@@ -48,7 +48,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
     <button type="button" className="text-xs" onClick={()=>setAdding(false)}>Cancel</button>
    </div>
   </form>:<button type="button" onClick={()=>setAdding(true)}
-    className="mb-3 flex w-full items-center gap-1 rounded-lg border border-blue-100 bg-white p-2 text-left text-sm font-medium text-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
+    data-planner-add-task className="mb-3 flex w-full items-center gap-1 rounded-lg border border-blue-100 bg-white p-2 text-left text-sm font-medium text-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
      <Plus className="h-4 w-4"/> Add task</button>)}
   <div aria-label={group.title+" tasks"} className="min-h-10">
    {group.rows.map(record=><CollectionTaskCard key={record.id} groupKey={group.key} data={data} record={record}
