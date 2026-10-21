@@ -15,7 +15,7 @@ function tone(value: string): string {
   if (/progress|doing|active|review/i.test(value)) return "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300";
   if (/to do|todo|backlog|not started|new/i.test(value)) return "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300";
   if (/blocked|hold/i.test(value)) return "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300";
-  return "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300";
+  return "border-[var(--planner-border)] bg-[var(--planner-hover)] text-[var(--planner-secondary)] dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)] dark:text-[var(--planner-secondary)]";
 }
 
 export function CollectionSelectChip({ label, value, options, disabled, onChange }: Props) {
