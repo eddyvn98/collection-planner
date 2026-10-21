@@ -38,6 +38,7 @@ export function CollectionScheduleDay({ data, view, day, rows, today, outside, r
     onCreate(day, title); setTitle(""); setAdding(false); };
   return <section ref={drop.setNodeRef} data-testid="collection-calendar-day" data-date={day}
     aria-label={"Date " + day}
+    onClick={event => { if (!readOnly && event.target === event.currentTarget) setAdding(true); }}
     className={"min-h-28 min-w-0 rounded-lg border p-1.5 text-xs transition-colors " +
       (drop.isOver ? "border-blue-500 bg-blue-100 ring-2 ring-blue-400 dark:bg-blue-950 "
         : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 ") +
