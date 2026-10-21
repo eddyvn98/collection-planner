@@ -79,6 +79,23 @@ describe("collectionTasks migration and state", () => {
   expect(setTaskDate(data,"task-1","due","not-a-date")).toBe(data);
   expect(data.records[0].values[data.fields[3].id]).toBeUndefined();
  });
+ it("migrates a legacy Status board into separate Bucket without losing task placement", () => {
+  const data = setup();
+  const oldGroup = data.fields[1].id;
+  const legacy = { ...data,
+    fields: data.fields.filter(field => field.name !== "Bucket"),
+    views: data.views.map(view => view.kind === "kanban" ? { ...view, groupFieldId: oldGroup } : view),
+  };
+  const migrated = normalizeCollection(legacy);
+  const bucket = migrated.fields.find(field => field.name === "Bucket")!;
+  const board = migrated.views.find(view => view.kind === "kanban")!;
+  expect(board.groupFieldId).toBe(bucket.id);
+  expect(migrated.records[0].values[bucket.id]).toBe("Done");
+  expect(migrated.records[0].values[oldGroup]).toBe("Done");
+  expect(migrated.records[0].progress).toBe("completed");
+  expect(normalizeCollection(migrated).records).toBe(migrated.records);
+  expect(normalizeCollection(migrated).fields).toBe(migrated.fields);
+ });
  it("compares ISO local calendar dates", () => {
   expect(localToday(new Date(2026,0,9))).toBe("2026-01-09");
  });
