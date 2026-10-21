@@ -26,6 +26,8 @@ interface Props {
 export function CollectionFloatingPanel({open,anchorRef,onClose,role,label,children,className,
  align="end"}: Props) {
  const panelRef = useRef<HTMLDivElement>(null);
+ const closeRef = useRef(onClose);
+ closeRef.current = onClose;
  const [layout,setLayout] = useState({top:0,left:0,maxHeight:0,flipped:false});
  useLayoutEffect(()=>{
   if(!open)return;
@@ -42,7 +44,7 @@ export function CollectionFloatingPanel({open,anchorRef,onClose,role,label,child
   window.addEventListener("scroll",reposition,true);
   const outside=(event:PointerEvent)=>{
    const target=event.target as Node;
-   if(!panelRef.current?.contains(target)&&!anchorRef.current?.contains(target))onClose();
+   if(!panelRef.current?.contains(target)&&!anchorRef.current?.contains(target))closeRef.current();
   };
   const escape=(event:KeyboardEvent)=>{
    if(event.key!=="Escape")return;
@@ -59,7 +61,7 @@ export function CollectionFloatingPanel({open,anchorRef,onClose,role,label,child
    document.removeEventListener("pointerdown",outside,true);
    window.removeEventListener("keydown",escape,true);
   };
- },[open,align,anchorRef,onClose]);
+ },[open,align,anchorRef]);
  if(!open||typeof document==="undefined")return null;
  return createPortal(<div ref={panelRef} role={role} aria-label={label} data-planner-floating
   data-placement={layout.flipped?"top":"bottom"}
