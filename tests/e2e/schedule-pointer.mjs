@@ -93,7 +93,7 @@ try {
   await small.locator('button[aria-label="Toggle dark mode"]').click();
   await small.getByRole("button", { name: "More plan actions" }).click();
   assert.equal(await small.locator("html.dark").count(), 1);
-  await small.getByRole("button", { name: "Add view" }).click();
+  await small.getByRole("button", { name: "More plan actions" }).click();
   const colors=await small.locator('[role="menu"]').last().evaluate(node => ({
     background: getComputedStyle(node).backgroundColor,
     foreground: getComputedStyle(node).color,
