@@ -9,7 +9,7 @@ import type { TaskFilterState } from "../collections/collectionPlannerFilters";
 import type { CollectionBlockPayload, CollectionRecord } from "../collections/model";
 const COLORS = ["#2563eb", "#0d9488", "#d97706", "#7c3aed", "#e11d48", "#0891b2", "#65a30d", "#a855f7"];
 const dimensions: { key: ChartDimension; title: string }[] = [
-  { key: "progress", title: "Status" }, { key: "bucket", title: "Bucket" },
+  { key: "progress", title: "Progress" }, { key: "bucket", title: "Bucket" },
   { key: "priority", title: "Priority" }, { key: "assignee", title: "Assignee" },
 ];
 function ChartPanel({ dimension, title, points, style, onChoose }: {
