@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { btnClass, fieldTypeGuidance, fieldTypeLabels, hintClass, inputClass, FieldEditor } from "./CollectionFieldEditor";
 import { CollectionScheduleView } from "./CollectionScheduleView";
@@ -23,28 +22,25 @@ import { CollectionSettingsSection } from "./CollectionSettingsSection";
 import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
 import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
+import { useCollectionHistory } from "../collections/collectionHistory";
+import { CollectionKeyboard } from "./CollectionKeyboard";
+import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
 import { normalizeCollection } from "../collections/model";
+import { visiblePlannerFields, isLegacyStatusField } from "../collections/collectionPlannerFields";
 import type { CollectionBlockPayload, CollectionSources, CollectionField, CollectionRecord, CollectionView } from "../collections/model";
 import { addRecord, addView, dateField, deleteRecord, endDateField, FIELD_TYPES, newId, primaryField, recordTitle, removeField, removeView, selectField, setParent, setRecordValue, updateField, updateView, VIEW_KINDS, visibleRecords } from "../collections/model";
 import { downloadCollection, exportCollectionCsv, importCollectionCsv, importCollectionJson } from "../collections/io";
-
 interface Props { blockId: string; data: CollectionBlockPayload; sources?: CollectionSources;
   standalone?: boolean;
   standaloneNavigation?: { collectionsHref: string; canvasHref: string; syncMessage: string };
   revisionNotice?: { stale: boolean; refreshing: boolean; error: string; refresh: () => Promise<void> };
   onChange: (next: CollectionBlockPayload) => void; readOnly: boolean }
-
-export function CollectionSurface({ blockId, data, sources = {}, revisionNotice, standalone = false, standaloneNavigation, onChange, readOnly }: Props) {
-  const [search, setSearch] = useState("");
-  const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS});
-  const [localViewId, setLocalViewId] = useState<string | null>(null);
-  const [settings, setSettings] = useState(false);
-  const [fieldSettingsTarget, setFieldSettingsTarget] = useState<string | null>(null);
-  const [fieldsPanelOpen, setFieldsPanelOpen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [full, setFull] = useState(false);
-  const expanded = full || standalone;
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+export function CollectionSurface({ blockId, data, sources = {}, revisionNotice, standalone = false, standaloneNavigation, onChange: persist, readOnly }: Props) {
+  const {onChange,undo,redo,canUndo,canRedo}=useCollectionHistory(data,persist,readOnly);
+  const root=useRef<HTMLDivElement>(null);
+  const [darkMode,setDarkMode]=useState(()=>typeof localStorage!=="undefined"&&localStorage.getItem("planner:dark")==="1");
+  useEffect(()=>{try{localStorage.setItem("planner:dark",darkMode?"1":"0");}catch{/* storage unavailable */}},[darkMode]);
+  const [search, setSearch] = useState(""); const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS}); const [localViewId, setLocalViewId] = useState<string | null>(null); const [settings, setSettings] = useState(false); const [fieldSettingsTarget, setFieldSettingsTarget] = useState<string | null>(null); const [fieldsPanelOpen, setFieldsPanelOpen] = useState(false); const [showHistory, setShowHistory] = useState(false); const [full, setFull] = useState(false); const expanded = full || standalone; const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   useEffect(() => {
     if (!settings || !fieldSettingsTarget) return;
     const target = Array.from(document.querySelectorAll<HTMLElement>("[data-field-setting-id]"))
@@ -56,10 +52,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     setShowHistory(false);
     setFieldSettingsTarget(fieldId);
   };
-  const fileInput = useRef<HTMLInputElement>(null);
-  const openCollectionButton = useRef<HTMLButtonElement>(null);
-  const backButton = useRef<HTMLButtonElement>(null);
-  const wasFull = useRef(false);
+  const fileInput = useRef<HTMLInputElement>(null); const openCollectionButton = useRef<HTMLButtonElement>(null); const backButton = useRef<HTMLButtonElement>(null); const wasFull = useRef(false);
   const closeFull = useCallback(() => {
     if (window.history.state?.collectionFullscreen === blockId) {
       window.history.back();
@@ -156,11 +149,13 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       event.preventDefault(); first?.focus();
     }
   };
-  const content = <div data-testid="collection-block" role={full ? "dialog" : undefined} aria-modal={full ? true : undefined}
+  const content = <div ref={root} data-testid="collection-block" role={full ? "dialog" : undefined} aria-modal={full ? true : undefined}
     aria-label={full ? `${data.title || "Untitled collection"} Collection screen` : undefined}
     tabIndex={full ? -1 : undefined} onKeyDown={keepFocusInScreen}
-    className={"flex h-full w-full flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 " + (full ? "fixed inset-0 z-[9999] p-0" : "")}
+    className={"flex h-full w-full flex-col overflow-hidden text-slate-900 dark:text-slate-100 " + (darkMode ? "dark bg-slate-950 text-slate-100 " : "bg-slate-50 ") + (full ? "fixed inset-0 z-[9999] p-0" : "")}
     onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("[data-collection-drag-handle]")) e.stopPropagation(); }} onDoubleClick={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
+    <CollectionKeyboard root={root} undo={undo} redo={redo} disabled={readOnly}
+      onEscape={()=>{setTaskFilters({...EMPTY_TASK_FILTERS});setSearch("");setSettings(false);}} />
     {expanded && <CollectionToolbar title={data.title} recordCount={data.records.length} readOnly={readOnly}
       full={full} settings={settings} showHistory={showHistory} navigation={standaloneNavigation}
       backButtonRef={backButton} onTitleChange={title => onChange({ ...data, title })}
@@ -190,6 +185,10 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       {!readOnly && <select aria-label="Add view" className={inputClass} value="" onChange={(e) => e.target.value && onChange(addView(data, e.target.value as CollectionView["kind"]))}><option value="">+ View</option>{VIEW_KINDS.map((v) => <option key={v} value={v}>{v}</option>)}</select>}
       {!plannerView && <input aria-label="Search records" className={inputClass + " ml-auto w-44"} placeholder="Search records" value={search} onChange={(e) => setSearch(e.target.value)} />}
     </div>
+    <CollectionPhase4Controls readOnly={readOnly} canUndo={canUndo} canRedo={canRedo} undo={undo} redo={redo}
+      darkMode={darkMode} setDarkMode={setDarkMode} />
+    {revisionNotice?.error && <p role="alert" className="border-b px-3 py-2 text-sm text-red-700 dark:text-red-300">{revisionNotice.error}</p>}
+    {revisionNotice?.refreshing && <p role="status" className="px-3 py-1 text-xs text-blue-600">Refreshing collection…</p>}
     {plannerView && <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
       onChange={setTaskFilters} onDataChange={onChange} />}
     <div className={"flex min-h-0 flex-1 flex-col overflow-hidden " + (settings || showHistory ? "md:flex-row" : "")}>
@@ -201,11 +200,11 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       <div className="flex flex-wrap items-center gap-2"><label>View name <input className={inputClass} value={view.name} disabled={readOnly} onChange={(e) => renameView({ name: e.target.value })} /></label></div>
       <CollectionSettingsSection title="View options" description="Choose which records appear, how they are grouped or sorted, and what totals are shown.">
       <div className="flex flex-wrap items-center gap-2">
-        {view.kind === "kanban" && <label>Group cards by <select className={inputClass} value={group?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ groupFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "select").map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}
+        {view.kind === "kanban" && <label>Group cards by <select className={inputClass} value={group?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ groupFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "select" && !isLegacyStatusField(f)).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}
         {(view.kind === "calendar" || view.kind === "timeline") && <><label>{view.kind === "calendar" ? "Calendar date" : "Start date"} <select aria-label={view.kind === "calendar" ? "Calendar date" : "Start date"} className={inputClass} value={date?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ dateFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "date").map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>{view.kind === "timeline" && <label>End date <select aria-label="End date" className={inputClass} value={end?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ endDateFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "date").map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}</> }
       </div>
-      <CollectionViewConditions view={view} fields={data.fields} readOnly={readOnly} onChange={renameView} />
-      <CollectionCardFormSettings view={view} fields={data.fields} readOnly={readOnly} onChange={renameView} />
+      <CollectionViewConditions view={view} fields={visiblePlannerFields(data)} readOnly={readOnly} onChange={renameView} />
+      <CollectionCardFormSettings view={view} fields={visiblePlannerFields(data)} readOnly={readOnly} onChange={renameView} />
       </CollectionSettingsSection>
       <CollectionSettingsSection title="Automations" description="Rules can update fields when records change or on a schedule. They do not send messages.">
       <CollectionAutomationSettings data={data} readOnly={readOnly} onChange={onChange} />
@@ -218,7 +217,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       <p className={hintClass}>{fieldTypeGuidance}</p>
       <section aria-label="Field settings" className="space-y-2">
       <div className="flex flex-col">
-        {data.fields.map((f) => <span key={f.id} data-field-setting-id={f.id} className="flex flex-wrap items-center gap-2 border-b border-slate-200 py-2 last:border-0 dark:border-slate-700"><input aria-label={"Rename " + f.name} className="w-24 max-w-full bg-transparent" value={f.name} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { name: e.target.value }))} /><select aria-label={"Type " + f.name} className={inputClass} value={f.type} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { type: e.target.value as CollectionField["type"] }))}>{FIELD_TYPES.map((t) => <option key={t} value={t}>{fieldTypeLabels[t]}</option>)}</select>{(f.type === "lookup" || f.type === "rollup") && <><select aria-label={"Lookup relation " + f.name} className={inputClass} value={f.relationFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { relationFieldId: e.target.value || undefined }))}><option value="">Choose relation</option>{data.fields.filter((x) => x.type === "relation").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><select aria-label={"Lookup target " + f.name} className={inputClass} value={f.targetFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { targetFieldId: e.target.value || undefined }))}><option value="">Choose field</option>{(() => { const relation = data.fields.find(x => x.id === f.relationFieldId);
+        {visiblePlannerFields(data).map((f) => <span key={f.id} data-field-setting-id={f.id} className="flex flex-wrap items-center gap-2 border-b border-slate-200 py-2 last:border-0 dark:border-slate-700"><input aria-label={"Rename " + f.name} className="w-24 max-w-full bg-transparent" value={f.name} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { name: e.target.value }))} /><select aria-label={"Type " + f.name} className={inputClass} value={f.type} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { type: e.target.value as CollectionField["type"] }))}>{FIELD_TYPES.map((t) => <option key={t} value={t}>{fieldTypeLabels[t]}</option>)}</select>{(f.type === "lookup" || f.type === "rollup") && <><select aria-label={"Lookup relation " + f.name} className={inputClass} value={f.relationFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { relationFieldId: e.target.value || undefined }))}><option value="">Choose relation</option>{data.fields.filter((x) => x.type === "relation").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><select aria-label={"Lookup target " + f.name} className={inputClass} value={f.targetFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { targetFieldId: e.target.value || undefined }))}><option value="">Choose field</option>{(() => { const relation = data.fields.find(x => x.id === f.relationFieldId);
           const target = relation?.relationTargetBlockId ? sources[relation.relationTargetBlockId] : data;
           return (target?.fields ?? []).filter(x => x.id !== f.id && !["lookup", "rollup", "formula", "relation"].includes(x.type))
             .map(x => <option key={x.id} value={x.id}>{x.name}</option>); })()}</select></>}{f.type === "rollup" && <select aria-label={"Rollup operation " + f.name} className={inputClass}

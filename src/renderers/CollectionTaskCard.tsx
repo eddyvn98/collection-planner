@@ -5,7 +5,7 @@ import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from 
 import { isTaskOverdue, taskAssignees, taskDate } from "../collections/collectionTasks";
 import { cardDragId } from "./collectionBoardGroups";
 export function CollectionTaskCard({ data, record, groupKey, readOnly, onOpen }: {
-  data: CollectionBlockPayload; record: CollectionRecord; groupKey: string; readOnly: boolean; onOpen: () => void;
+  data: CollectionBlockPayload; record: CollectionRecord; groupKey: string; readOnly: boolean; onOpen: (trigger: HTMLButtonElement) => void;
 }) {
   const drag = useDraggable({ id: cardDragId(record.id, groupKey), disabled: readOnly });
   const drop = useDroppable({ id: cardDragId(record.id, groupKey), disabled: readOnly });
@@ -23,8 +23,8 @@ export function CollectionTaskCard({ data, record, groupKey, readOnly, onOpen }:
       <button type="button" aria-label={"Drag " + recordTitle(data, record)} title="Drag task"
         className="rounded p-1 text-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500" disabled={readOnly}
         {...drag.attributes} {...drag.listeners}><GripVertical className="h-4 w-4" /></button>
-      <button type="button" className="min-w-0 flex-1 text-left text-sm font-semibold text-slate-800 hover:text-blue-600 dark:text-slate-100"
-        onClick={onOpen}>{recordTitle(data, record)}</button>
+      <button type="button" className="min-w-0 flex-1 text-left text-sm font-semibold focus-visible:outline-2 focus-visible:outline-blue-500 text-slate-800 hover:text-blue-600 dark:text-slate-100"
+        onClick={event => onOpen(event.currentTarget)}>{recordTitle(data, record)}</button>
     </div>
     {labels.length > 0 && <div className="mt-2 flex flex-wrap gap-1">
       {labels.map(label => <span key={label.id} className="rounded px-2 py-0.5 text-[11px] text-white"

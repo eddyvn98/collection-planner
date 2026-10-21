@@ -6,7 +6,7 @@ import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
 interface Props { data: CollectionBlockPayload; group: BoardGroup; mode: BoardGroupBy; field?: CollectionField;
- readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onOpen: (id: string) => void; }
+ readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onOpen: (id: string, trigger: HTMLButtonElement) => void; }
 export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,onOpen}: Props) {
  const drop = useDroppable({id:"bucket:"+group.key,disabled:readOnly});
  const [title,setTitle] = useState("");
@@ -28,7 +28,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
    : <button type="button" disabled={readOnly||!canEdit} onClick={()=>{setName(bucket);setRenaming(true);}}
      className="min-w-0 flex-1 truncate text-left text-sm font-semibold" aria-label={"Rename bucket "+bucket}>{group.title}</button>}
    {canEdit&&!readOnly&&!renaming&&<Pencil className="h-3 w-3 text-slate-400" aria-hidden="true"/>}
-  <span className="rounded-full bg-white px-2 py-0.5 text-xs dark:bg-slate-700">{group.rows.length}</span>
+  <span className="rounded-full bg-white px-2 py-0.5 text-xs dark:bg-slate-700">{group.rows.length} {group.rows.length === 1 ? "task" : "tasks"}</span>
    {!readOnly&&canEdit&&field&&<div className="flex">
     <button className="rounded p-1 hover:bg-white focus-visible:ring-2 focus-visible:ring-blue-500" title="Move bucket left" aria-label={"Move "+bucket+" left"} onClick={()=>onChange(moveBucket(data,field.id,bucket,-1))}>
       <ChevronLeft className="h-4 w-4"/></button>
@@ -48,11 +48,11 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
     <button type="button" className="text-xs" onClick={()=>setAdding(false)}>Cancel</button>
    </div>
   </form>:<button type="button" onClick={()=>setAdding(true)}
-    className="mb-3 flex w-full items-center gap-1 rounded-lg border border-blue-100 bg-white p-2 text-left text-sm font-medium text-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
+    data-planner-add-task className="mb-3 flex w-full items-center gap-1 rounded-lg border border-blue-100 bg-white p-2 text-left text-sm font-medium text-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
      <Plus className="h-4 w-4"/> Add task</button>)}
   <div aria-label={group.title+" tasks"} className="min-h-10">
    {group.rows.map(record=><CollectionTaskCard key={record.id} groupKey={group.key} data={data} record={record}
-    readOnly={readOnly} onOpen={()=>onOpen(record.id)}/>)}
+    readOnly={readOnly} onOpen={trigger=>onOpen(record.id,trigger)}/>)}
    {!group.rows.length&&<p className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-xs text-slate-400">Drop a task here</p>}
   </div>
  </section>;

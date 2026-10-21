@@ -16,6 +16,9 @@ import { COLLECTION_PAGE_SIZES, collectionTablePage, type CollectionPageSize } f
 import { gridFields } from "../collections/collectionPlannerFilters";
 import { CollectionGridToolbar } from "./CollectionGridToolbar";
 import { CollectionGridAddRow } from "./CollectionGridAddRow";
+import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
+import { CollectionGridAddQuick } from "./CollectionGridAddRow";
+import { gridTaskColumns } from "./collectionGridTaskColumns";
 
 interface Props {
   data: CollectionBlockPayload; sources?: CollectionSources;
@@ -62,7 +65,8 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   // Stable controlled state: one sorting array per saved View configuration.
   const sorting = useMemo<SortingState>(() => viewSorts(view).map(s =>
     ({ id: s.fieldId, desc: s.direction === "desc" })), [view]);
-  const columns = useMemo<ColumnDef<CollectionRecord>[]>(() => visibleFields.map(field => ({
+  const columns = useMemo<ColumnDef<CollectionRecord>[]>(() => {
+    const base = visibleFields.map(field => ({
     id: field.id, accessorFn: record => record.values[field.id] ?? "", header: () => field.name,
     sortingFn: field.type === "number" ? "basic" : "alphanumeric",
     cell: ctx => field.type === "select"
@@ -76,7 +80,9 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         readOnly={readOnly} data={dataRef.current} sources={sourcesRef.current}
         recordId={ctx.row.original.id}
         compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
-  })), [visibleFields, readOnly]);
+  })) as ColumnDef<CollectionRecord>[];
+    return [base[0], ...gridTaskColumns(() => dataRef.current, onChange, readOnly), ...base.slice(1)].filter(Boolean);
+  }, [visibleFields, readOnly, onChange]);
   const numericFieldIds = useMemo(() => new Set(data.fields.filter(field => field.type === "number").map(field => field.id)), [data.fields]);
   const table = useReactTable({
     // Bind TanStack only to the visible page, not thousands of input editors.
@@ -120,12 +126,18 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   return <div className="min-w-0 space-y-2" data-testid="collection-paged-table">
     <CollectionGridToolbar data={data} view={view} visibleCount={rows.length} selectedIds={selectedIds} readOnly={readOnly}
       onChange={onChange} onClear={() => setSelected([])} />
+    <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
+      onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
+      onOpen={setOpenRecordId} onChange={onChange}/>
+    {!page.rows.length && <p role="status" className="hidden rounded-lg border border-dashed p-4 text-center text-sm text-slate-500 sm:block">
+      No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
-    <div ref={tableScroll} className="overflow-x-auto">
+    <div ref={tableScroll} className="hidden max-w-full overflow-x-auto sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
     <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-xs" data-testid="collection-tanstack-table">
     <colgroup>
       <col style={{ width: 40 }} />
-      {visibleFields.map(field => <col key={field.id} style={{ width: table.getColumn(field.id)?.getSize() ?? 160 }} />)}
+      {table.getAllLeafColumns().map(column => <col key={column.id}
+        style={{ width: column.getSize() }} />)}
       <col style={{ width: 40 }} /><col style={{ width: 108 }} />
     </colgroup>
     <thead>{table.getHeaderGroups().map(group => <tr key={group.id}>
@@ -140,7 +152,9 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         const field = data.fields.find(item => item.id === header.column.id);
         return field ? <CollectionTableColumnHeader key={header.id} field={field} header={header} data={data}
           readOnly={readOnly} onChange={onChange} onOpenFieldSettings={onOpenFieldSettings}
-          onRequestDelete={setPendingDeleteFieldId} onAdjustColumnSize={adjustColumnSize} /> : null;
+          onRequestDelete={setPendingDeleteFieldId} onAdjustColumnSize={adjustColumnSize} /> :
+          <th key={header.id} className="sticky top-0 z-20 border-b bg-slate-100 p-2 text-left font-semibold dark:bg-slate-800">
+            {flexRender(header.column.columnDef.header, header.getContext())}</th>;
       })}
       <th style={{ width: 40 }} className="sticky top-0 border-b bg-slate-100 p-1 dark:bg-slate-800">
         <button type="button" className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-700"
@@ -166,16 +180,17 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         <button aria-label={"Delete " + recordTitle(data, row.original)} className={btnClass}
         disabled={readOnly} onClick={() => onChange(deleteRecord(data, row.original.id))}>×</button></td>
     </tr>)}
-    <CollectionGridAddRow data={data} colSpan={visibleFields.length + 3} readOnly={readOnly} onChange={onChange} />
+    <CollectionGridAddRow data={data} colSpan={table.getAllLeafColumns().length + 3} readOnly={readOnly} onChange={onChange} />
     </tbody>
-    {!!view.aggregations?.length && <tfoot><tr><td className="border-t" />{visibleFields.map(field => {
-      const aggregate = view.aggregations?.find(item => item.fieldId === field.id);
-      return <td key={field.id} className="border-t bg-slate-50 p-2 text-xs font-semibold dark:bg-slate-900">
+    {!!view.aggregations?.length && <tfoot><tr><td className="border-t" />{table.getAllLeafColumns().map(column => {
+      const aggregate = view.aggregations?.find(item => item.fieldId === column.id);
+      return <td key={column.id} className="border-t bg-slate-50 p-2 text-xs font-semibold dark:bg-slate-900">
         {aggregate ? aggregate.operation + ": " + calculateCollectionAggregate(rows, aggregate) : ""}</td>;
     })}<td className="border-t" /><td className="border-t text-xs">Visible totals</td></tr></tfoot>}
     </table>
     </div>
     </DndContext>
+    <div className="sm:hidden"><CollectionGridAddQuick data={data} readOnly={readOnly} onChange={onChange}/></div>
     <nav aria-label="Collection Table pagination" className="flex flex-wrap items-center gap-2 text-xs">
       <span role="status" aria-live="polite" data-testid="collection-page-summary">
         {page.total ? page.start + 1 : 0}–{page.end} of {page.total} matching records

@@ -7,9 +7,9 @@ import { chartSelection, chartSeries, chartSummary, summarySelection,
 import { localToday } from "../collections/collectionTasks";
 import type { TaskFilterState } from "../collections/collectionPlannerFilters";
 import type { CollectionBlockPayload, CollectionRecord } from "../collections/model";
-const COLORS = ["#2563eb", "#0d9488", "#d97706", "#7c3aed", "#e11d48", "#0891b2", "#65a30d", "#a855f7"];
+import { chartPointColor } from "../collections/collectionChartColors";
 const dimensions: { key: ChartDimension; title: string }[] = [
-  { key: "progress", title: "Status" }, { key: "bucket", title: "Bucket" },
+  { key: "progress", title: "Progress" }, { key: "bucket", title: "Bucket" },
   { key: "priority", title: "Priority" }, { key: "assignee", title: "Assignee" },
 ];
 function ChartPanel({ dimension, title, points, style, onChoose }: {
@@ -24,7 +24,7 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
         {style === "donut" ? <PieChart>
           <Pie data={active} dataKey="value" nameKey="name" cx="50%" cy="50%"
             innerRadius={50} outerRadius={78} paddingAngle={2}>
-            {active.map((point, index) => <Cell key={point.key} fill={COLORS[index % COLORS.length]}
+            {active.map((point) => <Cell key={point.key} fill={chartPointColor(points, point)}
               cursor="pointer" onClick={() => onChoose(dimension, point.key)} />)}
           </Pie>
           <Tooltip />
@@ -34,18 +34,18 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
           <YAxis allowDecimals={false} width={28} tick={{ fontSize: 11 }} />
           <Tooltip />
           <Bar dataKey="value" name="Tasks" maxBarSize={44} radius={[5, 5, 0, 0]}>
-            {active.map((point, index) => <Cell key={point.key} fill={COLORS[index % COLORS.length]}
+            {active.map((point) => <Cell key={point.key} fill={chartPointColor(points, point)}
               cursor="pointer" onClick={() => onChoose(dimension, point.key)} />)}
           </Bar>
         </BarChart>}
       </ResponsiveContainer>
     </div> : <p className="flex h-56 items-center justify-center text-sm text-slate-500">No tasks to chart.</p>}
     <div className="mt-2 flex flex-wrap gap-1.5" aria-label={title + " categories"}>
-      {points.map((point, index) => <button type="button" key={point.key}
+      {points.map((point) => <button type="button" key={point.key}
         onClick={() => onChoose(dimension, point.key)}
         className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs hover:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700"
         title={"Show " + point.name + " tasks in Grid"}>
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}/>
+        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: chartPointColor(points, point) }}/>
         {point.name} <strong>{point.value}</strong>
       </button>)}
     </div>
@@ -71,7 +71,7 @@ export function CollectionChartsView({ data, rows, onDrilldown }: {
   return <div data-testid="collection-charts" className="min-w-0 space-y-4">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-lg font-semibold">Charts</h2>
-        <p className="text-xs text-slate-500">{summary.total} tasks. Click any category to filter Grid.</p>
+        <p className="text-xs text-slate-500">{summary.total} {summary.total === 1 ? "task" : "tasks"}. Click any category to filter Grid.</p>
       </div>
       <label className="text-sm">Display <select aria-label="Chart type"
         className="ml-2 rounded-lg border bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900"

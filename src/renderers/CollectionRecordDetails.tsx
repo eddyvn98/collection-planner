@@ -4,20 +4,23 @@ import { createPortal } from "react-dom";
 import { primaryField, recordTitle, selectField, setRecordValue, updateRecordBody,
  type CollectionBlockPayload, type CollectionField, type CollectionSources } from "../collections/model";
 import { FieldEditor, hintClass, inputClass } from "./CollectionFieldEditor";
+import { isLegacyStatusField, plannerBucket } from "../collections/collectionPlannerFields";
 import { taskDateFields } from "../collections/collectionTasks";
+import { CollectionTaskActions } from "./CollectionTaskActions";
 import { CollectionTaskProperties } from "./CollectionTaskProperties";
 interface Props {
  data: CollectionBlockPayload; sources?: CollectionSources; recordId: string; group?: CollectionField;
  readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onClose: () => void;
+ returnFocusTo?: HTMLElement | null;
 }
 /** Every view edits the same stable record. Parent onChange persists edits. */
-export function CollectionRecordDetails({data,sources,recordId,group,readOnly,onChange,onClose}:Props){
+export function CollectionRecordDetails({data,sources,recordId,group,readOnly,onChange,onClose,returnFocusTo}:Props){
  const dialog=useRef<HTMLElement>(null),titleInput=useRef<HTMLInputElement>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  const record=data.records.find(r=>r.id===recordId);
  useEffect(()=>{
-  const prior=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  const prior=returnFocusTo ?? (document.activeElement instanceof HTMLElement?document.activeElement:null);
   titleInput.current?.focus();
   const keydown=(event:KeyboardEvent)=>{
    if(event.key==="Escape"){
@@ -33,13 +36,13 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
   };
   window.addEventListener("keydown",keydown,true);
-  return ()=>{window.removeEventListener("keydown",keydown,true);prior?.focus();};
+  return ()=>{window.removeEventListener("keydown",keydown,true);requestAnimationFrame(() => { if (prior?.isConnected) prior.focus(); });};
  },[]);
  if(!record||typeof document==="undefined")return null;
  const title=primaryField(data);
- const bucket=group??selectField(data,data.views.find(v=>v.id===data.activeViewId)??data.views[0]);
+ const bucket=group && !isLegacyStatusField(group) ? group : plannerBucket(data);
  const {start,due}=taskDateFields(data);
- const hidden=new Set([title?.id,bucket?.id,start?.id,due?.id]);
+ const hidden=new Set([title?.id,bucket?.id,start?.id,due?.id,...data.fields.filter(isLegacyStatusField).map(f=>f.id)]);
  return createPortal(<div className="fixed inset-0 z-[10020] flex justify-end bg-black/50"
   role="presentation" onPointerDown={event=>event.stopPropagation()}>
   <button type="button" className="absolute inset-0 cursor-default" aria-label="Close task details"
@@ -58,7 +61,7 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
       onChange={e=>onChange(setRecordValue(data,record.id,title.id,e.target.value))}/>
     </label>}
     {bucket&&<label className="block space-y-1 text-xs font-medium">
-     Bucket ({bucket.name})<FieldEditor field={bucket} value={record.values[bucket.id]??""} readOnly={readOnly}
+     Bucket<FieldEditor field={bucket} value={record.values[bucket.id]??""} readOnly={readOnly}
       data={data} recordId={record.id} sources={sources}
       onSet={value=>onChange(setRecordValue(data,record.id,bucket.id,value))}/>
     </label>}
@@ -76,6 +79,7 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
       onChange={e=>onChange(updateRecordBody(data,record.id,e.target.value))}/>
     </label>
     <CollectionTaskProperties data={data} record={record} readOnly={readOnly} onChange={onChange}/>
+    <CollectionTaskActions data={data} record={record} readOnly={readOnly} onChange={onChange}/>
     {data.fields.some(field=>!hidden.has(field.id))&&<details className="rounded-lg border p-3 dark:border-slate-700">
      <summary className="cursor-pointer text-sm font-semibold">Other fields</summary>
      <div className="mt-3 space-y-3">

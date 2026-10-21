@@ -53,9 +53,9 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
           <option value="">All people</option><option value="__unassigned__">Unassigned</option>{(data.people??[]).map(p=><option value={p.id} key={p.id}>{p.name}</option>)}
         </select></label>
       <label className="text-xs">Status
-        <select aria-label="Filter status" className={control+" mt-1 block"} value={value.progress??""}
+        <select aria-label="Filter progress" className={control+" mt-1 block"} value={value.progress??""}
           onChange={e=>set("progress",e.target.value)}>
-          <option value="">All statuses</option><option value="not_started">Not started</option>
+          <option value="">All progress</option><option value="not_started">Not started</option>
           <option value="in_progress">In progress</option><option value="completed">Completed</option>
         </select></label>
       <label className="text-xs">Priority

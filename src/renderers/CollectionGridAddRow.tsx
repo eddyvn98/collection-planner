@@ -27,3 +27,19 @@ export function CollectionGridAddRow({ data, colSpan, readOnly, onChange }: {
     </td>
   </tr>;
 }
+
+export function CollectionGridAddQuick({ data, readOnly, onChange }: {
+  data: CollectionBlockPayload; readOnly: boolean; onChange: (next: CollectionBlockPayload) => void;
+}) {
+  const [name, setName] = useState("");
+  return <form className="flex items-center gap-2 p-2" onSubmit={event => {
+    event.preventDefault();if (!name.trim() || readOnly) return;
+    onChange(createBoardTask(data, name));setName("");
+  }}>
+    <input aria-label="New task title" className="min-w-0 flex-1 rounded border bg-white p-2 text-sm dark:bg-slate-800"
+      value={name} maxLength={300} disabled={readOnly} onChange={event => setName(event.target.value)}
+      placeholder="Add new task" />
+    <button type="submit" disabled={readOnly || !name.trim()}
+      className="rounded bg-blue-600 px-3 py-2 text-sm text-white disabled:opacity-50">Add task</button>
+  </form>;
+}
