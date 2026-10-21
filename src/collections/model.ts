@@ -61,6 +61,7 @@ export interface CollectionView {
   name: string;
   kind: CollectionViewKind;
   groupFieldId?: string;
+  boardGroupBy?: "bucket" | "progress" | "priority" | "assignee" | "label" | "due";
   dateFieldId?: string;
   endDateFieldId?: string;
   /** Legacy persisted single-condition representation. */
