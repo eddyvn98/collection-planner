@@ -1,3 +1,4 @@
+import { CollectionDrawerPicker } from "./CollectionDrawerPicker";
 import { displayPlannerDate } from "../collections/collectionDateDisplay";
 import { CalendarDays, Circle, CircleDot, CheckCircle2, Flag, Repeat, Tag, UserRound, Layers3 } from "lucide-react";
 import { newId, setRecordValue, type CollectionBlockPayload, type CollectionRecord,
@@ -55,9 +56,9 @@ export function CollectionPlannerTaskFields({data,record,readOnly,onChange}:Prop
     onChange={e=>onChange(setRecurrence(data,record.id,e.target.value as TaskRecurrence))}>
     {["none","daily","weekly","monthly"].map(x=><option key={x} value={x}>{x==="none"?"Never":x}</option>)}</select></label>
   <div className={row}><UserRound size={16} strokeWidth={1.75}/><span>Assignees</span>
-   <details className="relative min-w-0"><summary className={input+" flex cursor-pointer items-center"}>
-    {people.filter(p=>record.assigneeIds?.includes(p.id)).map(p=>p.name).join(", ")||"Assign people"}</summary>
-    <div className="absolute right-0 z-20 mt-1 w-full min-w-44 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 shadow-lg">
+   <CollectionDrawerPicker label="Assignees" value={
+    people.filter(p=>record.assigneeIds?.includes(p.id)).map(p=>p.name).join(", ")||"Assign people"}>
+    <div className="space-y-1">
      {people.map(p=><label key={p.id} className="flex min-h-8 items-center gap-2 text-xs">
       <input type="checkbox" disabled={readOnly} checked={!!record.assigneeIds?.includes(p.id)}
        onChange={e=>patch({assigneeIds:e.target.checked?[...(record.assigneeIds??[]),p.id]:(record.assigneeIds??[]).filter(id=>id!==p.id)})}/>{p.name}</label>)}
@@ -65,12 +66,12 @@ export function CollectionPlannerTaskFields({data,record,readOnly,onChange}:Prop
         addPerson(x.value);x.value="";}}>
        <input name="person" placeholder="Add a person" aria-label="New assignee" maxLength={80} className={input}/>
        <button type="submit" className="mt-1 min-h-8 text-xs text-[var(--planner-accent)]">Add person</button></form>}
-    </div></details>
+    </div></CollectionDrawerPicker>
   </div>
   <div className={row}><Tag size={16} strokeWidth={1.75}/><span>Labels</span>
-   <details className="relative min-w-0"><summary className={input+" flex cursor-pointer items-center"}>
-     {labels.filter(x=>record.labelIds?.includes(x.id)).map(x=>x.name).join(", ")||"Choose labels"}</summary>
-    <div className="absolute right-0 z-20 mt-1 w-full min-w-44 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 shadow-lg">
+   <CollectionDrawerPicker label="Labels" value={
+    labels.filter(x=>record.labelIds?.includes(x.id)).map(x=>x.name).join(", ")||"Choose labels"}>
+    <div className="space-y-1">
      {labels.map(x=><label key={x.id} className="flex min-h-8 items-center gap-2 text-xs">
       <input type="checkbox" disabled={readOnly} checked={!!record.labelIds?.includes(x.id)}
        onChange={e=>patch({labelIds:e.target.checked?[...(record.labelIds??[]),x.id]:(record.labelIds??[]).filter(id=>id!==x.id)})}/>
@@ -79,7 +80,7 @@ export function CollectionPlannerTaskFields({data,record,readOnly,onChange}:Prop
         addLabel(x.value);x.value="";}}>
       <input name="label" aria-label="New label" placeholder="Add a label" maxLength={80} className={input}/>
       <button type="submit" className="mt-1 min-h-8 text-xs text-[var(--planner-accent)]">Add label</button></form>}
-    </div></details>
+    </div></CollectionDrawerPicker>
   </div>
  </section>;
 }
