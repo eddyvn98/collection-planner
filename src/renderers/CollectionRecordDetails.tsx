@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { recordTitle, setRecordValue, updateRecordBody,
   type CollectionBlockPayload, type CollectionSources } from "../collections/model";
 import { FieldEditor, hintClass } from "./CollectionFieldEditor";
-import { CollectionChecklist } from "./CollectionChecklist";
+import { CollectionTaskProperties } from "./CollectionTaskProperties";
 
 interface Props { data: CollectionBlockPayload; sources?: CollectionSources; recordId: string;
   readOnly: boolean; onChange: (data: CollectionBlockPayload) => void; onClose: () => void; }
@@ -34,11 +34,7 @@ export function CollectionRecordDetails({ data, sources, recordId, readOnly, onC
             data={data} sources={sources} recordId={record.id}
             onSet={value => onChange(setRecordValue(data, record.id, field.id, value))} />
         </label>)}
-        <section className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-          <CollectionChecklist items={record.checklist} readOnly={readOnly}
-            onChange={checklist => onChange({ ...data, records: data.records.map(row =>
-              row.id === record.id ? { ...row, checklist } : row) })} />
-        </section>
+        <CollectionTaskProperties data={data} record={record} readOnly={readOnly} onChange={onChange} />
         <label className="block space-y-1 text-sm">
           <span className="font-medium">Record notes</span>
           <textarea className="min-h-64 w-full rounded border bg-transparent p-3 text-sm placeholder:text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500"
