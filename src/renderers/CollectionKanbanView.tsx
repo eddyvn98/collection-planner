@@ -41,7 +41,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group}
      readOnly={readOnly} onChange={onChange} onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
     {mode==="bucket"&&!!group&&!readOnly&&(creating?
-     <form className="w-64 shrink-0 space-y-2 rounded-xl bg-slate-100 p-3"
+     <form className="w-64 shrink-0 space-y-2 rounded-xl bg-[var(--planner-hover)] p-3"
       onSubmit={e=>{e.preventDefault();const next=addBucket(data,group.id,newBucket);
        if(next!==data){onChange(next);setNewBucket("");setCreating(false);}}}>
       <input autoFocus aria-label="New bucket" value={newBucket} onChange={e=>setNewBucket(e.target.value)}

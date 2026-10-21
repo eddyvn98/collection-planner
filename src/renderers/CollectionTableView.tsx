@@ -130,7 +130,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
       onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
       onOpen={setOpenRecordId} onChange={onChange}/>
-    {!page.rows.length && <p role="status" className="hidden rounded-lg border border-dashed p-4 text-center text-sm text-slate-500 sm:block">
+    {!page.rows.length && <p role="status" className="hidden rounded-lg border border-dashed p-4 text-center text-sm text-[var(--planner-secondary)] sm:block">
       No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
     <div ref={tableScroll} className="hidden max-w-full overflow-x-auto rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
@@ -158,7 +158,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
             {flexRender(header.column.columnDef.header, header.getContext())}</th>;
       })}
       <th style={{ width: 40 }} className="sticky top-0 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-1">
-        <button type="button" className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-700"
+        <button type="button" className="inline-flex h-7 w-7 items-center justify-center rounded text-[var(--planner-secondary)] hover:bg-[var(--planner-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-[var(--planner-hover)]"
           aria-label="Add column" title="Add column" disabled={readOnly}
           onClick={() => {
             let index = data.fields.length + 1;
@@ -191,7 +191,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     </tbody>
     {!!view.aggregations?.length && <tfoot><tr><td className="border-t" />{table.getAllLeafColumns().map(column => {
       const aggregate = view.aggregations?.find(item => item.fieldId === column.id);
-      return <td key={column.id} className="border-t bg-slate-50 p-2 text-xs font-semibold dark:bg-slate-900">
+      return <td key={column.id} className="border-t bg-[var(--planner-hover)] p-2 text-xs font-semibold dark:bg-[var(--planner-surface)]">
         {aggregate ? aggregate.operation + ": " + calculateCollectionAggregate(rows, aggregate) : ""}</td>;
     })}<td className="border-t" /><td className="border-t text-xs">Visible totals</td></tr></tfoot>}
     </table>
@@ -223,12 +223,12 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     {pendingDeleteFieldId && (() => {
       const field = data.fields.find(item => item.id === pendingDeleteFieldId);
       if (!field) return null;
-      return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={event => { if (event.target === event.currentTarget) setPendingDeleteFieldId(null); }}>
+      return <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--planner-surface)]/40 p-4" onMouseDown={event => { if (event.target === event.currentTarget) setPendingDeleteFieldId(null); }}>
         <section role="alertdialog" aria-modal="true" aria-labelledby="delete-property-title" aria-describedby="delete-property-description"
           onKeyDown={event => { if (event.key === "Escape") setPendingDeleteFieldId(null); }}
-          className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl dark:bg-slate-900">
-          <h2 id="delete-property-title" className="text-base font-semibold text-slate-900 dark:text-slate-100">Delete “{field.name}”?</h2>
-          <p id="delete-property-description" className="mt-2 text-sm text-slate-600 dark:text-slate-300">This removes the column and its values from every record, view, and automation that uses it.</p>
+          className="w-full max-w-sm rounded-xl bg-[var(--planner-surface)] p-5 shadow-xl dark:bg-[var(--planner-surface)]">
+          <h2 id="delete-property-title" className="text-base font-semibold text-[var(--planner-text)] dark:text-[var(--planner-secondary)]">Delete “{field.name}”?</h2>
+          <p id="delete-property-description" className="mt-2 text-sm text-[var(--planner-secondary)] dark:text-[var(--planner-secondary)]">This removes the column and its values from every record, view, and automation that uses it.</p>
           <div className="mt-5 flex justify-end gap-2">
             <button type="button" autoFocus className={btnClass} onClick={() => setPendingDeleteFieldId(null)}>Cancel</button>
             <button type="button" className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500" onClick={() => {

@@ -13,11 +13,11 @@ export function CollectionGridAddRow({ data, colSpan, readOnly, onChange }: {
     setTitle("");
   };
   return <tr data-testid="collection-add-row">
-    <td colSpan={colSpan} className="border-b border-slate-200 p-2 dark:border-slate-700">
+    <td colSpan={colSpan} className="border-b border-[var(--planner-border)] p-2 dark:border-[var(--planner-border)]">
       <form className="flex items-center gap-2" onSubmit={e=>{e.preventDefault();add();}}>
         <Plus aria-hidden="true" size={16} strokeWidth={1.75} className="text-[var(--planner-accent)]"/>
         <input aria-label="New task title" value={title} disabled={readOnly}
-          className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white p-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900"
+          className="min-w-0 flex-1 rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]"
           placeholder="Add new task — type a name, press Enter" maxLength={300}
           onChange={e=>setTitle(e.target.value)} />
         <button type="submit" disabled={readOnly||!title.trim()}
@@ -37,7 +37,7 @@ export function CollectionGridAddQuick({ data, readOnly, onChange }: {
     event.preventDefault();if (!name.trim() || readOnly) return;
     onChange(createBoardTask(data, name));setName("");
   }}>
-    <input aria-label="New task title" className="min-w-0 flex-1 rounded border bg-white p-2 text-sm dark:bg-slate-800"
+    <input aria-label="New task title" className="min-w-0 flex-1 rounded border bg-[var(--planner-surface)] p-2 text-sm dark:bg-[var(--planner-surface)]"
       value={name} maxLength={300} disabled={readOnly} onChange={event => setName(event.target.value)}
       placeholder="Add new task" />
     <button type="submit" disabled={readOnly || !name.trim()}

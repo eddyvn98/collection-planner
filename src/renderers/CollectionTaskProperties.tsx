@@ -71,14 +71,14 @@ export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
     {r.values[data.fields[0]?.id]??r.id}</label>)}
   </section>
   <section id="task-comments" className="scroll-mt-4 space-y-2"><h3 className="text-sm font-semibold">Comments</h3>
-   {(record.comments??[]).map(c=><p key={c.id} className="rounded bg-slate-100 p-2 text-xs dark:bg-slate-800">
+   {(record.comments??[]).map(c=><p key={c.id} className="rounded bg-[var(--planner-hover)] p-2 text-xs dark:bg-[var(--planner-surface)]">
     <strong>{c.author}</strong> · {new Date(c.at).toLocaleString()}<span className="block whitespace-pre-wrap">{c.text}</span></p>)}
    {!readOnly&&<form onSubmit={e=>{e.preventDefault();onChange(addTaskComment(data,record.id,comment));setComment("");}}>
     <textarea aria-label="New comment" className={inputClass+" w-full"} maxLength={5000} value={comment} onChange={e=>setComment(e.target.value)}/>
     <button type="submit" disabled={!comment.trim()} className="text-blue-600">Post comment</button></form>}
   </section>
   <section id="task-activity" className="scroll-mt-4"><h3 className="text-sm font-semibold">Activity</h3>
-   {(record.activity??[]).slice().reverse().map(a=><p key={a.id} className="text-xs text-slate-500">{new Date(a.at).toLocaleString()} · {a.summary}</p>)}
+   {(record.activity??[]).slice().reverse().map(a=><p key={a.id} className="text-xs text-[var(--planner-secondary)]">{new Date(a.at).toLocaleString()} · {a.summary}</p>)}
   </section>
  </div>;
 }

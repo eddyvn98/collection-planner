@@ -89,19 +89,19 @@ export function TimelineView({ rows, data, start, end, readOnly, onChange, patch
         disabled={page.pageIndex >= page.pageCount - 1}
         onClick={() => setRequestedPage(page.pageIndex + 1)}>Next</button>
     </nav>
-    {page.total === 0 ? <div role="status" className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center dark:border-slate-700 dark:bg-slate-900">
-      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Nothing scheduled in this timeline</p>
-      <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Set a Start date in Table view to plot a record. Use End dates to give tasks a duration.</p>
-    </div> : <div ref={timelineScroll} className="max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950" data-testid="collection-timeline-scroll">
+    {page.total === 0 ? <div role="status" className="rounded-xl border border-dashed border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-6 text-center dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
+      <p className="text-sm font-medium text-[var(--planner-text)] dark:text-[var(--planner-secondary)]">Nothing scheduled in this timeline</p>
+      <p className="mt-1 text-xs text-[var(--planner-secondary)] dark:text-[var(--planner-secondary)]">Set a Start date in Table view to plot a record. Use End dates to give tasks a duration.</p>
+    </div> : <div ref={timelineScroll} className="max-w-full overflow-x-auto rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]" data-testid="collection-timeline-scroll">
       <div style={{ minWidth: 220 + span }}>
-        <div className="flex border-b bg-slate-100 dark:bg-slate-900">
-          <span className="sticky left-0 z-20 w-[220px] shrink-0 border-r bg-slate-100 p-2 font-semibold dark:bg-slate-900">Record</span>
+        <div className="flex border-b bg-[var(--planner-hover)] dark:bg-[var(--planner-surface)]">
+          <span className="sticky left-0 z-20 w-[220px] shrink-0 border-r bg-[var(--planner-hover)] p-2 font-semibold dark:bg-[var(--planner-surface)]">Record</span>
           <div className="relative h-10" style={{ width: span }}>
             {visibleTicks.map((day, index) => {
               const monday = new Date(day + "T12:00:00Z").getUTCDay() === 1;
               const shown = scale === "day" ? index % 3 === 0 : monday;
               const showGrid = scale === "day" || monday;
-              return <div key={day} className={`absolute top-0 h-full ${showGrid ? "border-l border-slate-300 dark:border-slate-700" : ""}`}
+              return <div key={day} className={`absolute top-0 h-full ${showGrid ? "border-l border-[var(--planner-border)] dark:border-[var(--planner-border)]" : ""}`}
                 data-testid="collection-timeline-tick" data-date={day}
                 style={{ left: index * cellSize, width: cellSize }}>
                 {shown && <span className="block whitespace-nowrap text-[10px] tabular-nums" aria-label={"Ruler date " + day}>{day.slice(5).replace("-", "/")}</span>}
@@ -114,7 +114,7 @@ export function TimelineView({ rows, data, start, end, readOnly, onChange, patch
         {page.rows.map(({ record, startOffset, length }) =>
           <div className="flex min-h-12 items-center border-b" key={record.id}
             data-testid="collection-timeline-row" data-record-id={record.id}>
-            <div className="sticky left-0 z-10 flex min-h-12 w-[220px] shrink-0 items-center border-r bg-white px-2 py-1 leading-4 dark:bg-slate-950" title={recordTitle(data, record)}>
+            <div className="sticky left-0 z-10 flex min-h-12 w-[220px] shrink-0 items-center border-r bg-[var(--planner-surface)] px-2 py-1 leading-4 dark:bg-[var(--planner-surface)]" title={recordTitle(data, record)}>
               {recordTitle(data, record)}
             </div>
             <div className="relative h-11" style={{ width: span }}>
@@ -131,14 +131,14 @@ export function TimelineView({ rows, data, start, end, readOnly, onChange, patch
     </div>}
     <div className="space-y-2">
       {page.rows.map(({ record }) => <details key={record.id}
-        className="group rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950" data-testid="collection-timeline-edit">
-        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 px-3 py-2 text-xs hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-900">
+        className="group rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]" data-testid="collection-timeline-edit">
+        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 px-3 py-2 text-xs hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-[var(--planner-surface)]">
           <strong className="min-w-0 flex-1 truncate">{recordTitle(data, record)}</strong>
-          <span className="tabular-nums text-slate-500">{record.values[start?.id ?? ""] || "No start"}{end && end.id !== start?.id && record.values[end.id] ? ` → ${record.values[end.id]}` : ""}</span>
-          <span className="text-slate-500 group-open:hidden">Edit schedule</span>
-          <span className="hidden text-slate-500 group-open:inline">Close</span>
+          <span className="tabular-nums text-[var(--planner-secondary)]">{record.values[start?.id ?? ""] || "No start"}{end && end.id !== start?.id && record.values[end.id] ? ` → ${record.values[end.id]}` : ""}</span>
+          <span className="text-[var(--planner-secondary)] group-open:hidden">Edit schedule</span>
+          <span className="hidden text-[var(--planner-secondary)] group-open:inline">Close</span>
         </summary>
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-2 dark:border-slate-700">
+        <div className="flex flex-wrap items-center gap-2 border-t border-[var(--planner-border)] px-3 py-2 dark:border-[var(--planner-border)]">
         {start && <FieldEditor field={start} value={record.values[start.id] ?? ""}
           readOnly={readOnly} onSet={value => patch(record, start, value)} />}
         {end && end.id !== start?.id && <FieldEditor field={end} value={record.values[end.id] ?? ""}

@@ -3,10 +3,10 @@ import React from "react";
 import type { CollectionBlockPayload, CollectionField, CollectionSources } from "../collections/model";
 import { recordTitle } from "../collections/model";
 import { relationIds, encodeRelationIds } from "../collections/collectionRelations";
-export const inputClass = "rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-xs placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-blue-950";
-export const hintClass = "text-xs leading-relaxed text-slate-600 dark:text-slate-400";
-export const emptyValueClass = "text-xs !text-slate-400 dark:!text-slate-500";
-export const btnClass = "inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-800 disabled:opacity-40";
+export const inputClass = "rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] px-3 py-2 text-sm text-[var(--planner-text)] outline-none transition placeholder:text-xs placeholder:text-[var(--planner-secondary)] focus-visible:border-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]";
+export const hintClass = "text-xs leading-relaxed text-[var(--planner-secondary)]";
+export const emptyValueClass = "text-xs text-[var(--planner-secondary)]";
+export const btnClass = "inline-flex min-h-8 items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-[var(--planner-secondary)] transition-colors hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] disabled:opacity-40";
 export const fieldTypeLabels: Record<CollectionField["type"], string> = {
   text: "Text", number: "Number", date: "Date", select: "Dropdown", checkbox: "Checkbox",
   url: "URL", image: "Image", relation: "Linked records", lookup: "Related value",
@@ -19,7 +19,7 @@ export function FieldEditor({ field, value, onSet, readOnly, data, recordId, sou
   compact?: boolean;
 }) {
   if (field.type === "lookup" || field.type === "formula" || field.type === "rollup") return <output aria-label={field.name}
-    className={`block ${compact ? "min-w-0" : "min-w-20"} truncate rounded bg-slate-100 p-1 text-xs dark:bg-slate-800`} title={value}>{value}</output>;
+    className={`block ${compact ? "min-w-0" : "min-w-20"} truncate rounded bg-[var(--planner-hover)] p-1 text-xs text-[var(--planner-text)]`} title={value}>{value}</output>;
   if (field.type === "relation") {
     const target = field.relationTargetBlockId ? sources?.[field.relationTargetBlockId] : data;
     const options = target?.records.filter(record => field.relationTargetBlockId || record.id !== recordId) ?? [];

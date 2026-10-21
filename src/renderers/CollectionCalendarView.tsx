@@ -70,11 +70,11 @@ export function CalendarView({ month, setMonth, rows, data, field, readOnly, pat
         value={anchor} onChange={event => event.target.value && navigate(event.target.value)} />
       {!field && <span className="text-amber-600">Add a date field to use Calendar</span>}
     </div>
-    {(!field || scheduledInPeriod === 0) && <div role="status" className="flex items-start gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900">
-      <span aria-hidden="true" className="mt-0.5 text-lg text-slate-400">▦</span>
+    {(!field || scheduledInPeriod === 0) && <div role="status" className="flex items-start gap-3 rounded-xl border border-dashed border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 text-sm dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
+      <span aria-hidden="true" className="mt-0.5 text-lg text-[var(--planner-secondary)]">▦</span>
       <div>
-        <p className="font-medium text-slate-800 dark:text-slate-100">{!field ? "Calendar needs a date field" : "Nothing scheduled in this period"}</p>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{!field
+        <p className="font-medium text-[var(--planner-text)] dark:text-[var(--planner-secondary)]">{!field ? "Calendar needs a date field" : "Nothing scheduled in this period"}</p>
+        <p className="mt-1 text-xs text-[var(--planner-secondary)] dark:text-[var(--planner-secondary)]">{!field
           ? "Add a date field in Settings to place records on the calendar."
           : rows.length ? "Choose another period or add a date to a record in Table view."
             : "Add a record, then give it a date to see it here."}</p>
@@ -90,10 +90,10 @@ export function CalendarView({ month, setMonth, rows, data, field, readOnly, pat
         const outside = mode === "month" && !day.startsWith(anchor.slice(0, 7));
         return <section key={day} data-testid="collection-calendar-day" data-date={day}
           aria-label={"Date " + day}
-          className={"min-h-20 min-w-0 rounded border p-1 text-xs dark:border-slate-700 " + (outside ? "opacity-50" : "")}
+          className={"min-h-20 min-w-0 rounded border p-1 text-xs dark:border-[var(--planner-border)] " + (outside ? "opacity-50" : "")}
           onDragOver={event => { if (!readOnly && field) event.preventDefault(); }}
           onDrop={event => onDrop(event, day)}>
-          <button type="button" className="text-slate-500 underline" aria-label={"Select " + day}
+          <button type="button" className="text-[var(--planner-secondary)] underline" aria-label={"Select " + day}
             onClick={() => navigate(day)}>{day.slice(8)}</button>
           {allMatches.length > MAX_DAY_CARDS && <button type="button"
             aria-label={(expanded ? "Show fewer" : "Show all") + " records for " + day}

@@ -40,7 +40,7 @@ export function CollectionScheduledAutomationSettings({ data, readOnly, onChange
       type={field?.type === "number" ? "number" : field?.type === "date" ? "date" : "text"}
       maxLength={2000} value={value} onChange={event => set(event.target.value)} />;
   };
-  return <section className="space-y-2 border-b border-slate-200 py-3 dark:border-slate-700" data-testid="collection-scheduled-automations">
+  return <section className="space-y-2 border-b border-[var(--planner-border)] py-3 dark:border-[var(--planner-border)]" data-testid="collection-scheduled-automations">
     <div className="flex items-center gap-2">
       <strong>Daily scheduled rules</strong>
       <button type="button" className={btnClass} disabled={readOnly || !targets.length || rules.length >= 20}
@@ -51,7 +51,7 @@ export function CollectionScheduledAutomationSettings({ data, readOnly, onChange
     {rules.map(rule => {
       const target = targets.find(field => field.id === rule.targetFieldId);
       const match = conditions.find(field => field.id === rule.matchFieldId);
-      return <div key={rule.id} className="space-y-2 border-l-2 border-slate-200 py-2 pl-3 dark:border-slate-700">
+      return <div key={rule.id} className="space-y-2 border-l-2 border-[var(--planner-border)] py-2 pl-3 dark:border-[var(--planner-border)]">
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-1"><input type="checkbox"
             aria-label={"Enable daily rule " + rule.name} checked={rule.enabled}

@@ -184,11 +184,11 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     {revisionNotice?.refreshing && <p role="status" className="px-3 py-1 text-xs text-blue-600">Refreshing collection…</p>}
     {plannerView&&<CollectionFilterChips data={data} value={taskFilters} onChange={setTaskFilters}/>}
     <div className={"flex min-h-0 flex-1 flex-col overflow-hidden " + (settings || showHistory ? "md:flex-row" : "")}>
-    {(settings || showHistory) && <aside className="max-h-[min(55vh,28rem)] min-h-0 shrink-0 overflow-y-auto overscroll-contain px-3 py-2 md:h-full md:max-h-none md:w-[min(24vw,20rem)] md:border-r md:border-slate-200 dark:md:border-slate-700">
+    {(settings || showHistory) && <aside className="max-h-[min(55vh,28rem)] min-h-0 shrink-0 overflow-y-auto overscroll-contain px-3 py-2 md:h-full md:max-h-none md:w-[min(24vw,20rem)] md:border-r md:border-[var(--planner-border)] dark:md:border-[var(--planner-border)]">
     {showHistory && <CollectionAuditPanel data={data} onClose={() => setShowHistory(false)} />}
     {settings && <div role="region" aria-label="Collection settings" tabIndex={0} data-testid="collection-settings"
       className="min-h-0 space-y-2 text-xs">
-      <div className="border-b border-slate-200 pb-2 dark:border-slate-700"><h2 className="text-sm font-semibold">Settings</h2><p className={hintClass}>Configure this view and the collection’s fields. Changes save automatically.</p></div>
+      <div className="border-b border-[var(--planner-border)] pb-2 dark:border-[var(--planner-border)]"><h2 className="text-sm font-semibold">Settings</h2><p className={hintClass}>Configure this view and the collection’s fields. Changes save automatically.</p></div>
       <div className="flex flex-wrap items-center gap-2"><label>View name <input className={inputClass} value={view.name} disabled={readOnly} onChange={(e) => renameView({ name: e.target.value })} /></label></div>
       <CollectionSettingsSection title="View options" description="Choose which records appear, how they are grouped or sorted, and what totals are shown.">
       <div className="flex flex-wrap items-center gap-2">
@@ -209,7 +209,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       <p className={hintClass}>{fieldTypeGuidance}</p>
       <section aria-label="Field settings" className="space-y-2">
       <div className="flex flex-col">
-        {visiblePlannerFields(data).map((f) => <span key={f.id} data-field-setting-id={f.id} className="flex flex-wrap items-center gap-2 border-b border-slate-200 py-2 last:border-0 dark:border-slate-700"><input aria-label={"Rename " + f.name} className="w-24 max-w-full bg-transparent" value={f.name} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { name: e.target.value }))} /><select aria-label={"Type " + f.name} className={inputClass} value={f.type} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { type: e.target.value as CollectionField["type"] }))}>{FIELD_TYPES.map((t) => <option key={t} value={t}>{fieldTypeLabels[t]}</option>)}</select>{(f.type === "lookup" || f.type === "rollup") && <><select aria-label={"Lookup relation " + f.name} className={inputClass} value={f.relationFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { relationFieldId: e.target.value || undefined }))}><option value="">Choose relation</option>{data.fields.filter((x) => x.type === "relation").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><select aria-label={"Lookup target " + f.name} className={inputClass} value={f.targetFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { targetFieldId: e.target.value || undefined }))}><option value="">Choose field</option>{(() => { const relation = data.fields.find(x => x.id === f.relationFieldId);
+        {visiblePlannerFields(data).map((f) => <span key={f.id} data-field-setting-id={f.id} className="flex flex-wrap items-center gap-2 border-b border-[var(--planner-border)] py-2 last:border-0 dark:border-[var(--planner-border)]"><input aria-label={"Rename " + f.name} className="w-24 max-w-full bg-transparent" value={f.name} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { name: e.target.value }))} /><select aria-label={"Type " + f.name} className={inputClass} value={f.type} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { type: e.target.value as CollectionField["type"] }))}>{FIELD_TYPES.map((t) => <option key={t} value={t}>{fieldTypeLabels[t]}</option>)}</select>{(f.type === "lookup" || f.type === "rollup") && <><select aria-label={"Lookup relation " + f.name} className={inputClass} value={f.relationFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { relationFieldId: e.target.value || undefined }))}><option value="">Choose relation</option>{data.fields.filter((x) => x.type === "relation").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><select aria-label={"Lookup target " + f.name} className={inputClass} value={f.targetFieldId ?? ""} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { targetFieldId: e.target.value || undefined }))}><option value="">Choose field</option>{(() => { const relation = data.fields.find(x => x.id === f.relationFieldId);
           const target = relation?.relationTargetBlockId ? sources[relation.relationTargetBlockId] : data;
           return (target?.fields ?? []).filter(x => x.id !== f.id && !["lookup", "rollup", "formula", "relation"].includes(x.type))
             .map(x => <option key={x.id} value={x.id}>{x.name}</option>); })()}</select></>}{f.type === "rollup" && <select aria-label={"Rollup operation " + f.name} className={inputClass}
@@ -241,12 +241,12 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
           aria-label={"Formula expression " + f.name} value={f.formulaExpression ?? ""}
           placeholder="{fieldId} * 1.1" maxLength={500} disabled={readOnly}
           onChange={event => onChange(updateField(data, f.id, { formulaExpression: event.target.value }))} />}
-          {f.formulaOperation !== "expression" && [0, 1].map((i) => <select key={i} aria-label={"Formula source " + (i + 1) + " " + f.name} className={inputClass} value={f.formulaFieldIds?.[i] ?? ""} disabled={readOnly} onChange={(e) => { const ids = [...(f.formulaFieldIds ?? ["", ""])]; ids[i] = e.target.value; onChange(updateField(data, f.id, { formulaFieldIds: ids })); }}><option value="">Choose field</option>{data.fields.filter((x) => x.id !== f.id && x.type !== "formula").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>)}</>}{f.type === "select" && <input aria-label={"Options " + f.name} className={inputClass + " w-56 max-w-full"} value={(f.options ?? []).join(", ")} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { options: e.target.value.split(",").map((v) => v.trim()).filter(Boolean) }))}/>}<button type="button" className="shrink-0 rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:hover:bg-rose-950" aria-label={"Remove field " + f.name} disabled={readOnly || f.id === data.fields[0].id} onClick={() => onChange(removeField(data, f.id))}>×</button></span>)}
+          {f.formulaOperation !== "expression" && [0, 1].map((i) => <select key={i} aria-label={"Formula source " + (i + 1) + " " + f.name} className={inputClass} value={f.formulaFieldIds?.[i] ?? ""} disabled={readOnly} onChange={(e) => { const ids = [...(f.formulaFieldIds ?? ["", ""])]; ids[i] = e.target.value; onChange(updateField(data, f.id, { formulaFieldIds: ids })); }}><option value="">Choose field</option>{data.fields.filter((x) => x.id !== f.id && x.type !== "formula").map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>)}</>}{f.type === "select" && <input aria-label={"Options " + f.name} className={inputClass + " w-56 max-w-full"} value={(f.options ?? []).join(", ")} disabled={readOnly} onChange={(e) => onChange(updateField(data, f.id, { options: e.target.value.split(",").map((v) => v.trim()).filter(Boolean) }))}/>}<button type="button" className="shrink-0 rounded p-1 text-[var(--planner-secondary)] hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:hover:bg-rose-950" aria-label={"Remove field " + f.name} disabled={readOnly || f.id === data.fields[0].id} onClick={() => onChange(removeField(data, f.id))}>×</button></span>)}
       </div></section>
       </CollectionSettingsSection>
     </div>}
     </aside>}
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-slate-50/80 p-4 dark:bg-slate-950">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-[var(--planner-hover)]/80 p-4 dark:bg-[var(--planner-surface)]">
       {view.kind === "table" && <CollectionTableView data={data} sources={sources} view={view} rows={rows} readOnly={readOnly} onChange={onChange} patch={patch} onOpenFieldSettings={openFieldSettings} />}
       {view.kind === "kanban" && <CollectionKanbanView data={data} view={view} rows={rows} group={group} groupOptions={groupOptions} readOnly={readOnly} onChange={onChange} patch={patch} />}
       {view.kind === "gallery" && <CollectionGalleryView data={data} sources={sources} view={view} rows={rows} titleField={titleField} readOnly={readOnly} patch={patch} onChange={onChange} />}
@@ -260,10 +260,10 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       {view.kind === "timeline" && <TimelineView rows={rows} data={data} start={date} end={end} readOnly={readOnly} patch={patch} onChange={onChange} />}
       {view.kind === "mindmap" && <MindMapView rows={rows} data={data} readOnly={readOnly} onChange={onChange} />}
       {view.kind === "form" && <CollectionFormView data={data} sources={sources} view={view} readOnly={readOnly} onChange={onChange} />}
-      {!rows.length && view.kind !== "form" && <div className="p-4 text-center text-xs text-slate-400">No matching records. Add one to get started.</div>}
+      {!rows.length && view.kind !== "form" && <div className="p-4 text-center text-xs text-[var(--planner-secondary)]">No matching records. Add one to get started.</div>}
     </div>
     </div>
-    {view.kind !== "table" && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-950">
+    {view.kind !== "table" && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
       <button className={btnClass} disabled={readOnly} onClick={() => onChange(addRecord(data))}>+ Record</button>
     </div>}
     <input ref={fileInput} type="file" accept=".csv,.json" className="hidden" onChange={(e) => { void loadFile(e.target.files?.[0]); e.target.value = ""; }} />
@@ -272,19 +272,19 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
   if (standalone) return content;
   const previewRecords = visibleRecords(data, view, "", sources).slice(0, 3);
   return <section data-testid="collection-block" aria-label={`${data.title || "Untitled collection"} preview`}
-    className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-3 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+    className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] p-3 text-[var(--planner-text)] shadow-sm dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)] dark:text-[var(--planner-secondary)]"
     onPointerDown={(event) => event.stopPropagation()} onDoubleClick={(event) => event.stopPropagation()}>
     <header className="flex min-w-0 items-start justify-between gap-3">
       <div className="min-w-0">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Collection</div>
         <h2 className="mt-1 truncate text-sm font-semibold" title={data.title}>{data.title || "Untitled collection"}</h2>
-        <p className="mt-0.5 text-xs text-slate-500">{data.records.length} records · {view.name}</p>
+        <p className="mt-0.5 text-xs text-[var(--planner-secondary)]">{data.records.length} records · {view.name}</p>
       </div>
       <button ref={openCollectionButton} type="button" className={btnClass + " shrink-0"} onClick={openFull}>Open collection</button>
     </header>
-    <ul className="mt-3 min-h-0 flex-1 space-y-1 overflow-hidden text-xs text-slate-600 dark:text-slate-300" aria-label="Recent records">
-      {previewRecords.map((record) => <li key={record.id} className="truncate rounded bg-slate-50 px-2 py-1.5 dark:bg-slate-900">{recordTitle(data, record) || "Untitled record"}</li>)}
-      {!previewRecords.length && <li className="rounded border border-dashed px-2 py-2 text-slate-400">No records yet</li>}
+    <ul className="mt-3 min-h-0 flex-1 space-y-1 overflow-hidden text-xs text-[var(--planner-secondary)] dark:text-[var(--planner-secondary)]" aria-label="Recent records">
+      {previewRecords.map((record) => <li key={record.id} className="truncate rounded bg-[var(--planner-hover)] px-2 py-1.5 dark:bg-[var(--planner-surface)]">{recordTitle(data, record) || "Untitled record"}</li>)}
+      {!previewRecords.length && <li className="rounded border border-dashed px-2 py-2 text-[var(--planner-secondary)]">No records yet</li>}
     </ul>
   </section>;
 }

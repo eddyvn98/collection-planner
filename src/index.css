@@ -13,7 +13,23 @@
   font-family:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
   font-size:14px;
 }
-html,body,#root {height:100%;margin:0;}
+html,body,#root {
+  min-height:100vh; min-height:100dvh; margin:0;
+  background:var(--planner-canvas); color:var(--planner-text);
+}
+#root {min-height:100vh;min-height:100dvh;}
+html.dark,html.dark body,html.dark #root {
+ background:var(--planner-canvas); color:var(--planner-text); color-scheme:dark;
+}
+:is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+  background-color:var(--planner-surface)!important;
+  border-color:var(--planner-border)!important;
+  color:var(--planner-text)!important;
+}
+:is(input,select,textarea)::placeholder {color:var(--planner-secondary);opacity:.85;}
+input[type="date"]::-webkit-calendar-picker-indicator {cursor:pointer;}
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {filter:invert(1);}
+
 html.dark {
   --planner-canvas:#1F1F1F;
   --planner-surface:#292929;
