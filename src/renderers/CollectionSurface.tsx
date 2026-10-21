@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { btnClass, fieldTypeGuidance, fieldTypeLabels, hintClass, inputClass, FieldEditor } from "./CollectionFieldEditor";
-import { CalendarView } from "./CollectionCalendarView";
+import { CollectionScheduleView } from "./CollectionScheduleView";
+import { CollectionChartsView } from "./CollectionChartsView";
 import { CollectionTaskFilterBar } from "./CollectionTaskFilterBar";
 import { EMPTY_TASK_FILTERS, filterPlannerTasks, type TaskFilterState } from "../collections/collectionPlannerFilters";
 import { TimelineView } from "./CollectionTimelineView";
@@ -258,7 +259,13 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       {view.kind === "table" && <CollectionTableView data={data} sources={sources} view={view} rows={rows} readOnly={readOnly} onChange={onChange} patch={patch} onOpenFieldSettings={openFieldSettings} />}
       {view.kind === "kanban" && <CollectionKanbanView data={data} view={view} rows={rows} group={group} groupOptions={groupOptions} readOnly={readOnly} onChange={onChange} patch={patch} />}
       {view.kind === "gallery" && <CollectionGalleryView data={data} sources={sources} view={view} rows={rows} titleField={titleField} readOnly={readOnly} patch={patch} onChange={onChange} />}
-      {view.kind === "calendar" && <CalendarView month={month} setMonth={setMonth} rows={rows} data={data} field={date} readOnly={readOnly} patch={patch} />}
+      {view.kind === "calendar" && <CollectionScheduleView data={data} view={view} rows={rows} month={month} setMonth={setMonth} readOnly={readOnly} onChange={onChange} />}
+      {view.kind === "charts" && <CollectionChartsView data={data} rows={rows} onDrilldown={filters => {
+        const grid = data.views.find(item => item.kind === "table");
+        setTaskFilters(filters); if (!grid) return;
+        if (readOnly) setLocalViewId(grid.id);
+        else { setLocalViewId(null); onChange({ ...data, activeViewId: grid.id }); }
+      }} />}
       {view.kind === "timeline" && <TimelineView rows={rows} data={data} start={date} end={end} readOnly={readOnly} patch={patch} onChange={onChange} />}
       {view.kind === "mindmap" && <MindMapView rows={rows} data={data} readOnly={readOnly} onChange={onChange} />}
       {view.kind === "form" && <CollectionFormView data={data} sources={sources} view={view} readOnly={readOnly} onChange={onChange} />}
