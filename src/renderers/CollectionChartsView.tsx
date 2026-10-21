@@ -17,7 +17,7 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
   onChoose: (dimension: ChartDimension, key: string) => void;
 }) {
   const active = points.filter(point => point.value > 0);
-  return <section aria-label={title + " chart"} className="min-w-0 rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-4 ">
+  return <section aria-label={title + " chart"} className="min-w-0 rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-4 text-[var(--planner-text)]">
     <h3 className="mb-2 font-semibold">{title}</h3>
     {active.length ? <div className="h-56 w-full min-w-0">
       <ResponsiveContainer width="100%" height="100%">
@@ -74,7 +74,7 @@ export function CollectionChartsView({ data, rows, onDrilldown }: {
         <p className="text-xs text-[var(--planner-secondary)]">{summary.total} {summary.total === 1 ? "task" : "tasks"}. Click any category to filter Grid.</p>
       </div>
       <label className="text-sm">Display <select aria-label="Chart type"
-        className="ml-2 rounded-lg border bg-white px-2 py-1.5 "
+        className="ml-2 rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 py-1.5 text-[var(--planner-text)]"
         value={style} onChange={event => setStyle(event.target.value as "donut" | "bar")}>
         <option value="donut">Donut</option><option value="bar">Bar</option>
       </select></label>
