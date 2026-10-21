@@ -130,7 +130,10 @@ export function normalizeCollection(input: CollectionBlockPayload | null | undef
     && dates.length >= 2 && view.dateFieldId === view.endDateFieldId
       ? { ...view, dateFieldId: dates[0].id, endDateFieldId: dates[1].id } : view);
   return { ...input, version: 1, title: input.title || "Untitled collection", views,
-    records: input.records.map(row => normalizeTaskRecord(row, input.fields)),
+    records: (() => {
+      const next = input.records.map(row => normalizeTaskRecord(row, input.fields));
+      return next.every((row, index) => row === input.records[index]) ? input.records : next;
+    })(),
     people: Array.isArray(input.people) ? input.people : [],
     labels: Array.isArray(input.labels) ? input.labels.slice(0, 25) : [],
     automations: sanitizeCollectionAutomations(input),
