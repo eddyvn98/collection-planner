@@ -28,7 +28,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
    : <button type="button" disabled={readOnly||!canEdit} onClick={()=>{setName(bucket);setRenaming(true);}}
      className="min-w-0 flex-1 truncate text-left text-sm font-semibold" aria-label={"Rename bucket "+bucket}>{group.title}</button>}
    {canEdit&&!readOnly&&!renaming&&<Pencil className="h-3 w-3 text-slate-400" aria-hidden="true"/>}
-  <span className="rounded-full bg-white px-2 py-0.5 text-xs dark:bg-slate-700">{group.rows.length}</span>
+  <span className="rounded-full bg-white px-2 py-0.5 text-xs dark:bg-slate-700">{group.rows.length} {group.rows.length === 1 ? "task" : "tasks"}</span>
    {!readOnly&&canEdit&&field&&<div className="flex">
     <button className="rounded p-1 hover:bg-white focus-visible:ring-2 focus-visible:ring-blue-500" title="Move bucket left" aria-label={"Move "+bucket+" left"} onClick={()=>onChange(moveBucket(data,field.id,bucket,-1))}>
       <ChevronLeft className="h-4 w-4"/></button>
