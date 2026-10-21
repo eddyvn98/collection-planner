@@ -51,6 +51,12 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   }, [data.fields.length]);
   const visibleFields = useMemo(() => gridFields(data, view), [data, view]);
   const selectedIds = selected.filter(id => rows.some(record => record.id === id));
+  useEffect(() => {
+    setSelected(ids => {
+      const next = ids.filter(id => rows.some(row => row.id === id));
+      return next.length === ids.length ? ids : next;
+    });
+  }, [rows]);
   const page = useMemo(() => collectionTablePage(rows, requestedPage, pageSize),
     [rows, requestedPage, pageSize]);
   // Stable controlled state: one sorting array per saved View configuration.
@@ -112,7 +118,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     onChange({ ...data, fields });
   };
   return <div className="min-w-0 space-y-2" data-testid="collection-paged-table">
-    <CollectionGridToolbar data={data} view={view} selectedIds={selectedIds} readOnly={readOnly}
+    <CollectionGridToolbar data={data} view={view} visibleCount={rows.length} selectedIds={selectedIds} readOnly={readOnly}
       onChange={onChange} onClear={() => setSelected([])} />
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
     <div ref={tableScroll} className="overflow-x-auto">
