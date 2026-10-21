@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { btnClass, fieldTypeGuidance, fieldTypeLabels, hintClass, inputClass, FieldEditor } from "./CollectionFieldEditor";
 import { CalendarView } from "./CollectionCalendarView";
+import { CollectionTaskFilterBar } from "./CollectionTaskFilterBar";
+import { EMPTY_TASK_FILTERS, filterPlannerTasks, type TaskFilterState } from "../collections/collectionPlannerFilters";
 import { TimelineView } from "./CollectionTimelineView";
 import { MindMapView } from "./CollectionMindMapView";
 import { CollectionTableView } from "./CollectionTableView";
@@ -33,6 +35,7 @@ interface Props { blockId: string; data: CollectionBlockPayload; sources?: Colle
 
 export function CollectionSurface({ blockId, data, sources = {}, revisionNotice, standalone = false, standaloneNavigation, onChange, readOnly }: Props) {
   const [search, setSearch] = useState("");
+  const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS});
   const [localViewId, setLocalViewId] = useState<string | null>(null);
   const [settings, setSettings] = useState(false);
   const [fieldSettingsTarget, setFieldSettingsTarget] = useState<string | null>(null);
@@ -106,7 +109,11 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     setFull(true);
   };
   const view = data.views.find((v) => v.id === (localViewId ?? data.activeViewId)) ?? data.views[0];
-  const rows = useMemo(() => visibleRecords(data, view, search, sources), [data, view, search, sources]);
+  const plannerView = view.kind === "table" || view.kind === "kanban";
+  const rows = useMemo(() => {
+    const base = visibleRecords(data, view, plannerView ? "" : search, sources);
+    return plannerView ? filterPlannerTasks(data, base, taskFilters) : base;
+  }, [data, view, search, sources, plannerView, taskFilters]);
   const titleField = primaryField(data);
   const group = selectField(data, view);
   const date = dateField(data, view);
@@ -180,8 +187,10 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
         onSelect={viewId => { if (readOnly) setLocalViewId(viewId); else { setLocalViewId(null); onChange({ ...data, activeViewId: viewId }); } }}
         onDelete={viewId => onChange(removeView(data, viewId))} />
       {!readOnly && <select aria-label="Add view" className={inputClass} value="" onChange={(e) => e.target.value && onChange(addView(data, e.target.value as CollectionView["kind"]))}><option value="">+ View</option>{VIEW_KINDS.map((v) => <option key={v} value={v}>{v}</option>)}</select>}
-      <input aria-label="Search records" className={inputClass + " ml-auto w-44"} placeholder="Search records" value={search} onChange={(e) => setSearch(e.target.value)} />
+      {!plannerView && <input aria-label="Search records" className={inputClass + " ml-auto w-44"} placeholder="Search records" value={search} onChange={(e) => setSearch(e.target.value)} />}
     </div>
+    {plannerView && <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
+      onChange={setTaskFilters} onDataChange={onChange} />}
     <div className={"flex min-h-0 flex-1 flex-col overflow-hidden " + (settings || showHistory ? "md:flex-row" : "")}>
     {(settings || showHistory) && <aside className="max-h-[min(55vh,28rem)] min-h-0 shrink-0 overflow-y-auto overscroll-contain px-3 py-2 md:h-full md:max-h-none md:w-[min(24vw,20rem)] md:border-r md:border-slate-200 dark:md:border-slate-700">
     {showHistory && <CollectionAuditPanel data={data} onClose={() => setShowHistory(false)} />}

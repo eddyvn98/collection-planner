@@ -1,4 +1,5 @@
 import { createId } from "../utils/id";
+import type { TaskFilterPreset } from "./collectionPlannerFilters";
 import { normalizeTaskRecord, progressFromStatus } from "./collectionTasks";
 import { matchesViewFilters, type CollectionFilter, type FilterLogic } from "./collectionFilters";
 import { buildCollectionRelationIndex, projectCollectionLookups, removeInboundRelations } from "./collectionRelations";
@@ -73,6 +74,7 @@ export interface CollectionView {
   sorts?: { fieldId: string; direction: "asc" | "desc" }[];
   /** Table-only column widths, keyed by stable field ID. */
   columnWidths?: Record<string, number>;
+  gridHiddenFieldIds?: string[];
   /** Explicit field IDs shown on cards or form; undefined uses defaults. */
   galleryFieldIds?: string[];
   formFieldIds?: string[];
@@ -90,8 +92,8 @@ export interface CollectionBlockPayload {
   scheduledAutomations?: CollectionScheduledRule[];
   people?: CollectionPerson[];
   labels?: CollectionLabel[];
+  savedTaskFilters?: TaskFilterPreset[];
 }
-
 export function isCollectionBlockPayload(value: unknown): value is CollectionBlockPayload {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Record<string, unknown>;
@@ -117,13 +119,12 @@ export function createCollection(): CollectionBlockPayload {
     { id: newId(), name: "Bucket", type: "select", options: ["To do", "In progress", "Done"] },
   ];
   const views = VIEW_KINDS.map((kind) => ({
-    id: newId(), kind, name: kind === "mindmap" ? "Mind Map" : kind.charAt(0).toUpperCase() + kind.slice(1),
+    id: newId(), kind, name: kind === "mindmap" ? "Mind Map" : kind === "table" ? "Grid" : kind.charAt(0).toUpperCase() + kind.slice(1),
     ...(kind === "kanban" ? { groupFieldId: fields[6].id } : {}),
     ...(kind === "calendar" || kind === "timeline" ? { dateFieldId: fields[2].id, endDateFieldId: fields[3].id } : {}),
   }));
   return { version: 1, title: "Untitled collection", fields, records: [], views, activeViewId: views.find(view => view.kind === "kanban")!.id };
 }
-
 export function normalizeCollection(input: CollectionBlockPayload | null | undefined): CollectionBlockPayload {
   if (!input || !Array.isArray(input.fields) || !Array.isArray(input.records) || !Array.isArray(input.views)) return createCollection();
   const legacyGroup = input.fields.find(field => field.type === "select" &&
@@ -255,6 +256,7 @@ export function removeField(data: CollectionBlockPayload, fieldId: string): Coll
       ...(v.sorts ? { sorts: v.sorts.filter((item) => item.fieldId !== fieldId) } : {}),
       ...(v.aggregations ? { aggregations: v.aggregations.filter(item => item.fieldId !== fieldId) } : {}),
       ...(v.columnWidths ? { columnWidths: Object.fromEntries(Object.entries(v.columnWidths).filter(([id]) => id !== fieldId)) } : {}),
+      ...(v.gridHiddenFieldIds ? { gridHiddenFieldIds: v.gridHiddenFieldIds.filter(id => id !== fieldId) } : {}),
       ...(v.galleryFieldIds ? { galleryFieldIds: v.galleryFieldIds.filter(id => id !== fieldId) } : {}),
       ...(v.formFieldIds ? { formFieldIds: v.formFieldIds.filter(id => id !== fieldId) } : {}),
       ...(v.formRequiredFieldIds ? { formRequiredFieldIds: v.formRequiredFieldIds.filter(id => id !== fieldId) } : {}),
