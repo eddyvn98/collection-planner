@@ -56,6 +56,7 @@ export interface CollectionRecord {
   comments?: TaskComment[];
   activity?: TaskActivity[];
   boardOrder?: number;
+  recurrence?: "none" | "daily" | "weekly" | "monthly";
 }
 export interface CollectionView {
   id: string;
