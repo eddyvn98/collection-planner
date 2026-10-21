@@ -13,6 +13,7 @@ try {
     { bucket:"To do", title:"Soạn báo cáo", method:"click" },
     { bucket:"In progress", title:"Review sprint", method:"enter" },
     { bucket:"Done", title:"Document handover", method:"click" },
+    { bucket:"To do", title:"Final report", method:"enter" },
   ];
   for (const testCase of cases) {
     const column=page.locator('[data-testid="collection-kanban-column"]')
@@ -46,10 +47,10 @@ try {
   }
   await page.reload({waitUntil:"networkidle"});
   const persisted=await page.evaluate(()=>JSON.parse(localStorage.getItem("collection-planner:v1")));
-  assert.equal(persisted.records.length,3);
+  assert.equal(persisted.records.length,4);
   assert(persisted.records.every(row=>row.progress==="not_started"));
   assert.deepEqual(errors,[]);
-  console.log("PASS",title,"3 records persisted without completion");
+  console.log("PASS",title,"4 records persisted without completion");
 } catch(error) {
   console.error("FAIL",title,error);
   process.exitCode=1;
