@@ -1,7 +1,7 @@
 name: Planner typecheck and tests
 on:
   push:
-    branches: [feat/planner-phase-1, feat/planner-phase-2, feat/planner-phase-3]
+    branches: [feat/planner-phase-1, feat/planner-phase-2, feat/planner-phase-3, feat/planner-phase-4]
   pull_request:
     branches: [main, feat/planner-phase-1, feat/planner-phase-2]
 jobs:
