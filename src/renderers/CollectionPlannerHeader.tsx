@@ -1,5 +1,5 @@
 import { useState, type ReactNode, type RefObject } from "react";
-import { Star, Plus, ChevronDown, Ellipsis, HelpCircle, Share2, UserRound, ArrowLeft,
+import { Star, Plus, ChevronDown, Ellipsis, HelpCircle, Share2, UserRound, ArrowLeft, ExternalLink,
   Settings2, History, Maximize2, Minimize2 } from "lucide-react";
 import { CollectionViewTabs } from "./CollectionViewTabs";
 import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
@@ -14,6 +14,7 @@ interface Props {
  onAddView:(kind:CollectionView["kind"])=>void; onGroup:(mode:NonNullable<CollectionView["boardGroupBy"]>)=>void;
  onSettings:()=>void; onHistory:()=>void; settings:boolean; showHistory:boolean; importExport:ReactNode;
  canUndo:boolean; canRedo:boolean; undo:()=>void; redo:()=>void; darkMode:boolean; setDarkMode:(x:boolean)=>void;
+ navigation?:{collectionsHref:string;canvasHref:string;syncMessage:string};
  full:boolean; onExpand:()=>void; onClose:()=>void; backRef:RefObject<HTMLButtonElement>;
 }
 const item="flex min-h-9 w-full items-center gap-2 rounded px-3 text-left text-sm hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]";
@@ -69,9 +70,19 @@ export function CollectionPlannerHeader(p:Props){
        <button role="menuitem" className={item} onClick={()=>{p.onHistory();setMore(false);}}><History size={16}/> {p.showHistory?"Hide history":"History"}</button>
        <button role="menuitem" className={item} onClick={()=>{p.full?p.onClose():p.onExpand();setMore(false);}}>
         {p.full?<Minimize2 size={16}/>:<Maximize2 size={16}/>} {p.full?"Exit full screen":"Full screen"}</button>
+       
+       {p.navigation&&<div className="border-t border-[var(--planner-border)] py-1">
+         <a href={p.navigation.collectionsHref} className={item}><ArrowLeft size={16}/> All collections</a>
+         <a href={p.navigation.canvasHref} className={item}><ExternalLink size={16}/> Open canvas</a>
+         <span role="status" className="block px-3 text-xs text-[var(--planner-secondary)]">{p.navigation.syncMessage}</span>
+       </div>}
        <div className="border-t border-[var(--planner-border)] py-2">{p.importExport}</div>
-       <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{p.onAddView("table");setMore(false);}}>
-         <Plus size={16}/> Add Grid view</button>
+       <details className="sm:hidden"><summary className={item}><Plus size={16}/> Add view</summary>
+         {(["table","kanban","calendar","charts","timeline","gallery","mindmap","form"] as const).map(kind=>
+           <button key={kind} className={item+" pl-8"} onClick={()=>{p.onAddView(kind);setMore(false);}}>
+             {({table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts",timeline:"Timeline",
+               gallery:"Gallery",mindmap:"Mind Map",form:"Form"})[kind]}</button>)}
+       </details>
        <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{setHelp(!help);setMore(false);}}>
          <HelpCircle size={16}/> Keyboard shortcuts</button>
        <CollectionPhase4Controls readOnly={p.readOnly} canUndo={p.canUndo} canRedo={p.canRedo}
