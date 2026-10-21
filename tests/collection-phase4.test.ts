@@ -5,6 +5,7 @@ import { copyTask, completeRecurringTask, moveTaskToBucket, setRecurrence } from
 import { setTaskProgress } from "../src/renderers/collectionBoardGroups";
 import { gridFields } from "../src/collections/collectionPlannerFilters";
 import { visiblePlannerFields } from "../src/collections/collectionPlannerFields";
+import { chartPointColor } from "../src/collections/collectionChartColors";
 import { gridTaskColumns, GRID_TASK_KEYS } from "../src/renderers/collectionGridTaskColumns";
 describe("Phase 4 — history and task actions", () => {
  const fixture = () => {
@@ -68,6 +69,13 @@ describe("Phase 4 — history and task actions", () => {
   const daily=setRecurrence(data,"a","daily");
   expect(completeRecurringTask(daily,daily.records[0]).records[1].values[due]).toBe("2026-02-01");
   expect(completeRecurringTask(data,data.records[0])).toBe(data);
+ });
+ it("uses identical colors for the full legend and nonzero donut slices",()=>{
+  const points=[{key:"not_started",value:0},{key:"in_progress",value:7},{key:"completed",value:2}];
+  const active=points.filter(p=>p.value>0);
+  expect(chartPointColor(points,active[0])).toBe(chartPointColor(points,points[1]));
+  expect(chartPointColor(points,active[0])).not.toBe(chartPointColor(points,points[0]));
+  expect(chartPointColor(points,active[1])).toBe(chartPointColor(points,points[2]));
  });
  it("keeps Status internal and supplies four default Grid task columns",()=>{
   const {data}=fixture();
