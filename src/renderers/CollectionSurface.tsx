@@ -24,6 +24,7 @@ import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
 import { useCollectionHistory } from "../collections/collectionHistory";
 import { CollectionKeyboard } from "./CollectionKeyboard";
+import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
 import { normalizeCollection } from "../collections/model";
 import { visiblePlannerFields, isLegacyStatusField } from "../collections/collectionPlannerFields";
 import type { CollectionBlockPayload, CollectionSources, CollectionField, CollectionRecord, CollectionView } from "../collections/model";
@@ -196,15 +197,8 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       {!readOnly && <select aria-label="Add view" className={inputClass} value="" onChange={(e) => e.target.value && onChange(addView(data, e.target.value as CollectionView["kind"]))}><option value="">+ View</option>{VIEW_KINDS.map((v) => <option key={v} value={v}>{v}</option>)}</select>}
       {!plannerView && <input aria-label="Search records" className={inputClass + " ml-auto w-44"} placeholder="Search records" value={search} onChange={(e) => setSearch(e.target.value)} />}
     </div>
-    <div className="flex flex-wrap items-center justify-end gap-2 border-b border-slate-200 px-3 py-1 dark:border-slate-700">
-      <button type="button" aria-label="Undo last change" disabled={readOnly||!canUndo} onClick={undo}
-        className={btnClass+" focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-40"}>↶ Undo</button>
-      <button type="button" aria-label="Redo last change" disabled={readOnly||!canRedo} onClick={redo}
-        className={btnClass+" focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-40"}>↷ Redo</button>
-      <button type="button" aria-label="Toggle dark mode" aria-pressed={darkMode} onClick={()=>setDarkMode(!darkMode)}
-        className={btnClass+" focus-visible:ring-2 focus-visible:ring-blue-500"}>{darkMode?"☀ Light":"☾ Dark"}</button>
-      <span className="hidden text-[11px] text-slate-500 sm:inline">N new · / search · Esc close · Ctrl+Z undo</span>
-    </div>
+    <CollectionPhase4Controls readOnly={readOnly} canUndo={canUndo} canRedo={canRedo} undo={undo} redo={redo}
+      darkMode={darkMode} setDarkMode={setDarkMode} />
     {revisionNotice?.error && <p role="alert" className="border-b px-3 py-2 text-sm text-red-700 dark:text-red-300">{revisionNotice.error}</p>}
     {revisionNotice?.refreshing && <p role="status" className="px-3 py-1 text-xs text-blue-600">Refreshing collection…</p>}
     {plannerView && <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
