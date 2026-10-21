@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { Filter, X, Save } from "lucide-react";
 import type { CollectionBlockPayload } from "../collections/model";
 import { EMPTY_TASK_FILTERS, countActiveTaskFilters, deleteTaskFilterPreset, saveTaskFilterPreset,
@@ -13,9 +14,7 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
   const [presetName,setPresetName]=useState("");
   const [selected,setSelected]=useState("");
   const [expanded,setExpanded]=useState(false);
-  const menu=useRef<HTMLDivElement>(null);
-  useEffect(()=>{if(!expanded)return;const close=(e:PointerEvent)=>{if(!menu.current?.contains(e.target as Node))setExpanded(false);};
-    document.addEventListener("pointerdown",close);return()=>document.removeEventListener("pointerdown",close);},[expanded]);
+  const trigger=useRef<HTMLButtonElement>(null);
   const count=countActiveTaskFilters(value);
   const set=<K extends keyof TaskFilterState>(key:K, val:TaskFilterState[K]) =>
     onChange({...value,[key]:val});
@@ -29,15 +28,16 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
     onDataChange(saveTaskFilterPreset(data,name,value));
     setPresetName("");
   };
-  return <div ref={menu} className="relative">
-    <button type="button" aria-label="Filters" aria-haspopup="dialog" aria-expanded={expanded}
+  return <div className="relative">
+    <button ref={trigger} type="button" aria-label="Filters" aria-haspopup="dialog" aria-expanded={expanded}
       onClick={()=>setExpanded(!expanded)}
       className="inline-flex h-10 w-10 items-center justify-center gap-1 rounded-md px-1 sm:w-auto sm:px-2 text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
       <Filter size={16} strokeWidth={1.75}/> <span className="hidden sm:inline">Filter</span>
       {count>0&&<span aria-label={count+" active filters"} className="rounded-full bg-[var(--planner-accent)] px-1.5 text-xs text-white">{count}</span>}
     </button>
-    {expanded&&<div role="dialog" aria-label="Task filters" data-testid="planner-filter-panel"
-      className="absolute right-0 top-full z-[80] mt-2 max-h-[75vh] w-[min(360px,calc(100vw-24px))] overflow-y-auto rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] p-3 text-[var(--planner-text)] shadow-xl">
+    <CollectionFloatingPanel open={expanded} anchorRef={trigger} onClose={()=>setExpanded(false)}
+      role="dialog" label="Task filters" className="w-[min(360px,calc(100vw-16px))] rounded-lg p-3">
+      <div data-testid="planner-filter-panel">
       <div className="mb-3 flex items-center justify-between">
         <strong className="text-sm">Filter tasks</strong>
         <button aria-label="Close filters" type="button" onClick={()=>setExpanded(false)}
@@ -103,6 +103,7 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
             !presets.some(p=>p.name.toLowerCase()===presetName.trim().toLowerCase())}><Save size={16} strokeWidth={1.75} className="inline-block"/> Save filter</button>
       </form>}
     </div></div>
-    </div>}
+      </div>
+    </CollectionFloatingPanel>
   </div>;
 }

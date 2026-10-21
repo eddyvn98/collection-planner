@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { btnClass } from "./CollectionFieldEditor";
 
 interface Props {
@@ -19,37 +19,19 @@ function TransferIcon({ direction }: { direction: "up" | "down" }) {
 
 export function CollectionImportExportMenu({ onExportCsv, onBackupJson, onImport, importDisabled }: Props) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOnOutside = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("pointerdown", closeOnOutside);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutside);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [open]);
-
   const run = (action: () => void) => {
     setOpen(false);
     action();
   };
 
-  return <div ref={rootRef} className="relative">
+  return <div className="w-full">
     <button type="button" className={btnClass} aria-haspopup="menu" aria-expanded={open}
       aria-label="Import or export collection" title="Import or export collection" onClick={() => setOpen(value => !value)}>
       <TransferIcon direction="down" /><TransferIcon direction="up" />
       <span>Import / export</span>
     </button>
     {open && <div role="menu" aria-label="Import and export options"
-      className="absolute left-0 top-full z-30 mt-2 min-w-52 rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5 shadow-xl dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
+      className="mt-1 min-w-52 rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5">
       <button type="button" role="menuitem" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[var(--planner-text)] hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-[var(--planner-secondary)] dark:hover:bg-[var(--planner-surface)]"
         onClick={() => run(onExportCsv)}><TransferIcon direction="up" />Export CSV</button>
       <button type="button" role="menuitem" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[var(--planner-text)] hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-[var(--planner-secondary)] dark:hover:bg-[var(--planner-surface)]"
