@@ -1,18 +1,53 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-html, body, #root { height: 100%; margin: 0; }
-
-/* Native popup menus render outside React's dark subtree in Chromium/Safari. */
-html.dark { color-scheme: dark; background: #020617; color: #f1f5f9; }
-html.dark select, html.dark input, html.dark textarea { color-scheme: dark; }
-html.dark select option, html.dark select optgroup {
-  background-color: #0f172a;
-  color: #f8fafc;
+:root {
+  --planner-canvas:#FAF9F8;
+  --planner-surface:#FFFFFF;
+  --planner-border:#E1DFDD;
+  --planner-text:#242424;
+  --planner-secondary:#616161;
+  --planner-accent:#5B5FC7;
+  --planner-hover:#F3F2F1;
+  --planner-focus:#5B5FC7;
+  font-family:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:14px;
 }
-.dark [role="menu"], .dark [role="listbox"] { color: #f1f5f9; }
-
-:root { --planner-canvas:#FAF9F8; --planner-surface:#FFF; --planner-border:#E1DFDD;
-  --planner-text:#242424; --planner-secondary:#616161; --planner-accent:#5B5FC7; --planner-hover:#F3F2F1; }
-html.dark { --planner-canvas:#191919; --planner-surface:#242424; --planner-border:#454545;
-  --planner-text:#F5F5F5; --planner-secondary:#C2C2C2; --planner-accent:#AAA6FF; --planner-hover:#343434; }
+html,body,#root {height:100%;margin:0;}
+html.dark {
+  --planner-canvas:#191919;
+  --planner-surface:#252525;
+  --planner-border:#454545;
+  --planner-text:#F5F5F5;
+  --planner-secondary:#C2C2C2;
+  --planner-accent:#B4B0FF;
+  --planner-hover:#343434;
+  --planner-focus:#B4B0FF;
+  color-scheme:dark;
+  background:var(--planner-canvas);
+  color:var(--planner-text);
+}
+html.dark select, html.dark input, html.dark textarea {color-scheme:dark;}
+html.dark select option, html.dark select optgroup {
+  background:var(--planner-surface);
+  color:var(--planner-text);
+}
+[data-testid="collection-block"] {
+  font-family:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
+  background:var(--planner-canvas);
+  color:var(--planner-text);
+}
+[data-testid="collection-block"] :is(button,input,select,textarea,a,summary):focus-visible {
+  outline:2px solid var(--planner-focus);
+  outline-offset:2px;
+}
+[data-testid="collection-block"] :is(button,select,summary) {cursor:pointer;}
+[data-testid="collection-block"] :is(button,select):disabled {cursor:not-allowed;}
+.dark [role="menu"],.dark [role="listbox"],.dark [role="dialog"] {
+  background:var(--planner-surface);
+  color:var(--planner-text);
+}
+@media (max-width:639px) {
+ [data-testid="collection-block"] :is(button,select,summary) {min-height:44px;}
+ [data-testid="collection-block"] [data-testid="collection-kanban-card"] button {min-width:36px;}
+}
