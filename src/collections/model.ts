@@ -1,5 +1,5 @@
 import { createId } from "../utils/id";
-import { normalizeTaskRecord } from "./collectionTasks";
+import { normalizeTaskRecord, progressFromStatus } from "./collectionTasks";
 import { matchesViewFilters, type CollectionFilter, type FilterLogic } from "./collectionFilters";
 import { buildCollectionRelationIndex, projectCollectionLookups, removeInboundRelations } from "./collectionRelations";
 import { applyCollectionAutomations, sanitizeCollectionAutomations, type CollectionAutomation } from "./collectionAutomations";
@@ -186,7 +186,9 @@ export function setRecordValue(data: CollectionBlockPayload, recordId: string, f
   if (!data.records.some(r => r.id === recordId)) return data;
   return { ...data, records: data.records.map((r) => {
     if (r.id !== recordId || r.values[fieldId] === value) return r;
-    return applyCollectionAutomations(data, r, { ...r, values: { ...r.values, [fieldId]: value } }, [fieldId]);
+    return applyCollectionAutomations(data, r, { ...r, values: { ...r.values, [fieldId]: value },
+      ...(field.type === "select" && /^(status|progress)$/i.test(field.name.trim())
+        ? { progress: progressFromStatus(value) } : {}) }, [fieldId]);
   }) };
 }
 export function addRecord(data: CollectionBlockPayload, values: Record<string, string> = {}): CollectionBlockPayload {
