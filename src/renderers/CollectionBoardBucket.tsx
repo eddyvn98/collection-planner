@@ -55,7 +55,12 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
   {!readOnly&&(adding?<form className="mb-2 space-y-1" onSubmit={e=>{e.preventDefault();save();}}>
     <input autoFocus aria-label={"New task in "+group.title} value={title} maxLength={300}
       placeholder="Task name" onChange={e=>setTitle(e.target.value)}
-      onKeyDown={e=>{if(e.key==="Escape")setAdding(false);}}
+      onKeyDown={e=>{
+       if(e.key==="Escape"){e.preventDefault();setAdding(false);}
+       if(e.key==="Enter"&&!e.nativeEvent.isComposing&&!e.repeat){
+        e.preventDefault();e.currentTarget.form?.requestSubmit();
+       }
+      }}
       className="w-full rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm"/>
     <div className="flex gap-2">
       <button type="submit" disabled={!title.trim()} className="min-h-8 rounded bg-[var(--planner-accent)] px-3 text-xs text-white disabled:opacity-50">Add task</button>
