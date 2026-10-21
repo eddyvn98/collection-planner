@@ -1,4 +1,5 @@
 import { createId } from "../utils/id";
+import { normalizeTaskRecord, progressFromStatus } from "./collectionTasks";
 import { matchesViewFilters, type CollectionFilter, type FilterLogic } from "./collectionFilters";
 import { buildCollectionRelationIndex, projectCollectionLookups, removeInboundRelations } from "./collectionRelations";
 import { applyCollectionAutomations, sanitizeCollectionAutomations, type CollectionAutomation } from "./collectionAutomations";
@@ -27,6 +28,13 @@ export interface CollectionField {
   formulaExpression?: string;
   formulaFieldIds?: string[];
 }
+export type TaskProgress = "not_started" | "in_progress" | "completed";
+export type TaskPriority = "urgent" | "important" | "medium" | "low";
+export interface CollectionPerson { id: string; name: string }
+export interface CollectionLabel { id: string; name: string; color: string }
+export interface TaskAttachment { id: string; name: string; url: string }
+export interface TaskComment { id: string; author: string; text: string; at: string }
+export interface TaskActivity { id: string; summary: string; at: string }
 export interface CollectionRecord {
   id: string;
   values: Record<string, string>;
@@ -37,12 +45,23 @@ export interface CollectionRecord {
   dependsOn?: string[];
   /** Checklist items shared by all views of this record. */
   checklist?: Array<{ id: string; text: string; done: boolean }>;
+  progress?: TaskProgress;
+  priority?: TaskPriority;
+  startDate?: string;
+  dueDate?: string;
+  assigneeIds?: string[];
+  labelIds?: string[];
+  attachments?: TaskAttachment[];
+  comments?: TaskComment[];
+  activity?: TaskActivity[];
+  boardOrder?: number;
 }
 export interface CollectionView {
   id: string;
   name: string;
   kind: CollectionViewKind;
   groupFieldId?: string;
+  boardGroupBy?: "bucket" | "progress" | "priority" | "assignee" | "label" | "due";
   dateFieldId?: string;
   endDateFieldId?: string;
   /** Legacy persisted single-condition representation. */
@@ -69,6 +88,8 @@ export interface CollectionBlockPayload {
   automations?: CollectionAutomation[];
   auditTrail?: CollectionAuditEntry[];
   scheduledAutomations?: CollectionScheduledRule[];
+  people?: CollectionPerson[];
+  labels?: CollectionLabel[];
 }
 
 export function isCollectionBlockPayload(value: unknown): value is CollectionBlockPayload {
@@ -93,25 +114,46 @@ export function createCollection(): CollectionBlockPayload {
     { id: newId(), name: "Due", type: "date" },
     { id: newId(), name: "Description", type: "text" },
     { id: newId(), name: "Image", type: "image" },
+    { id: newId(), name: "Bucket", type: "select", options: ["To do", "In progress", "Done"] },
   ];
   const views = VIEW_KINDS.map((kind) => ({
     id: newId(), kind, name: kind === "mindmap" ? "Mind Map" : kind.charAt(0).toUpperCase() + kind.slice(1),
-    ...(kind === "kanban" ? { groupFieldId: fields[1].id } : {}),
+    ...(kind === "kanban" ? { groupFieldId: fields[6].id } : {}),
     ...(kind === "calendar" || kind === "timeline" ? { dateFieldId: fields[2].id, endDateFieldId: fields[3].id } : {}),
   }));
-  return { version: 1, title: "Untitled collection", fields, records: [], views, activeViewId: views[0].id };
+  return { version: 1, title: "Untitled collection", fields, records: [], views, activeViewId: views.find(view => view.kind === "kanban")!.id };
 }
 
 export function normalizeCollection(input: CollectionBlockPayload | null | undefined): CollectionBlockPayload {
   if (!input || !Array.isArray(input.fields) || !Array.isArray(input.records) || !Array.isArray(input.views)) return createCollection();
+  const legacyGroup = input.fields.find(field => field.type === "select" &&
+    /^(status|progress)$/i.test(field.name.trim()) &&
+    input.views.some(view => view.kind === "kanban" && view.groupFieldId === field.id));
+  const existingBucket = input.fields.find(field => field.type === "select" && /^buckets?$/i.test(field.name.trim()));
+  const migrationBucket: CollectionField | undefined = !existingBucket && legacyGroup
+    ? { id: newId(), name: "Bucket", type: "select", options: [...(legacyGroup.options ?? [])] } : undefined;
+  const fields = migrationBucket ? [...input.fields, migrationBucket] : input.fields;
   const oldViews = input.views.length ? input.views : createCollection().views;
-  const dates = input.fields.filter(field => field.type === "date");
-  const views = oldViews.map(view => (view.kind === "timeline" || view.kind === "calendar")
-    && dates.length >= 2 && view.dateFieldId === view.endDateFieldId
-      ? { ...view, dateFieldId: dates[0].id, endDateFieldId: dates[1].id } : view);
-  return { ...input, version: 1, title: input.title || "Untitled collection", views,
+  const dates = fields.filter(field => field.type === "date");
+  const views = oldViews.map(view => {
+    const fixed = (view.kind === "timeline" || view.kind === "calendar")
+      && dates.length >= 2 && view.dateFieldId === view.endDateFieldId
+        ? { ...view, dateFieldId: dates[0].id, endDateFieldId: dates[1].id } : view;
+    return migrationBucket && fixed.kind === "kanban" && fixed.groupFieldId === legacyGroup?.id
+      ? { ...fixed, groupFieldId: migrationBucket.id } : fixed;
+  });
+  const normalized = input.records.map(row => {
+    const migrated = migrationBucket && legacyGroup && row.values[legacyGroup.id]
+      ? { ...row, values: { ...row.values, [migrationBucket.id]: row.values[legacyGroup.id] } } : row;
+    return normalizeTaskRecord(migrated, fields);
+  });
+  const records = normalized.every((row, index) => row === input.records[index]) ? input.records : normalized;
+  return { ...input, version: 1, title: input.title || "Untitled collection", fields, views, records,
+    people: Array.isArray(input.people) ? input.people : [],
+    labels: Array.isArray(input.labels) ? input.labels.slice(0, 25) : [],
     automations: sanitizeCollectionAutomations(input),
-    scheduledAutomations: sanitizeCollectionSchedules(input), activeViewId: views.some((v) => v.id === input.activeViewId) ? input.activeViewId : views[0].id };
+    scheduledAutomations: sanitizeCollectionSchedules(input),
+    activeViewId: views.some(view => view.id === input.activeViewId) ? input.activeViewId : views[0].id };
 }
 export function primaryField(data: CollectionBlockPayload): CollectionField | undefined {
   return data.fields.find((f) => f.type === "text") ?? data.fields[0];
@@ -123,7 +165,9 @@ export function recordTitle(data: CollectionBlockPayload, record: CollectionReco
   return record.values[primaryField(data)?.id ?? ""] || "Untitled";
 }
 export function selectField(data: CollectionBlockPayload, view: CollectionView): CollectionField | undefined {
-  return data.fields.find((f) => f.id === view.groupFieldId && f.type === "select") ?? data.fields.find((f) => f.type === "select");
+  return data.fields.find(f => f.id === view.groupFieldId && f.type === "select") ??
+    (view.kind === "kanban" ? data.fields.find(f => f.type === "select" && /^buckets?$/i.test(f.name)) : undefined) ??
+    data.fields.find(f => f.type === "select");
 }
 export function dateField(data: CollectionBlockPayload, view: CollectionView): CollectionField | undefined {
   return data.fields.find((f) => f.id === view.dateFieldId && f.type === "date") ?? data.fields.find((f) => f.type === "date");
@@ -163,7 +207,9 @@ export function setRecordValue(data: CollectionBlockPayload, recordId: string, f
   if (!data.records.some(r => r.id === recordId)) return data;
   return { ...data, records: data.records.map((r) => {
     if (r.id !== recordId || r.values[fieldId] === value) return r;
-    return applyCollectionAutomations(data, r, { ...r, values: { ...r.values, [fieldId]: value } }, [fieldId]);
+    return applyCollectionAutomations(data, r, { ...r, values: { ...r.values, [fieldId]: value },
+      ...(field.type === "select" && /^(status|progress)$/i.test(field.name.trim())
+        ? { progress: progressFromStatus(value) } : {}) }, [fieldId]);
   }) };
 }
 export function addRecord(data: CollectionBlockPayload, values: Record<string, string> = {}): CollectionBlockPayload {
@@ -219,7 +265,8 @@ export function updateField(data: CollectionBlockPayload, fieldId: string, patch
   return { ...data, fields: data.fields.map((f) => f.id === fieldId ? { ...f, ...patch, id: f.id } : f) };
 }
 export function addView(data: CollectionBlockPayload, kind: CollectionViewKind): CollectionBlockPayload {
-  const field = kind === "kanban" ? data.fields.find((f) => f.type === "select") : undefined;
+  const field = kind === "kanban" ? data.fields.find(f => f.type === "select" && /^buckets?$/i.test(f.name)) ??
+    data.fields.find(f => f.type === "select") : undefined;
   const dates = data.fields.filter((f) => f.type === "date");
   const view: CollectionView = { id: newId(), kind, name: kind === "mindmap" ? "Mind Map" : kind.charAt(0).toUpperCase() + kind.slice(1),
     ...(field ? { groupFieldId: field.id } : {}),
