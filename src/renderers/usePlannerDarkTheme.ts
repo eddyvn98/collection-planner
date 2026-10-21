@@ -5,6 +5,6 @@ export function usePlannerDarkTheme(dark: boolean) {
     const html = document.documentElement;
     const previous = html.classList.contains("dark");
     html.classList.toggle("dark", dark);
-    return () => html.classList.toggle("dark", previous);
+    return () => { html.classList.toggle("dark", previous); };
   }, [dark]);
 }
