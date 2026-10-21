@@ -1,59 +1,80 @@
 import { useState } from "react";
-import { useDroppable } from "@dnd-kit/core";
-import { Plus, ChevronLeft, ChevronRight, Trash2, Pencil } from "lucide-react";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
+import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { createGroupedTask, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
 import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions";
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
-interface Props { data: CollectionBlockPayload; group: BoardGroup; mode: BoardGroupBy; field?: CollectionField;
- readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onOpen: (id: string, trigger: HTMLButtonElement) => void; }
-export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,onOpen}: Props) {
- const drop = useDroppable({id:"bucket:"+group.key,disabled:readOnly});
- const [title,setTitle] = useState("");
- const [adding,setAdding] = useState(false);
- const [renaming,setRenaming] = useState(false);
- const [name,setName] = useState(group.title);
- const bucket=group.key.slice(7);
- const canEdit=mode==="bucket"&&!!field&&!!bucket;
+interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;field?:CollectionField;
+ readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;}
+export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,onOpen}:Props){
+ const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
+ const {active}=useDndContext();
+ const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
+ const [renaming,setRenaming]=useState(false),[name,setName]=useState(group.title),[menu,setMenu]=useState(false);
+ const bucket=group.key.slice(7),editable=mode==="bucket"&&!!field&&!!bucket;
+ const pending=group.rows.filter(row=>row.progress!=="completed");
+ const completed=group.rows.filter(row=>row.progress==="completed");
  const save=()=>{const next=createGroupedTask(data,title,group.key,mode,field);
-  if(next===data)return;onChange(next);setTitle("");setAdding(false);};
+   if(next!==data){onChange(next);setTitle("");setAdding(false);}};
+ const action=(operation:"rename"|"left"|"right"|"delete")=>{
+   setMenu(false);if(!field)return;
+   if(operation==="rename"){setName(bucket);setRenaming(true);}
+   if(operation==="left")onChange(moveBucket(data,field.id,bucket,-1));
+   if(operation==="right")onChange(moveBucket(data,field.id,bucket,1));
+   if(operation==="delete"&&window.confirm("Delete this bucket? Its tasks will move to the first bucket."))
+     onChange(deleteBucket(data,field.id,bucket));
+ };
+ const card=(record:typeof group.rows[number])=><CollectionTaskCard key={record.id} data={data}
+   record={record} groupKey={group.key} readOnly={readOnly} onChange={onChange}
+   onOpen={trigger=>onOpen(record.id,trigger)}/>;
  return <section ref={drop.setNodeRef} data-testid="collection-kanban-column" data-status={group.key}
-  className={"w-72 shrink-0 self-start rounded-xl bg-slate-100 p-2 dark:bg-slate-900 " +
-    (drop.isOver?"ring-2 ring-blue-500":"")}>
-  <header className="mb-2 flex items-center gap-1 px-1">
-   {renaming&&canEdit?<input autoFocus aria-label="Bucket name" className="min-w-0 flex-1 rounded border p-1 text-sm"
-    value={name} onChange={e=>setName(e.target.value)}
-    onKeyDown={e=>{if(e.key==="Escape"){setName(bucket);setRenaming(false);}if(e.key==="Enter")e.currentTarget.blur();}}
-    onBlur={()=>{if(name!==bucket&&field)onChange(renameBucket(data,field.id,bucket,name));setRenaming(false);}} />
-   : <button type="button" disabled={readOnly||!canEdit} onClick={()=>{setName(bucket);setRenaming(true);}}
-     className="min-w-0 flex-1 truncate text-left text-sm font-semibold" aria-label={"Rename bucket "+bucket}>{group.title}</button>}
-   {canEdit&&!readOnly&&!renaming&&<Pencil className="h-3 w-3 text-slate-400" aria-hidden="true"/>}
-  <span className="rounded-full bg-white px-2 py-0.5 text-xs dark:bg-slate-700">{group.rows.length} {group.rows.length === 1 ? "task" : "tasks"}</span>
-   {!readOnly&&canEdit&&field&&<div className="flex">
-    <button className="rounded p-1 hover:bg-white focus-visible:ring-2 focus-visible:ring-blue-500" title="Move bucket left" aria-label={"Move "+bucket+" left"} onClick={()=>onChange(moveBucket(data,field.id,bucket,-1))}>
-      <ChevronLeft className="h-4 w-4"/></button>
-    <button className="rounded p-1 hover:bg-white focus-visible:ring-2 focus-visible:ring-blue-500" title="Move bucket right" aria-label={"Move "+bucket+" right"} onClick={()=>onChange(moveBucket(data,field.id,bucket,1))}>
-      <ChevronRight className="h-4 w-4"/></button>
-    <button className="rounded p-1 text-red-600 hover:bg-red-100 focus-visible:ring-2 focus-visible:ring-red-500" title="Delete bucket" aria-label={"Delete "+bucket}
-      onClick={()=>{if(window.confirm("Move tasks to Unassigned and delete this bucket?"))onChange(deleteBucket(data,field.id,bucket));}}>
-      <Trash2 className="h-4 w-4"/></button>
+   className={"w-72 shrink-0 self-start rounded-md bg-[var(--planner-canvas)] p-2 "+
+    (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}>
+  <header className="mb-1 flex min-h-9 items-center gap-2">
+   {renaming&&editable?<input autoFocus aria-label="Bucket name" value={name}
+      className="min-w-0 flex-1 rounded border border-[var(--planner-accent)] bg-[var(--planner-surface)] px-2 py-1 text-sm"
+      onChange={e=>setName(e.target.value)}
+      onKeyDown={e=>{if(e.key==="Escape"){setName(bucket);setRenaming(false);}
+        if(e.key==="Enter")e.currentTarget.blur();}}
+      onBlur={()=>{if(name.trim()!==bucket&&field)onChange(renameBucket(data,field.id,bucket,name));setRenaming(false);}}/>
+    : <h3 className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-[var(--planner-text)]">{group.title}</h3>}
+   <span aria-label={group.rows.length+" tasks"} className="rounded-full bg-[var(--planner-surface)] px-2 py-0.5 text-xs text-[var(--planner-secondary)]">{group.rows.length}</span>
+   {!readOnly&&editable&&<div className="relative">
+     <button type="button" title={"Bucket actions "+bucket} aria-label={"Bucket actions "+bucket}
+       aria-expanded={menu} className="flex min-h-8 min-w-8 items-center justify-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
+       onClick={()=>setMenu(!menu)}><Ellipsis size={16} strokeWidth={1.75}/></button>
+     {menu&&<div role="menu" aria-label={"Actions for "+bucket} className="absolute right-0 top-full z-40 w-44 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
+       {([["rename",Pencil,"Rename"],["left",ChevronLeft,"Move left"],
+         ["right",ChevronRight,"Move right"],["delete",Trash2,"Delete"]] as const).map(([kind,Icon,label])=>
+         <button key={kind} role="menuitem" className={"flex min-h-9 w-full items-center gap-2 rounded px-2 text-left text-sm hover:bg-[var(--planner-hover)] "+
+             (kind==="delete"?"text-red-600":"")} onClick={()=>action(kind)}>
+           <Icon size={16} strokeWidth={1.75}/>{label}</button>)}
+     </div>}
    </div>}
   </header>
-  {!readOnly&&(adding?<form className="mb-3 space-y-1" onSubmit={e=>{e.preventDefault();save();}}>
-   <input autoFocus aria-label={"New task in "+group.title} className="w-full rounded-lg border p-2 text-sm text-slate-900"
-     placeholder="Task name" value={title} onChange={e=>setTitle(e.target.value)} maxLength={300}
-     onKeyDown={e=>{if(e.key==="Escape")setAdding(false);}}/>
-   <div className="flex gap-2">
-    <button type="submit" className="rounded bg-blue-600 px-3 py-1 text-xs text-white">Add task</button>
-    <button type="button" className="text-xs" onClick={()=>setAdding(false)}>Cancel</button>
-   </div>
-  </form>:<button type="button" onClick={()=>setAdding(true)}
-    data-planner-add-task className="mb-3 flex w-full items-center gap-1 rounded-lg border border-blue-100 bg-white p-2 text-left text-sm font-medium text-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
-     <Plus className="h-4 w-4"/> Add task</button>)}
-  <div aria-label={group.title+" tasks"} className="min-h-10">
-   {group.rows.map(record=><CollectionTaskCard key={record.id} groupKey={group.key} data={data} record={record}
-    readOnly={readOnly} onOpen={trigger=>onOpen(record.id,trigger)}/>)}
-   {!group.rows.length&&<p className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-xs text-slate-400">Drop a task here</p>}
+  {!readOnly&&(adding?<form className="mb-2 space-y-1" onSubmit={e=>{e.preventDefault();save();}}>
+    <input autoFocus aria-label={"New task in "+group.title} value={title} maxLength={300}
+      placeholder="Task name" onChange={e=>setTitle(e.target.value)}
+      onKeyDown={e=>{if(e.key==="Escape")setAdding(false);}}
+      className="w-full rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm"/>
+    <div className="flex gap-2">
+      <button type="submit" disabled={!title.trim()} className="min-h-8 rounded bg-[var(--planner-accent)] px-3 text-xs text-white disabled:opacity-50">Add task</button>
+      <button type="button" className="min-h-8 rounded px-2 text-xs hover:bg-[var(--planner-hover)]" onClick={()=>setAdding(false)}>Cancel</button>
+    </div></form>:
+    <button type="button" data-planner-add-task onClick={()=>setAdding(true)}
+      className="mb-2 inline-flex min-h-9 w-full items-center gap-2 rounded px-2 text-left text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] hover:text-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+      <Plus size={16} strokeWidth={1.75}/>Add task</button>)}
+  <div aria-label={group.title+" tasks"} className="min-h-4">
+    {pending.map(card)}
+    {!pending.length&&active&&<div aria-label="Drop task here" className="mb-2 h-12 rounded border-2 border-dashed border-[var(--planner-accent)]"/>}
+    {!group.rows.length&&!active&&<div className="rounded-md px-3 py-5 text-center text-xs text-[var(--planner-secondary)]">
+      <ListTodo size={20} className="mx-auto mb-2"/>{!readOnly?"Add your first task":"No tasks yet"}</div>}
   </div>
+  {!!completed.length&&<details className="mt-3 border-t border-[var(--planner-border)] pt-2" data-testid="planner-completed-section">
+    <summary className="flex min-h-9 cursor-pointer items-center gap-2 text-xs text-[var(--planner-secondary)] hover:text-[var(--planner-accent)]">
+     <ChevronDown size={16} strokeWidth={1.75}/>Completed ({completed.length})</summary>
+    <div className="mt-2">{completed.map(card)}</div>
+  </details>}
  </section>;
 }
