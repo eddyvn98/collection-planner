@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { createGroupedTask, splitBucketCompletion, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
 import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions";
+import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
 interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;field?:CollectionField;
  readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;}
 export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,onOpen}:Props){
+ const bucketMenuRef=useRef<HTMLButtonElement>(null);
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
  const {active}=useDndContext();
  const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
@@ -40,16 +42,17 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
     : <h3 className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-[var(--planner-text)]">{group.title}</h3>}
    <span aria-label={group.rows.length+" tasks"} className="rounded-full bg-[var(--planner-surface)] px-2 py-0.5 text-xs text-[var(--planner-secondary)]">{group.rows.length}</span>
    {!readOnly&&editable&&<div className="relative">
-     <button type="button" title={"Bucket actions "+bucket} aria-label={"Bucket actions "+bucket}
+     <button ref={bucketMenuRef} type="button" title={"Bucket actions "+bucket} aria-label={"Bucket actions "+bucket}
        aria-expanded={menu} className="flex min-h-8 min-w-8 items-center justify-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
        onClick={()=>setMenu(!menu)}><Ellipsis size={16} strokeWidth={1.75}/></button>
-     {menu&&<div role="menu" aria-label={"Actions for "+bucket} className="absolute right-0 top-full z-40 w-44 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
+     <CollectionFloatingPanel open={menu} anchorRef={bucketMenuRef} onClose={()=>setMenu(false)}
+       role="menu" label={"Actions for "+bucket} className="w-44 rounded p-1">
        {([["rename",Pencil,"Rename"],["left",ChevronLeft,"Move left"],
          ["right",ChevronRight,"Move right"],["delete",Trash2,"Delete"]] as const).map(([kind,Icon,label])=>
          <button key={kind} role="menuitem" className={"flex min-h-9 w-full items-center gap-2 rounded px-2 text-left text-sm hover:bg-[var(--planner-hover)] "+
              (kind==="delete"?"text-red-600":"")} onClick={()=>action(kind)}>
            <Icon size={16} strokeWidth={1.75}/>{label}</button>)}
-     </div>}
+     </CollectionFloatingPanel>
    </div>}
   </header>
   {!readOnly&&(adding?<form className="mb-2 space-y-1" onSubmit={e=>{e.preventDefault();save();}}>
