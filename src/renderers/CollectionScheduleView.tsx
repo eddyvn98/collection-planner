@@ -1,10 +1,13 @@
 "use client";
 import { useMemo, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { pointerWithin, rectIntersection } from "@dnd-kit/core";
+import { useCompactSchedule } from "./useCompactSchedule";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { CollectionScheduleDay } from "./CollectionScheduleDay";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
 import { createScheduledTask, moveSchedulePeriod, rescheduleTask, scheduleDays,
-  scheduledTaskDay, scheduleIso, type ScheduleMode } from "../collections/collectionSchedule";
+  scheduledTaskDay, type ScheduleMode } from "../collections/collectionSchedule";
 import { localToday } from "../collections/collectionTasks";
 import type { CollectionBlockPayload, CollectionRecord, CollectionView } from "../collections/model";
 import { btnClass, inputClass } from "./CollectionFieldEditor";
@@ -13,6 +16,7 @@ interface Props { data: CollectionBlockPayload; view: CollectionView; rows: Coll
   onChange: (next: CollectionBlockPayload) => void; }
 export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,onChange}:Props){
  const [mode,setMode]=useState<ScheduleMode>("month");
+ const compact=useCompactSchedule();
  const [anchor,setAnchor]=useState(month+"-01");
  const [openId,setOpenId]=useState<string|null>(null);
  const today=localToday();
@@ -62,14 +66,26 @@ export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,o
   {!count&&<p role="status" className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
    No tasks scheduled in this period. Click a day to add one.</p>}
   <div className="min-h-0 flex-1 overflow-auto pb-3">
-   <DndContext sensors={sensors} onDragEnd={drop}>
-    <div className="grid min-w-[700px] grid-cols-7 gap-1.5 text-xs" role="grid" aria-label="Task schedule">
-     {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(name=>
-      <strong key={name} className="pb-1 text-center text-slate-500">{name}</strong>)}
-     {days.map(day=><CollectionScheduleDay key={day} data={data} view={view} day={day}
-      today={today} outside={mode==="month"&&!day.startsWith(anchor.slice(0,7))}
-      rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId}/>)}
-    </div>
+   <DndContext sensors={sensors} collisionDetection={args => {
+    const pointer=pointerWithin(args); return pointer.length ? pointer : rectIntersection(args);
+   }} onDragEnd={drop}>
+    {compact ? <div data-testid="collection-calendar-agenda" role="list"
+       aria-label="Schedule agenda" className="flex min-w-0 flex-col gap-2">
+       {days.filter(day => mode === "week" || day.startsWith(anchor.slice(0,7))).map(day =>
+        <div role="listitem" key={day} className="min-w-0">
+         <h3 className="mb-1 px-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+           {format(parseISO(day),"EEE, d MMM yyyy")}
+         </h3>
+         <CollectionScheduleDay data={data} view={view} day={day} today={today} outside={false}
+           rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId}/>
+        </div>)}
+      </div> : <div className="grid min-w-[700px] grid-cols-7 gap-1.5 text-xs" role="grid" aria-label="Task schedule">
+       {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(name=>
+         <strong key={name} className="pb-1 text-center text-slate-500">{name}</strong>)}
+       {days.map(day=><CollectionScheduleDay key={day} data={data} view={view} day={day}
+         today={today} outside={mode==="month"&&!day.startsWith(anchor.slice(0,7))}
+         rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId}/>)}
+      </div>}
    </DndContext>
   </div>
   <p className="text-xs text-slate-500">Drag a task to another day to reschedule it, or click a date to add a task.</p>
