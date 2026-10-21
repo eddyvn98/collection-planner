@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { btnClass } from "./CollectionFieldEditor";
+import { Table2, Columns3, CalendarDays, BarChart3 } from "lucide-react";
 import type { CollectionView } from "../collections/model";
 
 interface Props {
@@ -58,13 +59,20 @@ export function CollectionViewTabs({ views, activeViewId, readOnly, onSelect, on
       </div>
     </div>, document.body) : null;
 
+  const icons = {table:Table2, kanban:Columns3, calendar:CalendarDays, charts:BarChart3};
+  const labels = {table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts"};
   return <>
-    <div className="flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
-      {views.map(view => <button key={view.id} aria-pressed={view.id === activeViewId}
-        className={btnClass + (view.id === activeViewId ? " bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : " text-slate-500 dark:text-slate-400")}
-        onContextMenu={event => { event.preventDefault(); setContextMenu({ viewId: view.id, x: event.clientX, y: event.clientY }); }}
-        onClick={event => { if (event.button === 0) onSelect(view.id); }}>{view.name}</button>)}
-    </div>
+    <nav aria-label="Plan views" className="flex h-11 min-w-0 items-stretch gap-1 overflow-x-auto">
+      {views.filter(v=>v.kind in icons).map(view=>{
+        const Icon=icons[view.kind as keyof typeof icons];
+        return <button type="button" key={view.id} aria-current={view.id===activeViewId?"page":undefined}
+          className={"inline-flex min-h-10 shrink-0 items-center gap-1.5 border-b-2 px-2 text-sm transition hover:bg-[var(--planner-hover)] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--planner-accent)] "+
+            (view.id===activeViewId?"border-[var(--planner-accent)] font-semibold text-[var(--planner-accent)]":"border-transparent text-[var(--planner-secondary)]")}
+          onContextMenu={event=>{event.preventDefault();setContextMenu({viewId:view.id,x:event.clientX,y:event.clientY});}}
+          onClick={()=>onSelect(view.id)}><Icon aria-hidden="true" size={16} strokeWidth={1.75}/>
+          {labels[view.kind as keyof typeof labels]}</button>;
+      })}
+    </nav>
     {menu}
     {dialog}
   </>;
