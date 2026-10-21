@@ -47,9 +47,9 @@ try{
      scrollbar:getComputedStyle(e).scrollbarWidth}));
    assert(styles.snap.includes("mandatory"),JSON.stringify(styles));
   }
-  await page.getByRole("button",{name:"Filters"}).click();
+  await page.locator('button[aria-label="Filters"]').click();
   await page.getByLabel("Filter priority").selectOption("urgent");
-  await page.getByRole("button",{name:"Filters"}).click();
+  await page.locator('button[aria-label="Filters"]').click();
   await page.getByTestId("planner-active-filter-chips").waitFor();
   assert.equal(await page.getByRole("button",{name:"Remove Priority: urgent"}).count(),1);
   await page.getByRole("button",{name:"Clear all filters"}).click();
