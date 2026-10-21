@@ -24,6 +24,8 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
   const prior=returnFocusTo??(document.activeElement instanceof HTMLElement?document.activeElement:null);
   titleInput.current?.focus();
   const keydown=(event:KeyboardEvent)=>{if(event.key==="Escape"){
+    // Child popovers consume Escape first. Keep the pane mounted until they close.
+    if(document.querySelector("[data-planner-floating]"))return;
     event.preventDefault();event.stopPropagation();closeRef.current();
   }};
   window.addEventListener("keydown",keydown,true);
