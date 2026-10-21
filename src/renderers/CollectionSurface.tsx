@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { btnClass, fieldTypeGuidance, fieldTypeLabels, hintClass, inputClass, FieldEditor } from "./CollectionFieldEditor";
 import { CollectionScheduleView } from "./CollectionScheduleView";
@@ -23,19 +22,23 @@ import { CollectionSettingsSection } from "./CollectionSettingsSection";
 import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
 import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
+import { useCollectionHistory } from "../collections/collectionHistory";
+import { CollectionKeyboard } from "./CollectionKeyboard";
 import { normalizeCollection } from "../collections/model";
 import { visiblePlannerFields, isLegacyStatusField } from "../collections/collectionPlannerFields";
 import type { CollectionBlockPayload, CollectionSources, CollectionField, CollectionRecord, CollectionView } from "../collections/model";
 import { addRecord, addView, dateField, deleteRecord, endDateField, FIELD_TYPES, newId, primaryField, recordTitle, removeField, removeView, selectField, setParent, setRecordValue, updateField, updateView, VIEW_KINDS, visibleRecords } from "../collections/model";
 import { downloadCollection, exportCollectionCsv, importCollectionCsv, importCollectionJson } from "../collections/io";
-
 interface Props { blockId: string; data: CollectionBlockPayload; sources?: CollectionSources;
   standalone?: boolean;
   standaloneNavigation?: { collectionsHref: string; canvasHref: string; syncMessage: string };
   revisionNotice?: { stale: boolean; refreshing: boolean; error: string; refresh: () => Promise<void> };
   onChange: (next: CollectionBlockPayload) => void; readOnly: boolean }
-
-export function CollectionSurface({ blockId, data, sources = {}, revisionNotice, standalone = false, standaloneNavigation, onChange, readOnly }: Props) {
+export function CollectionSurface({ blockId, data, sources = {}, revisionNotice, standalone = false, standaloneNavigation, onChange: persist, readOnly }: Props) {
+  const {onChange,undo,redo,canUndo,canRedo}=useCollectionHistory(data,persist,readOnly);
+  const root=useRef<HTMLDivElement>(null);
+  const [darkMode,setDarkMode]=useState(()=>typeof localStorage!=="undefined"&&localStorage.getItem("planner:dark")==="1");
+  useEffect(()=>{try{localStorage.setItem("planner:dark",darkMode?"1":"0");}catch{/* storage unavailable */}},[darkMode]);
   const [search, setSearch] = useState("");
   const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS});
   const [localViewId, setLocalViewId] = useState<string | null>(null);
@@ -157,11 +160,13 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       event.preventDefault(); first?.focus();
     }
   };
-  const content = <div data-testid="collection-block" role={full ? "dialog" : undefined} aria-modal={full ? true : undefined}
+  const content = <div ref={root} data-testid="collection-block" role={full ? "dialog" : undefined} aria-modal={full ? true : undefined}
     aria-label={full ? `${data.title || "Untitled collection"} Collection screen` : undefined}
     tabIndex={full ? -1 : undefined} onKeyDown={keepFocusInScreen}
-    className={"flex h-full w-full flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 " + (full ? "fixed inset-0 z-[9999] p-0" : "")}
+    className={"flex h-full w-full flex-col overflow-hidden text-slate-900 dark:text-slate-100 " + (darkMode ? "dark bg-slate-950 text-slate-100 " : "bg-slate-50 ") + (full ? "fixed inset-0 z-[9999] p-0" : "")}
     onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("[data-collection-drag-handle]")) e.stopPropagation(); }} onDoubleClick={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
+    <CollectionKeyboard root={root} undo={undo} redo={redo} disabled={readOnly}
+      onEscape={()=>{setTaskFilters({...EMPTY_TASK_FILTERS});setSearch("");setSettings(false);}} />
     {expanded && <CollectionToolbar title={data.title} recordCount={data.records.length} readOnly={readOnly}
       full={full} settings={settings} showHistory={showHistory} navigation={standaloneNavigation}
       backButtonRef={backButton} onTitleChange={title => onChange({ ...data, title })}
@@ -191,6 +196,17 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       {!readOnly && <select aria-label="Add view" className={inputClass} value="" onChange={(e) => e.target.value && onChange(addView(data, e.target.value as CollectionView["kind"]))}><option value="">+ View</option>{VIEW_KINDS.map((v) => <option key={v} value={v}>{v}</option>)}</select>}
       {!plannerView && <input aria-label="Search records" className={inputClass + " ml-auto w-44"} placeholder="Search records" value={search} onChange={(e) => setSearch(e.target.value)} />}
     </div>
+    <div className="flex flex-wrap items-center justify-end gap-2 border-b border-slate-200 px-3 py-1 dark:border-slate-700">
+      <button type="button" aria-label="Undo last change" disabled={readOnly||!canUndo} onClick={undo}
+        className={btnClass+" focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-40"}>↶ Undo</button>
+      <button type="button" aria-label="Redo last change" disabled={readOnly||!canRedo} onClick={redo}
+        className={btnClass+" focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-40"}>↷ Redo</button>
+      <button type="button" aria-label="Toggle dark mode" aria-pressed={darkMode} onClick={()=>setDarkMode(!darkMode)}
+        className={btnClass+" focus-visible:ring-2 focus-visible:ring-blue-500"}>{darkMode?"☀ Light":"☾ Dark"}</button>
+      <span className="hidden text-[11px] text-slate-500 sm:inline">N new · / search · Esc close · Ctrl+Z undo</span>
+    </div>
+    {revisionNotice?.error && <p role="alert" className="border-b px-3 py-2 text-sm text-red-700 dark:text-red-300">{revisionNotice.error}</p>}
+    {revisionNotice?.refreshing && <p role="status" className="px-3 py-1 text-xs text-blue-600">Refreshing collection…</p>}
     {plannerView && <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
       onChange={setTaskFilters} onDataChange={onChange} />}
     <div className={"flex min-h-0 flex-1 flex-col overflow-hidden " + (settings || showHistory ? "md:flex-row" : "")}>
