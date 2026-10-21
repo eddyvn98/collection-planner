@@ -52,7 +52,11 @@ describe("Collection date view mapping migration", () => {
       expect(view.endDateFieldId).toBe(due.id);
     }
     expect(migrated.views.map(view => view.id)).toEqual(old.map(view => view.id));
-    expect(migrated.records).toBe(previous.records);
+    // This legacy record lacks Planner metadata, so migration may replace the array.
+    expect(migrated.records).not.toBe(previous.records);
+    expect(migrated.records.map(row => row.id)).toEqual(previous.records.map(row => row.id));
+    expect(migrated.records[0].values).toBe(previous.records[0].values);
+    expect(normalizeCollection(migrated).records).toBe(migrated.records);
     expect(old.find(view => view.kind === "timeline")?.dateFieldId).toBe(due.id);
     expect(normalizeCollection(migrated).views).toEqual(migrated.views);
   });
