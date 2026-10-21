@@ -3,6 +3,7 @@ import { newId, type CollectionBlockPayload, type CollectionRecord, type TaskPri
 import { PROGRESS, PRIORITIES, updateTask, setTaskDate, taskDate, addTaskComment } from "../collections/collectionTasks";
 import { setCollectionDependencies } from "../collections/collectionDependencies";
 import { CollectionChecklist } from "./CollectionChecklist";
+import { setTaskProgress } from "./collectionBoardGroups";
 import { inputClass } from "./CollectionFieldEditor";
 export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
  data: CollectionBlockPayload; record: CollectionRecord; readOnly: boolean;
@@ -23,7 +24,7 @@ export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
  return <div className="space-y-5">
   <div className="grid grid-cols-2 gap-3">
    <label className="text-xs">Progress<select className={inputClass+" w-full"} disabled={readOnly} value={record.progress??"not_started"}
-    onChange={e=>patch({progress:e.target.value as TaskProgress})}>{PROGRESS.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
+    onChange={e=>onChange(setTaskProgress(data,record.id,e.target.value as TaskProgress))}>{PROGRESS.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
    <label className="text-xs">Priority<select className={inputClass+" w-full"} disabled={readOnly} value={record.priority??"medium"}
     onChange={e=>patch({priority:e.target.value as TaskPriority})}>{PRIORITIES.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
    {(["start","due"] as const).map(kind=><label key={kind} className="text-xs">{kind==="start"?"Start":"Due"} date
