@@ -3,10 +3,10 @@ import { useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors,
  type DragEndEvent } from "@dnd-kit/core";
 import { addBucket } from "./collectionBoardActions";
-import { BOARD_MODES, boardGroups, moveGroupedTask, parseCardDragId } from "./collectionBoardGroups";
+import { boardGroups, moveGroupedTask, parseCardDragId } from "./collectionBoardGroups";
 import { CollectionBoardBucket } from "./CollectionBoardBucket";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
-import { updateView, type CollectionBlockPayload, type CollectionField, type CollectionRecord,
+import { type CollectionBlockPayload, type CollectionField, type CollectionRecord,
  type CollectionView } from "../collections/model";
 interface Props {
  data: CollectionBlockPayload; view: CollectionView; rows: CollectionRecord[]; group?: CollectionField;
@@ -35,16 +35,6 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   if(next!==data)onChange(next);
  };
  return <div className="flex min-h-0 flex-1 flex-col">
-  <div className="mb-3 flex items-center justify-between gap-3">
-   <p className="text-xs text-slate-500">{rows.length} {rows.length===1?"task":"tasks"} · Swipe horizontally to see more groups</p>
-   <label className="flex items-center gap-2 text-xs">Group by
-    <select aria-label="Group tasks by" className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900"
-     value={mode} disabled={readOnly}
-     onChange={e=>onChange(updateView(data,view.id,{boardGroupBy:e.target.value as CollectionView["boardGroupBy"]}))}>
-      {BOARD_MODES.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
-    </select>
-   </label>
-  </div>
   <DndContext sensors={sensors} onDragEnd={onDragEnd}>
    <div className="flex min-h-0 flex-1 items-start gap-3 overflow-x-auto pb-3" data-testid="collection-kanban">
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group}
