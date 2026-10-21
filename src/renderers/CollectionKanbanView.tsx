@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors,
  type DragEndEvent } from "@dnd-kit/core";
 import { addBucket } from "./collectionBoardActions";
@@ -15,6 +15,7 @@ interface Props {
 }
 export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Props){
  const [openId,setOpenId]=useState<string|null>(null);
+ const opener=useRef<HTMLButtonElement|null>(null);
  const [newBucket,setNewBucket]=useState(""),[creating,setCreating]=useState(false);
  const mode=view.boardGroupBy??"bucket";
  const groups=boardGroups(data,rows,mode,group);
@@ -47,7 +48,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   <DndContext sensors={sensors} onDragEnd={onDragEnd}>
    <div className="flex min-h-0 flex-1 items-start gap-3 overflow-x-auto pb-3" data-testid="collection-kanban">
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group}
-     readOnly={readOnly} onChange={onChange} onOpen={setOpenId}/>)}
+     readOnly={readOnly} onChange={onChange} onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
     {mode==="bucket"&&!!group&&!readOnly&&(creating?
      <form className="w-64 shrink-0 space-y-2 rounded-xl bg-slate-100 p-3"
       onSubmit={e=>{e.preventDefault();const next=addBucket(data,group.id,newBucket);
@@ -60,7 +61,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
       onClick={()=>setCreating(true)}>+ Add new bucket</button>)}
    </div>
   </DndContext>
-  {openId&&<CollectionRecordDetails data={data} recordId={openId} group={group}
+  {openId&&<CollectionRecordDetails data={data} recordId={openId} returnFocusTo={opener.current} group={group}
    readOnly={readOnly} onChange={onChange} onClose={()=>setOpenId(null)}/>}
  </div>;
 }
