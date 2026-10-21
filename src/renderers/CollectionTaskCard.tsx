@@ -3,11 +3,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckSquare, GripVertical, Paperclip, StickyNote } from "lucide-react";
 import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 import { localToday, taskDate } from "../collections/collectionTasks";
-export function CollectionTaskCard({ data, record, readOnly, onOpen }: {
-  data: CollectionBlockPayload; record: CollectionRecord; readOnly: boolean; onOpen: () => void;
+import { cardDragId } from "./collectionBoardGroups";
+export function CollectionTaskCard({ data, record, groupKey, readOnly, onOpen }: {
+  data: CollectionBlockPayload; record: CollectionRecord; groupKey: string; readOnly: boolean; onOpen: () => void;
 }) {
-  const drag = useDraggable({ id: "task:" + record.id, disabled: readOnly });
-  const drop = useDroppable({ id: "task:" + record.id, disabled: readOnly });
+  const drag = useDraggable({ id: cardDragId(record.id, groupKey), disabled: readOnly });
+  const drop = useDroppable({ id: cardDragId(record.id, groupKey), disabled: readOnly });
   const due = taskDate(data, record, "due");
   const late = due && due < localToday() && record.progress !== "completed";
   const done = record.checklist?.filter(item => item.done).length ?? 0;
