@@ -10,10 +10,11 @@ export interface TaskFilterState {
   label: string;
   assignee: string;
   priority: string;
+  progress?: string;
 }
 export interface TaskFilterPreset { id: string; name: string; filters: TaskFilterState }
 export const EMPTY_TASK_FILTERS: TaskFilterState = {
-  keyword: "", due: "all", bucket: "", label: "", assignee: "", priority: "",
+  keyword: "", due: "all", bucket: "", label: "", assignee: "", priority: "", progress: "",
 };
 const addDays = (date: string, days: number) => {
   const value = new Date(date + "T12:00:00Z");
@@ -29,8 +30,19 @@ export function matchesPlannerTask(data: CollectionBlockPayload, record: Collect
   if (filters.bucket && (record.values[bucket?.id ?? ""] ?? "") !==
     (filters.bucket === "__unassigned__" ? "" : filters.bucket)) return false;
   if (filters.label && !(record.labelIds ?? []).includes(filters.label)) return false;
-  if (filters.assignee && !(record.assigneeIds ?? []).includes(filters.assignee)) return false;
+  if (filters.assignee) {
+    const known = new Set((data.people ?? []).map(person => person.id));
+    const ids = (record.assigneeIds ?? []).filter(id => known.has(id));
+    if (filters.assignee === "__unassigned__" ? !!ids.length : !ids.includes(filters.assignee)) return false;
+  }
   if (filters.priority && (record.priority ?? "medium") !== filters.priority) return false;
+  if (filters.progress) {
+    const status = data.fields.find(f => f.type === "select" && /^(status|progress)$/i.test(f.name.trim()));
+    const text = (record.values[status?.id ?? ""] ?? "").toLowerCase().trim();
+    const fallback = ["done", "completed", "complete", "finished"].includes(text) ? "completed"
+      : ["in progress", "doing", "working", "active"].includes(text) ? "in_progress" : "not_started";
+    if ((record.progress ?? fallback) !== filters.progress) return false;
+  }
   if (filters.due !== "all") {
     const due = taskDate(data, record, "due");
     if (filters.due === "no_due") return !due;
@@ -44,7 +56,7 @@ export function matchesPlannerTask(data: CollectionBlockPayload, record: Collect
 export function filterPlannerTasks(data: CollectionBlockPayload, rows: CollectionRecord[],
   filters: TaskFilterState, today = localToday()): CollectionRecord[] {
   const inactive = !filters.keyword.trim() && filters.due === "all" &&
-    !filters.bucket && !filters.label && !filters.assignee && !filters.priority;
+    !filters.bucket && !filters.label && !filters.assignee && !filters.priority && !filters.progress;
   return inactive ? rows : rows.filter(row => matchesPlannerTask(data, row, filters, today));
 }
 export function saveTaskFilterPreset(data: CollectionBlockPayload,
