@@ -105,7 +105,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     setFull(true);
   };
   const view = data.views.find((v) => v.id === (localViewId ?? data.activeViewId)) ?? data.views[0];
-  const plannerView = view.kind === "table" || view.kind === "kanban";
+  const plannerView = ["table", "kanban", "calendar", "charts"].includes(view.kind);
   const rows = useMemo(() => {
     const base = visibleRecords(data, view, plannerView ? "" : search, sources);
     return plannerView ? filterPlannerTasks(data, base, taskFilters) : base;
