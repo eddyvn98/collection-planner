@@ -1,7 +1,7 @@
 name: Phase 5 before-after screenshots
 on:
   push:
-    branches: [feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d]
+    branches: [feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e]
   workflow_dispatch:
 permissions:
   contents: write
@@ -24,6 +24,7 @@ jobs:
             feat/planner-ui-a-header) BASE=main ;;
             feat/planner-ui-b-board) BASE=feat/planner-ui-a-header ;;
             feat/planner-phase-5d) BASE=main ;;
+            feat/planner-phase-5e) BASE=main ;;
             *) BASE=feat/planner-ui-b-board ;;
           esac
           git fetch origin "$BASE"
@@ -40,7 +41,9 @@ jobs:
             if curl -fsS http://127.0.0.1:4174/ >/dev/null && curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
             sleep 1
           done
-          if [ "$GITHUB_REF_NAME" = "feat/planner-phase-5d" ]; then
+          if [ "$GITHUB_REF_NAME" = "feat/planner-phase-5e" ]; then
+            node tests/e2e/phase5e-screenshots.mjs
+          elif [ "$GITHUB_REF_NAME" = "feat/planner-phase-5d" ]; then
             node tests/e2e/phase5d-screenshots.mjs
           else
             node tests/e2e/phase5-screenshots.mjs
