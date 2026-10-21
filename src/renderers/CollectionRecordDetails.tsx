@@ -13,13 +13,15 @@ interface Props {
 /** Every view edits the same stable record. Parent onChange persists edits. */
 export function CollectionRecordDetails({data,sources,recordId,group,readOnly,onChange,onClose}:Props){
  const dialog=useRef<HTMLElement>(null),titleInput=useRef<HTMLInputElement>(null);
+ const closeRef=useRef(onClose);
+ closeRef.current=onClose;
  const record=data.records.find(r=>r.id===recordId);
  useEffect(()=>{
   const prior=document.activeElement instanceof HTMLElement?document.activeElement:null;
   titleInput.current?.focus();
   const keydown=(event:KeyboardEvent)=>{
    if(event.key==="Escape"){
-    event.preventDefault();event.stopPropagation();onClose();return;
+    event.preventDefault();event.stopPropagation();closeRef.current();return;
    }
    if(event.key!=="Tab"||!dialog.current)return;
    const focusable=[...dialog.current.querySelectorAll<HTMLElement>(
@@ -32,7 +34,7 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
   };
   window.addEventListener("keydown",keydown,true);
   return ()=>{window.removeEventListener("keydown",keydown,true);prior?.focus();};
- },[onClose]);
+ },[]);
  if(!record||typeof document==="undefined")return null;
  const title=primaryField(data);
  const bucket=group??selectField(data,data.views.find(v=>v.id===data.activeViewId)??data.views[0]);
