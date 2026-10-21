@@ -60,6 +60,12 @@ try {
   await page.getByRole("button", { name: "Undo last change" }).click();
   await page.locator('[data-date="2026-10-21"] [data-record-id="e2e-task"]').waitFor({ timeout: 8000 });
   console.log("PASS desktop drag (12 pointer moves), persistence and Undo");
+  await page.locator('[data-date="2026-10-21"] [data-record-id="e2e-task"] button').last().click();
+  await page.getByLabel("Move task to date").fill("2026-10-24");
+  await page.locator('[role="dialog"][aria-label^="Task "] button[aria-label="Close task details"]').click();
+  await page.locator('[data-date="2026-10-24"] [data-record-id="e2e-task"]').waitFor({ timeout: 8000 });
+  assert.equal(await page.getByRole("button", { name: "Undo last change" }).isEnabled(), true);
+  console.log("PASS Move to date fallback updates Schedule and Undo");
   const mobile = await browser.newContext({ viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true });
   const small = await mobile.newPage();
   await small.addInitScript(data => localStorage.setItem("collection-planner:v1", JSON.stringify(data)), fixture);
@@ -70,6 +76,25 @@ try {
   assert(overscroll <= 1, "375px view must not cause horizontal page overflow: "+overscroll);
   assert(await small.getByTestId("collection-calendar-agenda").getByText("Sun, 25 Oct 2026").count() === 1);
   console.log("PASS 375px agenda, all weekdays accessible and no horizontal overflow");
+  await small.getByRole("button", { name: "Board", exact: true }).click();
+  const toggle=small.getByRole("button", { name: "Toggle task filters" });
+  assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+  await toggle.click();
+  await small.getByLabel("Filter priority").selectOption("urgent");
+  await toggle.click();
+  assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+  assert.equal(await small.getByLabel("1 active filters").count(), 1);
+  await small.getByRole("button", { name: "Toggle dark mode" }).click();
+  assert.equal(await small.locator("html.dark").count(), 1);
+  const colors=await small.locator('select[aria-label="Add view"]').evaluate(node => ({
+    background: getComputedStyle(node).backgroundColor,
+    foreground: getComputedStyle(node).color,
+    colorScheme: getComputedStyle(node).colorScheme,
+  }));
+  console.log("dark native Add view select",colors);
+  assert.notEqual(colors.background, "rgb(255, 255, 255)");
+  assert(colors.colorScheme.includes("dark"));
+  console.log("PASS collapsed mobile filters badge and dark native View dropdown");
   await mobile.close(); await desktop.close();
   console.log("PASS", testName);
 } catch (error) {
