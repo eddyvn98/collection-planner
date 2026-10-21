@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CollectionBlockPayload } from "../collections/model";
-import { EMPTY_TASK_FILTERS, deleteTaskFilterPreset, saveTaskFilterPreset,
+import { EMPTY_TASK_FILTERS, countActiveTaskFilters, deleteTaskFilterPreset, saveTaskFilterPreset,
   type TaskDueFilter, type TaskFilterState } from "../collections/collectionPlannerFilters";
 import { inputClass, btnClass } from "./CollectionFieldEditor";
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
 export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChange}:Props) {
   const [presetName,setPresetName]=useState("");
   const [selected,setSelected]=useState("");
+  const [expanded,setExpanded]=useState(false);
+  const count=countActiveTaskFilters(value);
   const set=<K extends keyof TaskFilterState>(key:K, val:TaskFilterState[K]) =>
     onChange({...value,[key]:val});
   const bucket=data.fields.find(f=>f.type==="select" && /^bucket$/i.test(f.name.trim()));
@@ -24,7 +26,14 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
     setPresetName("");
   };
   return <section aria-label="Task filters" data-testid="planner-filter-bar"
-    className="shrink-0 space-y-2 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-950">
+    className="shrink-0 border-b border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
+    <button type="button" aria-label="Toggle task filters" aria-expanded={expanded}
+      aria-controls="planner-task-filter-fields" onClick={()=>setExpanded(open=>!open)}
+      className="flex min-h-9 items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 sm:hidden">
+      Filters {count>0&&<span aria-label={count+" active filters"} className="rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">{count}</span>}
+      <span aria-hidden="true">{expanded?"▴":"▾"}</span>
+    </button>
+    <div id="planner-task-filter-fields" className={(expanded?"mt-2 block":"hidden")+" space-y-2 sm:mt-0 sm:block"}>
     <div className="flex flex-wrap items-center gap-2">
       <label className="min-w-44 flex-1 text-xs">Search tasks
         <input aria-label="Filter task keyword" className={control+" mt-1 w-full"} placeholder="Search title, notes, fields…"
@@ -52,7 +61,7 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
           onChange={e=>set("assignee",e.target.value)}>
           <option value="">All people</option><option value="__unassigned__">Unassigned</option>{(data.people??[]).map(p=><option value={p.id} key={p.id}>{p.name}</option>)}
         </select></label>
-      <label className="text-xs">Status
+      <label className="text-xs">Progress
         <select aria-label="Filter progress" className={control+" mt-1 block"} value={value.progress??""}
           onChange={e=>set("progress",e.target.value)}>
           <option value="">All progress</option><option value="not_started">Not started</option>
@@ -84,6 +93,7 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
           type="submit" disabled={!presetName.trim()||presets.length>=20 &&
             !presets.some(p=>p.name.toLowerCase()===presetName.trim().toLowerCase())}>Save filter</button>
       </form>}
+    </div>
     </div>
   </section>;
 }

@@ -14,6 +14,11 @@ export interface TaskFilterState {
   progress?: string;
 }
 export interface TaskFilterPreset { id: string; name: string; filters: TaskFilterState }
+export function countActiveTaskFilters(filters: TaskFilterState): number {
+  return Number(!!filters.keyword.trim()) + Number(filters.due !== "all") +
+    [filters.bucket, filters.label, filters.assignee, filters.priority, filters.progress]
+      .filter(Boolean).length;
+}
 export const EMPTY_TASK_FILTERS: TaskFilterState = {
   keyword: "", due: "all", bucket: "", label: "", assignee: "", priority: "", progress: "",
 };
