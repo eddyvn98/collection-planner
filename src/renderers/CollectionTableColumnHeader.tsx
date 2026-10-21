@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { CollectionFieldIcon } from "./CollectionFieldIcon";
 import { Ellipsis, GripVertical } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
@@ -44,13 +45,14 @@ export function CollectionTableColumnHeader({ field, header, data, readOnly, onC
   }, [menuOpen]);
   return <th ref={node => { drag.setNodeRef(node); drop.setNodeRef(node); }}
     style={{ width: header.getSize(), transform: CSS.Translate.toString(drag.transform), opacity: drag.isDragging ? 0.45 : 1 }}
-    className={`group sticky top-0 z-30 whitespace-nowrap border-b bg-slate-100 p-2 dark:bg-slate-800 ${drop.isOver ? "ring-2 ring-inset ring-blue-400" : ""}`}>
+    className={`group sticky top-0 z-30 whitespace-nowrap border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-[var(--planner-text)] ${drop.isOver ? "ring-2 ring-inset ring-blue-400" : ""}`}>
     <div className="flex items-center gap-1">
       <button type="button" aria-label={`Reorder column ${field.name}`} title="Drag to reorder column"
         className="flex h-6 w-4 shrink-0 cursor-grab items-center justify-center rounded text-slate-400 opacity-0 hover:bg-white group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing dark:hover:bg-slate-700"
         disabled={readOnly} {...drag.attributes} {...drag.listeners}>
         <GripVertical aria-hidden="true" className="h-3.5 w-3.5" />
       </button>
+      <CollectionFieldIcon type={field.type}/>
       <button type="button" disabled={readOnly} onClick={header.column.getToggleSortingHandler()}
         className={`min-w-0 flex-1 truncate ${field.type === "number" ? "text-right" : "text-left"}`}
         aria-label={`Sort ${field.name}`} title="Shift-click to sort by multiple columns">
