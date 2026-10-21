@@ -40,16 +40,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
   const root=useRef<HTMLDivElement>(null);
   const [darkMode,setDarkMode]=useState(()=>typeof localStorage!=="undefined"&&localStorage.getItem("planner:dark")==="1");
   useEffect(()=>{try{localStorage.setItem("planner:dark",darkMode?"1":"0");}catch{/* storage unavailable */}},[darkMode]);
-  const [search, setSearch] = useState("");
-  const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS});
-  const [localViewId, setLocalViewId] = useState<string | null>(null);
-  const [settings, setSettings] = useState(false);
-  const [fieldSettingsTarget, setFieldSettingsTarget] = useState<string | null>(null);
-  const [fieldsPanelOpen, setFieldsPanelOpen] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [full, setFull] = useState(false);
-  const expanded = full || standalone;
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [search, setSearch] = useState(""); const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS}); const [localViewId, setLocalViewId] = useState<string | null>(null); const [settings, setSettings] = useState(false); const [fieldSettingsTarget, setFieldSettingsTarget] = useState<string | null>(null); const [fieldsPanelOpen, setFieldsPanelOpen] = useState(false); const [showHistory, setShowHistory] = useState(false); const [full, setFull] = useState(false); const expanded = full || standalone; const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   useEffect(() => {
     if (!settings || !fieldSettingsTarget) return;
     const target = Array.from(document.querySelectorAll<HTMLElement>("[data-field-setting-id]"))
@@ -61,10 +52,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     setShowHistory(false);
     setFieldSettingsTarget(fieldId);
   };
-  const fileInput = useRef<HTMLInputElement>(null);
-  const openCollectionButton = useRef<HTMLButtonElement>(null);
-  const backButton = useRef<HTMLButtonElement>(null);
-  const wasFull = useRef(false);
+  const fileInput = useRef<HTMLInputElement>(null); const openCollectionButton = useRef<HTMLButtonElement>(null); const backButton = useRef<HTMLButtonElement>(null); const wasFull = useRef(false);
   const closeFull = useCallback(() => {
     if (window.history.state?.collectionFullscreen === blockId) {
       window.history.back();
