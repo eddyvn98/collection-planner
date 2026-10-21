@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Copy, Ellipsis, Layers3, Trash2 } from "lucide-react";
 import { copyTask, moveTaskToBucket } from "../collections/collectionRecurrence";
 import { plannerBucket } from "../collections/collectionPlannerFields";
-import { deleteRecord, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
+import { type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 export function CollectionDrawerActions({data,record,readOnly,onChange,onDelete}:{
  data:CollectionBlockPayload;record:CollectionRecord;readOnly:boolean;
  onChange:(next:CollectionBlockPayload)=>void;onDelete:()=>void;
