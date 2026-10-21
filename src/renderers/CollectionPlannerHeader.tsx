@@ -2,6 +2,8 @@ import { useState, type ReactNode, type RefObject } from "react";
 import { Star, Plus, ChevronDown, Ellipsis, HelpCircle, Share2, UserRound, ArrowLeft, ExternalLink,
   Settings2, History, Maximize2, Minimize2 } from "lucide-react";
 import { CollectionViewTabs } from "./CollectionViewTabs";
+import { CollectionMobileViewPicker } from "./CollectionMobileViewPicker";
+import { ListFilter } from "lucide-react";
 import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
 import { BOARD_MODES } from "./collectionBoardGroups";
 import { resolveMyTasksId } from "../collections/collectionFilterChips";
@@ -28,17 +30,18 @@ export function CollectionPlannerHeader(p:Props){
  const mine=!!currentMe && p.filters.assignee===currentMe;
  const toggleMe=()=>{if(!currentMe){setChooseMe(true);return;}
    p.onFilters({...p.filters,assignee:mine?"":currentMe});};
- const menuButton="inline-flex min-h-9 min-w-9 shrink-0 items-center justify-center gap-1 rounded px-2 text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]";
- return <header data-testid="planner-header" className="relative z-50 flex h-12 shrink-0 items-center gap-2 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[var(--planner-text)] sm:px-3">
+ const menuButton="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1 rounded px-1 text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]";
+ return <header data-testid="planner-header" className="relative z-50 flex h-12 w-full min-w-0 shrink-0 items-center gap-0.5 sm:gap-2 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[var(--planner-text)] sm:px-3">
   {p.full&&<button ref={p.backRef} aria-label="Back" className={menuButton} onClick={p.onClose}><ArrowLeft size={16}/></button>}
   <input aria-label="Collection title" value={p.data.title} disabled={p.readOnly} onChange={e=>p.onTitle(e.target.value)}
-    className="w-20 min-w-0 shrink-0 bg-transparent text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:text-xl"/>
+    title={p.data.title} className="min-w-0 w-[min(24vw,88px)] shrink bg-transparent text-ellipsis text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:shrink-0 sm:text-xl"/>
   <button type="button" title={star?"Unstar plan":"Star plan"} aria-label="Star plan" aria-pressed={star} className={menuButton+" hidden sm:inline-flex"}
     onClick={()=>{const next=!star;setStar(next);try{localStorage.setItem("planner:star:"+p.data.title,next?"1":"0");}catch{}}}>
     <Star size={16} strokeWidth={1.75} fill={star?"#5B5FC7":"none"}/></button>
-  <div className="min-w-0 flex-1 overflow-x-auto overscroll-contain"><CollectionViewTabs views={p.data.views} activeViewId={p.view.id}
+  <div className="hidden min-w-0 flex-1 overflow-x-auto overscroll-contain sm:block"><CollectionViewTabs views={p.data.views} activeViewId={p.view.id}
     readOnly={p.readOnly} onSelect={p.onSelect} onDelete={p.onDelete}/></div>
-  <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+  <CollectionMobileViewPicker views={p.data.views} selected={p.view.id} onSelect={p.onSelect}/>
+  <div className="ml-auto flex shrink-0 items-center gap-0 sm:gap-1">
     {p.filterControl}
     <button aria-pressed={mine} className={menuButton+(mine?" bg-[var(--planner-hover)] text-[var(--planner-accent)]":"")}
       onClick={toggleMe} title="My tasks" aria-label="My tasks"><UserRound size={16}/><span className="hidden xl:inline text-sm">My tasks</span></button>
@@ -49,7 +52,7 @@ export function CollectionPlannerHeader(p:Props){
     </select>}
     {p.view.kind==="kanban"&&<div className="relative">
       <button aria-label="Group by" aria-expanded={groupMenu} className={menuButton} onClick={()=>setGroupMenu(!groupMenu)}>
-        <span className="text-xs">Group</span><ChevronDown size={14}/></button>
+        <ListFilter size={16} strokeWidth={1.75}/><span className="hidden lg:inline text-xs">Group</span><ChevronDown className="hidden sm:block" size={14}/></button>
       {groupMenu&&<div role="menu" className="absolute right-0 top-full z-50 w-44 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
         {BOARD_MODES.map(mode=><button role="menuitem" className={item} key={mode.value}
          onClick={()=>{p.onGroup(mode.value);setGroupMenu(false);}}>{mode.label}</button>)}
@@ -83,6 +86,7 @@ export function CollectionPlannerHeader(p:Props){
              {({table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts",timeline:"Timeline",
                gallery:"Gallery",mindmap:"Mind Map",form:"Form"})[kind]}</button>)}
        </details>
+       <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{void navigator.clipboard?.writeText(window.location.href);setMore(false);}}><Share2 size={16}/> Share plan</button>
        <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{setHelp(!help);setMore(false);}}>
          <HelpCircle size={16}/> Keyboard shortcuts</button>
        <CollectionPhase4Controls readOnly={p.readOnly} canUndo={p.canUndo} canRedo={p.canRedo}

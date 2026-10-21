@@ -15,14 +15,14 @@
 }
 html,body,#root {height:100%;margin:0;}
 html.dark {
-  --planner-canvas:#191919;
-  --planner-surface:#252525;
-  --planner-border:#454545;
-  --planner-text:#F5F5F5;
-  --planner-secondary:#C2C2C2;
-  --planner-accent:#B4B0FF;
-  --planner-hover:#343434;
-  --planner-focus:#B4B0FF;
+  --planner-canvas:#1F1F1F;
+  --planner-surface:#292929;
+  --planner-border:#3D3D3D;
+  --planner-text:#FFFFFF;
+  --planner-secondary:#D1D1D1;
+  --planner-accent:#7F85F5;
+  --planner-hover:#363636;
+  --planner-focus:#7F85F5;
   color-scheme:dark;
   background:var(--planner-canvas);
   color:var(--planner-text);

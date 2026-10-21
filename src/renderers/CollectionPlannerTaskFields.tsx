@@ -1,3 +1,4 @@
+import { displayPlannerDate } from "../collections/collectionDateDisplay";
 import { CalendarDays, Circle, CircleDot, CheckCircle2, Flag, Repeat, Tag, UserRound, Layers3 } from "lucide-react";
 import { newId, setRecordValue, type CollectionBlockPayload, type CollectionRecord,
  type TaskProgress, type TaskPriority } from "../collections/model";
@@ -45,9 +46,10 @@ export function CollectionPlannerTaskFields({data,record,readOnly,onChange}:Prop
     {PRIORITIES.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
   {(["start","due"] as const).map(kind=><label key={kind} className={row}>
    <CalendarDays size={16} strokeWidth={1.75}/><span>{kind==="start"?"Start date":"Due date"}</span>
-   <input className={input} type="date" disabled={readOnly} aria-label={"Task "+kind+" date"}
+   <div className="min-w-0"><input className={input} type="date" disabled={readOnly} aria-label={"Task "+kind+" date"}
     value={taskDate(data,record,kind)}
-    onChange={e=>onChange(setTaskDate(data,record.id,kind,e.target.value))}/></label>)}
+    onChange={e=>onChange(setTaskDate(data,record.id,kind,e.target.value))}/>
+    <span className="block text-xs text-[var(--planner-secondary)]" aria-label={kind+" formatted date"}>{displayPlannerDate(taskDate(data,record,kind))}</span></div></label>)}
   <label className={row}><Repeat size={16} strokeWidth={1.75}/><span>Repeat</span>
    <select aria-label="Task recurrence" className={input} disabled={readOnly} value={record.recurrence??"none"}
     onChange={e=>onChange(setRecurrence(data,record.id,e.target.value as TaskRecurrence))}>

@@ -45,7 +45,7 @@ export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,o
   if(next!==data)onChange(next);
  };
  const count=days.reduce((total,day)=>total+(byDay.get(day)?.length??0),0);
- return <div data-testid="collection-calendar" className="flex h-full min-w-0 flex-col gap-3">
+ return <div data-testid="collection-calendar" className="flex h-full min-w-0 flex-col gap-2 bg-[var(--planner-canvas)] text-[var(--planner-text)]">
   <header className="flex flex-wrap items-center gap-2 text-sm">
    <h2 className="mr-2 font-semibold">Schedule</h2>
    <button type="button" className={btnClass} aria-label="Previous calendar period"
@@ -63,7 +63,7 @@ export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,o
    <input type="date" aria-label="Schedule selected day" className={inputClass}
     value={anchor} onChange={e=>e.target.value&&navigate(e.target.value)}/>
   </header>
-  {!count&&<p role="status" className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+  {!count&&<p role="status" className="rounded-lg border border-dashed border-[var(--planner-border)] p-4 text-sm text-[var(--planner-secondary)]">
    No tasks scheduled in this period. Click a day to add one.</p>}
   <div className="min-h-0 flex-1 overflow-auto pb-3">
    <DndContext sensors={sensors} collisionDetection={args => {
@@ -73,7 +73,7 @@ export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,o
        aria-label="Schedule agenda" className="flex min-w-0 flex-col gap-2">
        {days.filter(day => mode === "week" || day.startsWith(anchor.slice(0,7))).map(day =>
         <div role="listitem" key={day} className="min-w-0">
-         <h3 className="mb-1 px-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+         <h3 className="mb-1 px-1 text-xs font-semibold text-[var(--planner-secondary)]">
            {format(parseISO(day),"EEE, d MMM yyyy")}
          </h3>
          <CollectionScheduleDay data={data} view={view} day={day} today={today} outside={false}
@@ -81,14 +81,14 @@ export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,o
         </div>)}
       </div> : <div className="grid min-w-[700px] grid-cols-7 gap-1.5 text-xs" role="grid" aria-label="Task schedule">
        {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(name=>
-         <strong key={name} className="pb-1 text-center text-slate-500">{name}</strong>)}
+         <strong key={name} className="pb-1 text-center text-[var(--planner-secondary)]">{name}</strong>)}
        {days.map(day=><CollectionScheduleDay key={day} data={data} view={view} day={day}
          today={today} outside={mode==="month"&&!day.startsWith(anchor.slice(0,7))}
          rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId}/>)}
       </div>}
    </DndContext>
   </div>
-  <p className="text-xs text-slate-500">Drag a task to another day to reschedule it, or click a date to add a task.</p>
+  <p className="text-xs text-[var(--planner-secondary)]">Drag a task to another day to reschedule it, or click a date to add a task.</p>
   {openId&&<CollectionRecordDetails data={data} recordId={openId} readOnly={readOnly}
     onChange={onChange} onClose={()=>setOpenId(null)}/>}
  </div>;

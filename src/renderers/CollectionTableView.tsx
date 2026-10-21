@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { Plus } from "lucide-react";
+import { Plus, Circle, CheckCircle2 } from "lucide-react";
+import { setTaskProgress } from "./collectionBoardGroups";
 import { flexRender, getCoreRowModel, useReactTable,
   type ColumnDef, type SortingState } from "@tanstack/react-table";
 import { addField, addRecord, deleteRecord, removeField, recordTitle, viewSorts, type CollectionBlockPayload,
@@ -132,16 +133,16 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     {!page.rows.length && <p role="status" className="hidden rounded-lg border border-dashed p-4 text-center text-sm text-slate-500 sm:block">
       No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
-    <div ref={tableScroll} className="hidden max-w-full overflow-x-auto sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
-    <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-xs" data-testid="collection-tanstack-table">
+    <div ref={tableScroll} className="hidden max-w-full overflow-x-auto rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
+    <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-sm text-[var(--planner-text)]" data-testid="collection-tanstack-table">
     <colgroup>
-      <col style={{ width: 40 }} />
+      <col style={{ width: 76 }} />
       {table.getAllLeafColumns().map(column => <col key={column.id}
         style={{ width: column.getSize() }} />)}
       <col style={{ width: 40 }} /><col style={{ width: 108 }} />
     </colgroup>
     <thead>{table.getHeaderGroups().map(group => <tr key={group.id}>
-      <th style={{width:40}} className="sticky top-0 z-30 border-b bg-slate-100 p-2 dark:bg-slate-800">
+      <th style={{width:76}} className="sticky top-0 z-30 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2">
         <input type="checkbox" aria-label="Select all visible tasks" disabled={readOnly || !page.rows.length}
           checked={!!page.rows.length && page.rows.every(item => selectedIds.includes(item.id))}
           onChange={e => setSelected(current => e.target.checked
@@ -153,10 +154,10 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         return field ? <CollectionTableColumnHeader key={header.id} field={field} header={header} data={data}
           readOnly={readOnly} onChange={onChange} onOpenFieldSettings={onOpenFieldSettings}
           onRequestDelete={setPendingDeleteFieldId} onAdjustColumnSize={adjustColumnSize} /> :
-          <th key={header.id} className="sticky top-0 z-20 border-b bg-slate-100 p-2 text-left font-semibold dark:bg-slate-800">
+          <th key={header.id} className="sticky top-0 z-20 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-left font-semibold">
             {flexRender(header.column.columnDef.header, header.getContext())}</th>;
       })}
-      <th style={{ width: 40 }} className="sticky top-0 border-b bg-slate-100 p-1 dark:bg-slate-800">
+      <th style={{ width: 40 }} className="sticky top-0 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-1">
         <button type="button" className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-700"
           aria-label="Add column" title="Add column" disabled={readOnly}
           onClick={() => {
@@ -165,13 +166,19 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
             onChange(addField(data, `Property ${index}`, "text"));
           }}><Plus aria-hidden="true" className="h-4 w-4" /></button>
       </th>
-      <th style={{ width: 108 }} className="border-b"> </th>
+      <th style={{ width: 108 }} className="border-b border-[var(--planner-border)]"> </th>
     </tr>)}</thead>
-    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id}>
-      <td className="border-b p-2"><input type="checkbox" disabled={readOnly} checked={selectedIds.includes(row.original.id)}
+    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id} className="h-10 hover:bg-[var(--planner-hover)]">
+      <td className="border-b border-[var(--planner-border)] p-1">
+        <div className="flex items-center gap-1">
+        <button type="button" aria-label={(row.original.progress==="completed"?"Reopen ":"Complete ")+recordTitle(data,row.original)}
+          disabled={readOnly} className="grid h-8 w-8 place-items-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)]"
+          onClick={()=>onChange(setTaskProgress(data,row.original.id,row.original.progress==="completed"?"not_started":"completed"))}>
+          {row.original.progress==="completed"?<CheckCircle2 size={18}/>:<Circle size={18}/>}
+        </button><input type="checkbox" disabled={readOnly} checked={selectedIds.includes(row.original.id)}
         aria-label={"Select task " + recordTitle(data, row.original)} onChange={e => setSelected(current => e.target.checked
-          ? [...new Set([...current, row.original.id])] : current.filter(id => id !== row.original.id))} /></td>
-      {row.getVisibleCells().map(cell => <td style={{ width: cell.column.getSize() }} className={`border-b p-1 ${numericFieldIds.has(cell.column.id) ? "text-right" : "text-left"}`} key={cell.id}>
+          ? [...new Set([...current, row.original.id])] : current.filter(id => id !== row.original.id))} /></div></td>
+      {row.getVisibleCells().map(cell => <td style={{ width: cell.column.getSize() }} className={`border-b border-[var(--planner-border)] p-1 ${numericFieldIds.has(cell.column.id) ? "text-right" : "text-left"}`} key={cell.id}>
         {flexRender(cell.column.columnDef.cell, cell.getContext())}
       </td>)}
       <td aria-hidden="true" />

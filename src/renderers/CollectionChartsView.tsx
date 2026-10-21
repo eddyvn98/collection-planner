@@ -17,7 +17,7 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
   onChoose: (dimension: ChartDimension, key: string) => void;
 }) {
   const active = points.filter(point => point.value > 0);
-  return <section aria-label={title + " chart"} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+  return <section aria-label={title + " chart"} className="min-w-0 rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-4 text-[var(--planner-text)]">
     <h3 className="mb-2 font-semibold">{title}</h3>
     {active.length ? <div className="h-56 w-full min-w-0">
       <ResponsiveContainer width="100%" height="100%">
@@ -39,17 +39,17 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
           </Bar>
         </BarChart>}
       </ResponsiveContainer>
-    </div> : <p className="flex h-56 items-center justify-center text-sm text-slate-500">No tasks to chart.</p>}
+    </div> : <p className="flex h-56 items-center justify-center text-sm text-[var(--planner-secondary)]">No tasks to chart.</p>}
     <div className="mt-2 flex flex-wrap gap-1.5" aria-label={title + " categories"}>
       {points.map((point) => <button type="button" key={point.key}
         onClick={() => onChoose(dimension, point.key)}
-        className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs hover:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700"
+        className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs hover:border-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] border-[var(--planner-border)]"
         title={"Show " + point.name + " tasks in Grid"}>
         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: chartPointColor(points, point) }}/>
         {point.name} <strong>{point.value}</strong>
       </button>)}
     </div>
-    {dimension === "assignee" && <p className="mt-2 text-[11px] text-slate-500">
+    {dimension === "assignee" && <p className="mt-2 text-[11px] text-[var(--planner-secondary)]">
       A task assigned to several people contributes to each person.</p>}
   </section>;
 }
@@ -66,15 +66,15 @@ export function CollectionChartsView({ data, rows, onDrilldown }: {
   const counters = [
     { key: "late" as const, label: "Late", value: summary.late, shade: "text-red-600 dark:text-red-400" },
     { key: "dueSoon" as const, label: "Due soon (7 days)", value: summary.dueSoon, shade: "text-amber-600 dark:text-amber-400" },
-    { key: "unassigned" as const, label: "Unassigned", value: summary.unassigned, shade: "text-slate-800 dark:text-slate-100" },
+    { key: "unassigned" as const, label: "Unassigned", value: summary.unassigned, shade: "text-[var(--planner-text)]" },
   ];
   return <div data-testid="collection-charts" className="min-w-0 space-y-4">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-lg font-semibold">Charts</h2>
-        <p className="text-xs text-slate-500">{summary.total} {summary.total === 1 ? "task" : "tasks"}. Click any category to filter Grid.</p>
+        <p className="text-xs text-[var(--planner-secondary)]">{summary.total} {summary.total === 1 ? "task" : "tasks"}. Click any category to filter Grid.</p>
       </div>
       <label className="text-sm">Display <select aria-label="Chart type"
-        className="ml-2 rounded-lg border bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900"
+        className="ml-2 rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 py-1.5 text-[var(--planner-text)]"
         value={style} onChange={event => setStyle(event.target.value as "donut" | "bar")}>
         <option value="donut">Donut</option><option value="bar">Bar</option>
       </select></label>
@@ -83,8 +83,8 @@ export function CollectionChartsView({ data, rows, onDrilldown }: {
       {counters.map(counter => <button type="button" key={counter.key}
         onClick={() => onDrilldown(summarySelection(counter.key))}
         aria-label={"Show " + counter.label + " tasks in Grid"}
-        className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900">
-        <span className="block text-xs text-slate-500">{counter.label}</span>
+        className="rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-4 text-left shadow-sm transition hover:border-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] ">
+        <span className="block text-xs text-[var(--planner-secondary)]">{counter.label}</span>
         <strong className={"mt-1 block text-3xl tabular-nums " + counter.shade}>{counter.value}</strong>
       </button>)}
     </div>

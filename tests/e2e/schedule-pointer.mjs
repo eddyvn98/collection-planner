@@ -83,7 +83,8 @@ try {
   assert(overscroll <= 1, "375px view must not cause horizontal page overflow: "+overscroll);
   assert(await small.getByTestId("collection-calendar-agenda").getByText("Sun, 25 Oct 2026").count() === 1);
   console.log("PASS 375px agenda, all weekdays accessible and no horizontal overflow");
-  await small.getByRole("button", { name: "Board", exact: true }).click();
+  await small.getByRole("button", { name: "Choose view" }).click();
+  await small.getByRole("menuitemradio", { name: "Board" }).click();
   const toggle=small.locator('button[aria-label="Filters"]');
   assert.equal(await toggle.getAttribute("aria-expanded"), "false");
   await toggle.click();

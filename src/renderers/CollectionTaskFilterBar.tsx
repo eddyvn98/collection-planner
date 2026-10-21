@@ -32,7 +32,7 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
   return <div ref={menu} className="relative">
     <button type="button" aria-label="Filters" aria-haspopup="dialog" aria-expanded={expanded}
       onClick={()=>setExpanded(!expanded)}
-      className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+      className="inline-flex h-10 w-10 items-center justify-center gap-1 rounded-md px-1 sm:w-auto sm:px-2 text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
       <Filter size={16} strokeWidth={1.75}/> <span className="hidden sm:inline">Filter</span>
       {count>0&&<span aria-label={count+" active filters"} className="rounded-full bg-[var(--planner-accent)] px-1.5 text-xs text-white">{count}</span>}
     </button>
