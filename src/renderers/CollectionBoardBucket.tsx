@@ -6,7 +6,7 @@ import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
 interface Props { data: CollectionBlockPayload; group: BoardGroup; mode: BoardGroupBy; field?: CollectionField;
- readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onOpen: (id: string) => void; }
+ readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onOpen: (id: string, trigger: HTMLButtonElement) => void; }
 export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,onOpen}: Props) {
  const drop = useDroppable({id:"bucket:"+group.key,disabled:readOnly});
  const [title,setTitle] = useState("");
@@ -52,7 +52,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
      <Plus className="h-4 w-4"/> Add task</button>)}
   <div aria-label={group.title+" tasks"} className="min-h-10">
    {group.rows.map(record=><CollectionTaskCard key={record.id} groupKey={group.key} data={data} record={record}
-    readOnly={readOnly} onOpen={()=>onOpen(record.id)}/>)}
+    readOnly={readOnly} onOpen={trigger=>onOpen(record.id,trigger)}/>)}
    {!group.rows.length&&<p className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-xs text-slate-400">Drop a task here</p>}
   </div>
  </section>;
