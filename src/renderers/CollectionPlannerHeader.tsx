@@ -31,13 +31,13 @@ export function CollectionPlannerHeader(p:Props){
  return <header data-testid="planner-header" className="relative z-50 flex h-12 shrink-0 items-center gap-2 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[var(--planner-text)] sm:px-3">
   {p.full&&<button ref={p.backRef} aria-label="Back" className={menuButton} onClick={p.onClose}><ArrowLeft size={16}/></button>}
   <input aria-label="Collection title" value={p.data.title} disabled={p.readOnly} onChange={e=>p.onTitle(e.target.value)}
-    className="w-28 min-w-0 shrink-0 bg-transparent text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:text-xl"/>
-  <button type="button" title={star?"Unstar plan":"Star plan"} aria-label="Star plan" aria-pressed={star} className={menuButton}
+    className="w-20 min-w-0 shrink-0 bg-transparent text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:text-xl"/>
+  <button type="button" title={star?"Unstar plan":"Star plan"} aria-label="Star plan" aria-pressed={star} className={menuButton+" hidden sm:inline-flex"}
     onClick={()=>{const next=!star;setStar(next);try{localStorage.setItem("planner:star:"+p.data.title,next?"1":"0");}catch{}}}>
     <Star size={16} strokeWidth={1.75} fill={star?"#5B5FC7":"none"}/></button>
-  <div className="min-w-0 flex-1 overflow-x-auto"><CollectionViewTabs views={p.data.views} activeViewId={p.view.id}
+  <div className="min-w-0 flex-1 overflow-x-auto overscroll-contain"><CollectionViewTabs views={p.data.views} activeViewId={p.view.id}
     readOnly={p.readOnly} onSelect={p.onSelect} onDelete={p.onDelete}/></div>
-  <div className="flex shrink-0 items-center gap-1">
+  <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
     {p.filterControl}
     <button aria-pressed={mine} className={menuButton+(mine?" bg-[var(--planner-hover)] text-[var(--planner-accent)]":"")}
       onClick={toggleMe} title="My tasks" aria-label="My tasks"><UserRound size={16}/><span className="hidden xl:inline text-sm">My tasks</span></button>
@@ -54,9 +54,9 @@ export function CollectionPlannerHeader(p:Props){
          onClick={()=>{p.onGroup(mode.value);setGroupMenu(false);}}>{mode.label}</button>)}
       </div>}
     </div>}
-    <button title="Copy plan link" aria-label="Share plan" className={menuButton}
+    <button title="Copy plan link" aria-label="Share plan" className={menuButton+" hidden sm:inline-flex"}
       onClick={()=>void navigator.clipboard?.writeText(window.location.href)}><Share2 size={16}/></button>
-    <div className="relative"><button aria-label="Shortcuts" title="Keyboard shortcuts" className={menuButton} onClick={()=>setHelp(!help)}>
+    <div className="relative"><button aria-label="Shortcuts" title="Keyboard shortcuts" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setHelp(!help)}>
       <HelpCircle size={16}/></button>
       {help&&<div role="dialog" aria-label="Shortcuts" className="absolute right-0 top-full z-50 w-56 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-3 text-xs shadow-lg">
         <strong>Keyboard shortcuts</strong><p className="mt-2">N — New task (Board/Grid)</p><p>/ — Search</p>
@@ -70,11 +70,15 @@ export function CollectionPlannerHeader(p:Props){
        <button role="menuitem" className={item} onClick={()=>{p.full?p.onClose():p.onExpand();setMore(false);}}>
         {p.full?<Minimize2 size={16}/>:<Maximize2 size={16}/>} {p.full?"Exit full screen":"Full screen"}</button>
        <div className="border-t border-[var(--planner-border)] py-2">{p.importExport}</div>
+       <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{p.onAddView("table");setMore(false);}}>
+         <Plus size={16}/> Add Grid view</button>
+       <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{setHelp(!help);setMore(false);}}>
+         <HelpCircle size={16}/> Keyboard shortcuts</button>
        <CollectionPhase4Controls readOnly={p.readOnly} canUndo={p.canUndo} canRedo={p.canRedo}
          undo={p.undo} redo={p.redo} darkMode={p.darkMode} setDarkMode={p.setDarkMode}/>
       </div>}
     </div>
-    <div className="relative"><button disabled={p.readOnly} aria-label="Add view" title="Add view" className={menuButton} onClick={()=>setViewsMenu(!viewsMenu)}>
+    <div className="relative"><button disabled={p.readOnly} aria-label="Add view" title="Add view" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setViewsMenu(!viewsMenu)}>
       <Plus size={16}/><span className="hidden xl:inline text-xs">View</span></button>
       {viewsMenu&&<div role="menu" className="absolute right-0 top-full z-50 w-40 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
         {(["table","kanban","calendar","charts","timeline","gallery","mindmap","form"] as const).map(kind=>
