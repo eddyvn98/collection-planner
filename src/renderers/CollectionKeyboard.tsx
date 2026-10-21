@@ -21,7 +21,13 @@ export function CollectionKeyboard({ root, undo, redo, onEscape, disabled }: {
       if (disabled) return;
       if (event.key === "/") {
         const search=node.querySelector<HTMLInputElement>('[aria-label="Filter task keyword"],[aria-label="Search records"]');
-        if (search) {event.preventDefault();search.focus();search.select();}
+        if (search) {
+          event.preventDefault();
+          const toggle=node.querySelector<HTMLButtonElement>('[aria-label="Toggle task filters"]');
+          if (toggle && !toggle.getAttribute("aria-expanded")?.includes("true") &&
+              window.matchMedia("(max-width: 639px)").matches) toggle.click();
+          requestAnimationFrame(()=>{search.focus();search.select();});
+        }
       }
       if (event.key.toLowerCase()==="n" && !event.shiftKey) {
         const field=node.querySelector<HTMLInputElement>('[aria-label="New task title"]');
