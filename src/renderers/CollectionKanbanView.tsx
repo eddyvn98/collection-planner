@@ -1,4 +1,5 @@
 "use client";
+import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors,
  type DragEndEvent } from "@dnd-kit/core";
@@ -48,7 +49,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
       <button type="submit" className="rounded bg-blue-600 px-3 py-1 text-sm text-white" disabled={!newBucket.trim()}>Add</button>
       <button type="button" className="ml-2 text-sm" onClick={()=>setCreating(false)}>Cancel</button>
      </form>:<button type="button" className="w-56 shrink-0 rounded-xl border border-dashed p-3 text-left text-sm text-blue-600"
-      onClick={()=>setCreating(true)}>+ Add new bucket</button>)}
+      onClick={()=>setCreating(true)}><Plus size={16} strokeWidth={1.75} className="inline-block"/> Add new bucket</button>)}
    </div>
   </DndContext>
   {openId&&<CollectionRecordDetails data={data} recordId={openId} returnFocusTo={opener.current} group={group}
