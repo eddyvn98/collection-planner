@@ -6,6 +6,7 @@ import { primaryField, recordTitle, selectField, setRecordValue, updateRecordBod
 import { FieldEditor, hintClass, inputClass } from "./CollectionFieldEditor";
 import { isLegacyStatusField, plannerBucket } from "../collections/collectionPlannerFields";
 import { taskDateFields } from "../collections/collectionTasks";
+import { CollectionTaskActions } from "./CollectionTaskActions";
 import { CollectionTaskProperties } from "./CollectionTaskProperties";
 interface Props {
  data: CollectionBlockPayload; sources?: CollectionSources; recordId: string; group?: CollectionField;
@@ -78,6 +79,7 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
       onChange={e=>onChange(updateRecordBody(data,record.id,e.target.value))}/>
     </label>
     <CollectionTaskProperties data={data} record={record} readOnly={readOnly} onChange={onChange}/>
+    <CollectionTaskActions data={data} record={record} readOnly={readOnly} onChange={onChange}/>
     {data.fields.some(field=>!hidden.has(field.id))&&<details className="rounded-lg border p-3 dark:border-slate-700">
      <summary className="cursor-pointer text-sm font-semibold">Other fields</summary>
      <div className="mt-3 space-y-3">
