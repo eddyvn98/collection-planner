@@ -31,7 +31,7 @@ try{
     await page.screenshot({path:base+"-filter.png",animations:"disabled"});
     await filter.click();
     await page.getByRole("button",{name:"More plan actions"}).click();
-    await page.getByRole("menu",{name:"More plan actions"}).waitFor();
+    await page.locator('[role="menu"]').first().waitFor();
     await page.screenshot({path:base+"-more.png",animations:"disabled"});
     console.log("PASS screenshots",version,theme,width);
     await context.close();
