@@ -119,7 +119,7 @@ export function createCollection(): CollectionBlockPayload {
     ...(kind === "kanban" ? { groupFieldId: fields[1].id } : {}),
     ...(kind === "calendar" || kind === "timeline" ? { dateFieldId: fields[2].id, endDateFieldId: fields[3].id } : {}),
   }));
-  return { version: 1, title: "Untitled collection", fields, records: [], views, activeViewId: views[0].id };
+  return { version: 1, title: "Untitled collection", fields, records: [], views, activeViewId: views.find(view => view.kind === "kanban")!.id };
 }
 
 export function normalizeCollection(input: CollectionBlockPayload | null | undefined): CollectionBlockPayload {
