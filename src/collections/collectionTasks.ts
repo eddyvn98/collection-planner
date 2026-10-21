@@ -24,9 +24,17 @@ export function normalizeTaskRecord(record: CollectionRecord, fields: Collection
   const progress = progressKeys.includes(record.progress as TaskProgress)
     ? record.progress : progressFromStatus(record.values?.[status?.id ?? ""] ?? "");
   const priority = priorityKeys.includes(record.priority as TaskPriority) ? record.priority : "medium";
+  const unique = (values: unknown, max = Infinity): string[] =>
+    Array.isArray(values) ? [...new Set(values.filter((id): id is string => typeof id === "string"))].slice(0, max) : [];
+  const assigneeIds = unique(record.assigneeIds), labelIds = unique(record.labelIds, 25);
+  const validIds = (values: unknown, next: string[]) =>
+    Array.isArray(values) && values.length === next.length && values.every((id, index) => id === next[index]);
+  const validLists = Array.isArray(record.attachments) && Array.isArray(record.comments) && Array.isArray(record.activity);
+  if (record.progress === progress && record.priority === priority &&
+      validIds(record.assigneeIds, assigneeIds) && validIds(record.labelIds, labelIds) && validLists) return record;
   return { ...record, progress, priority,
-    assigneeIds: Array.isArray(record.assigneeIds) ? [...new Set(record.assigneeIds.filter(id => typeof id === "string"))] : [],
-    labelIds: Array.isArray(record.labelIds) ? [...new Set(record.labelIds.filter(id => typeof id === "string"))].slice(0, 25) : [],
+    assigneeIds: validIds(record.assigneeIds, assigneeIds) ? record.assigneeIds : assigneeIds,
+    labelIds: validIds(record.labelIds, labelIds) ? record.labelIds : labelIds,
     attachments: Array.isArray(record.attachments) ? record.attachments : [],
     comments: Array.isArray(record.comments) ? record.comments : [],
     activity: Array.isArray(record.activity) ? record.activity : [] };
