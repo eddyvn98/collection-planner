@@ -1,5 +1,6 @@
+import { Copy, CalendarDays, Layers3 } from "lucide-react";
 import type { CollectionBlockPayload, CollectionRecord } from "../collections/model";
-import { copyTask, moveTaskToBucket, setRecurrence, type TaskRecurrence } from "../collections/collectionRecurrence";
+import { copyTask, moveTaskToBucket } from "../collections/collectionRecurrence";
 import { rescheduleTask } from "../collections/collectionSchedule";
 import { taskDate } from "../collections/collectionTasks";
 import { plannerBucket } from "../collections/collectionPlannerFields";
@@ -11,19 +12,11 @@ export function CollectionTaskActions({data,record,readOnly,onChange}: {
   return <section aria-label="Task actions" className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
     <h3 className="text-sm font-semibold">Task actions</h3>
     <div className="flex flex-wrap items-center gap-3">
-      <label className="text-xs">Repeat
-        <select aria-label="Task recurrence" value={record.recurrence??"none"} disabled={readOnly}
-          className="ml-2 rounded-md border border-slate-300 bg-white p-1.5 text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-          onChange={e=>onChange(setRecurrence(data,record.id,e.target.value as TaskRecurrence))}>
-          <option value="none">None</option><option value="daily">Daily</option>
-          <option value="weekly">Weekly</option><option value="monthly">Monthly</option>
-        </select>
-      </label>
       <button type="button" disabled={readOnly} onClick={()=>onChange(copyTask(data,record.id))}
         className="rounded-md border px-3 py-1.5 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">
-        Copy task
+        <Copy size={16} strokeWidth={1.75} className="inline-block"/> Copy task
       </button>
-      <label className="text-xs">Move to date
+      <label className="text-xs"><CalendarDays size={16} className="inline-block"/> Move to date
         <input type="date" aria-label="Move task to date" disabled={readOnly}
           value={taskDate(data,record,"due")}
           className="ml-2 rounded-md border border-slate-300 bg-white p-1.5 text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
@@ -32,7 +25,7 @@ export function CollectionTaskActions({data,record,readOnly,onChange}: {
             if(calendar&&e.target.value)onChange(rescheduleTask(data,calendar,record.id,e.target.value));
           }}/>
       </label>
-      {bucket&&<label className="text-xs">Move to bucket
+      {bucket&&<label className="text-xs"><Layers3 size={16} className="inline-block"/> Move to bucket
         <select aria-label="Move task to bucket" value={record.values[bucket.id]??""} disabled={readOnly}
           className="ml-2 rounded-md border border-slate-300 bg-white p-1.5 text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
           onChange={e=>onChange(moveTaskToBucket(data,record.id,e.target.value))}>

@@ -5,6 +5,10 @@ import { PRIORITIES, PROGRESS, createBoardTask, localToday, setTaskDate, taskDat
 import { bucketOptions, moveBoardCard, orderedCards } from "./collectionBoardActions";
 export type BoardGroupBy = NonNullable<CollectionView["boardGroupBy"]>;
 export interface BoardGroup { key: string; title: string; rows: CollectionRecord[] }
+export function splitBucketCompletion(rows:CollectionRecord[]){
+ return { active:rows.filter(row=>row.progress!=="completed"),
+  completed:rows.filter(row=>row.progress==="completed") };
+}
 export const BOARD_MODES: { value: BoardGroupBy; label: string }[] = [
  {value:"bucket",label:"Bucket"},{value:"progress",label:"Progress"},{value:"priority",label:"Priority"},
  {value:"assignee",label:"Assignee"},{value:"label",label:"Label"},{value:"due",label:"Due date"},
@@ -14,9 +18,13 @@ const addDays = (date: string, count: number) => {
  const d = new Date(date+"T12:00:00Z"); d.setUTCDate(d.getUTCDate()+count);
  return d.toISOString().slice(0,10);
 };
+/** A missing bucket renders in the first configured bucket instead of an extra column. */
+export function displayBucket(value:string, options:string[]):string {
+ return value || options[0] || "";
+}
 export function taskGroupKeys(data: CollectionBlockPayload, record: CollectionRecord,
  mode: BoardGroupBy, field?: CollectionField, today = localToday()): string[] {
- if(mode==="bucket") return ["bucket:"+groupName(record,field)];
+ if(mode==="bucket") return ["bucket:"+displayBucket(groupName(record,field),field?.options??[])];
  if(mode==="progress") return ["progress:"+(record.progress??"not_started")];
  if(mode==="priority") return ["priority:"+(record.priority??"medium")];
  if(mode==="assignee") return record.assigneeIds?.length ? record.assigneeIds.map(id=>"assignee:"+id) : ["assignee:"];
@@ -30,7 +38,7 @@ export function taskGroupKeys(data: CollectionBlockPayload, record: CollectionRe
 export function boardGroups(data: CollectionBlockPayload, rows: CollectionRecord[],
  mode: BoardGroupBy, field?: CollectionField, today=localToday()): BoardGroup[] {
  const definitions: {key:string;title:string}[] = mode==="bucket"
-   ? [{key:"bucket:",title:"Unassigned"},...bucketOptions(data,field?.id??"").map(name=>({key:"bucket:"+name,title:name}))]
+   ? (bucketOptions(data,field?.id??"").length ? bucketOptions(data,field?.id??"").map(name=>({key:"bucket:"+name,title:name})) : [{key:"bucket:",title:"To do"}])
  : mode==="progress" ? PROGRESS.map(p=>({key:"progress:"+p.value,title:p.label}))
  : mode==="priority" ? PRIORITIES.map(p=>({key:"priority:"+p.value,title:p.label}))
  : mode==="assignee" ? [{key:"assignee:",title:"Unassigned"},...(data.people??[]).map(p=>({key:"assignee:"+p.id,title:p.name}))]
@@ -94,7 +102,7 @@ export function moveGroupedTask(data: CollectionBlockPayload, id: string, from: 
 }
 export function createGroupedTask(data:CollectionBlockPayload,title:string,key:string,
  mode:BoardGroupBy,field?:CollectionField,today=localToday()):CollectionBlockPayload{
- let next=createBoardTask(data,title,mode==="bucket"?field?.id:undefined,mode==="bucket"?key.slice(7):"");
+ let next=createBoardTask(data,title,mode==="bucket"?field?.id:undefined,mode==="bucket"?displayBucket(key.slice(7),field?.options??[]):"");
  if(next===data)return data;
  const record=next.records[next.records.length-1];
  if(mode!=="bucket")next=moveGroupedTask(next,record.id,"",key,mode,field,undefined,false,today);

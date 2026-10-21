@@ -1,7 +1,7 @@
 name: Planner polish and browser pointer tests
 on:
   push:
-    branches: [feat/planner-polish]
+    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer]
   pull_request:
     branches: [main]
 permissions:
@@ -46,3 +46,4 @@ jobs:
             sleep 1
           done
           node tests/e2e/schedule-pointer.mjs
+          node tests/e2e/phase5-quick-add.mjs

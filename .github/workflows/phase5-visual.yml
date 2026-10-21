@@ -1,0 +1,60 @@
+name: Phase 5 before-after screenshots
+on:
+  push:
+    branches: [feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare baseline
+        run: |
+          case "$GITHUB_REF_NAME" in
+            feat/planner-ui-a-header) BASE=main ;;
+            feat/planner-ui-b-board) BASE=feat/planner-ui-a-header ;;
+            *) BASE=feat/planner-ui-b-board ;;
+          esac
+          git fetch origin "$BASE"
+          git worktree add /tmp/planner-before "origin/$BASE"
+          pnpm install --frozen-lockfile
+          (cd /tmp/planner-before && pnpm install --frozen-lockfile)
+          npm install --prefix .e2e --no-save --no-package-lock playwright@1.56.1
+          .e2e/node_modules/.bin/playwright install --with-deps chromium
+      - name: Start baseline and candidate
+        run: |
+          (cd /tmp/planner-before && pnpm dev --host 127.0.0.1 --port 4174 > /tmp/old.log 2>&1) &
+          pnpm dev --host 127.0.0.1 --port 4173 > /tmp/new.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4174/ >/dev/null && curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node tests/e2e/phase5-screenshots.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase5-before-after-${{ github.run_id }}
+          path: screenshots/*.png
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Publish visual comparison to branch
+        if: success()
+        run: |
+          STAGE=${GITHUB_REF_NAME##*-}
+          mkdir -p "docs/phase5/$STAGE"
+          if [ -d /tmp/planner-before/docs/phase5 ]; then cp -R /tmp/planner-before/docs/phase5/. docs/phase5/; fi
+          cp screenshots/*.png "docs/phase5/$STAGE/"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/phase5
+          git diff --cached --quiet || (git commit -m "docs(ui-$STAGE): 1280px and 375px before-after screenshots [skip ci]" && git push origin HEAD:"$GITHUB_REF_NAME")

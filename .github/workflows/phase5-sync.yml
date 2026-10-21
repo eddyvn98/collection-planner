@@ -1,0 +1,26 @@
+name: Sync Phase 5C stacked branch
+on:
+  push:
+    branches: [feat/planner-ui-c-drawer]
+    paths: [.github/workflows/phase5-sync.yml]
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/planner-ui-c-drawer
+          fetch-depth: 0
+      # Sync Phase B quick-add metadata/Enter regression fix into the task drawer stack.
+      - name: Integrate current Phase B branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin feat/planner-ui-b-board
+          git merge --no-edit -X ours origin/feat/planner-ui-b-board
+          git restore --source=origin/feat/planner-ui-b-board -- docs/phase5/header docs/phase5/board
+          git add docs/phase5/header docs/phase5/board
+          git diff --cached --quiet || git commit -m "docs: align inherited Phase A and B screenshots [skip ci]"
+          git push origin HEAD:feat/planner-ui-c-drawer

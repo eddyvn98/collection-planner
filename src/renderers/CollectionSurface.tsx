@@ -16,19 +16,20 @@ import { CollectionAutomationSettings } from "./CollectionAutomationSettings";
 import { CollectionScheduledAutomationSettings } from "./CollectionScheduledAutomationSettings";
 import { CollectionAuditPanel } from "./CollectionAuditPanel";
 import { CollectionIntegrityPanel } from "./CollectionIntegrityPanel";
-import { CollectionToolbar } from "./CollectionToolbar";
-import { CollectionViewTabs } from "./CollectionViewTabs";
+import { CollectionPlannerHeader } from "./CollectionPlannerHeader";
+import { CollectionFilterChips } from "./CollectionFilterChips";
+
 import { CollectionSettingsSection } from "./CollectionSettingsSection";
 import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
 import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
 import { useCollectionHistory } from "../collections/collectionHistory";
 import { CollectionKeyboard } from "./CollectionKeyboard";
-import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
+
 import { usePlannerDarkTheme } from "./usePlannerDarkTheme"; import { normalizeCollection } from "../collections/model";
 import { visiblePlannerFields, isLegacyStatusField } from "../collections/collectionPlannerFields";
 import type { CollectionBlockPayload, CollectionSources, CollectionField, CollectionRecord, CollectionView } from "../collections/model";
-import { addRecord, addView, dateField, deleteRecord, endDateField, FIELD_TYPES, newId, primaryField, recordTitle, removeField, removeView, selectField, setParent, setRecordValue, updateField, updateView, VIEW_KINDS, visibleRecords } from "../collections/model";
+import { addRecord, addView, dateField, deleteRecord, endDateField, FIELD_TYPES, newId, primaryField, recordTitle, removeField, removeView, selectField, setParent, setRecordValue, updateField, updateView, visibleRecords } from "../collections/model";
 import { downloadCollection, exportCollectionCsv, importCollectionCsv, importCollectionJson } from "../collections/io";
 interface Props { blockId: string; data: CollectionBlockPayload; sources?: CollectionSources;
   standalone?: boolean;
@@ -104,7 +105,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     setFull(true);
   };
   const view = data.views.find((v) => v.id === (localViewId ?? data.activeViewId)) ?? data.views[0];
-  const plannerView = view.kind === "table" || view.kind === "kanban";
+  const plannerView = ["table", "kanban", "calendar", "charts"].includes(view.kind);
   const rows = useMemo(() => {
     const base = visibleRecords(data, view, plannerView ? "" : search, sources);
     return plannerView ? filterPlannerTasks(data, base, taskFilters) : base;
@@ -153,25 +154,25 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
   const content = <div ref={root} data-testid="collection-block" role={full ? "dialog" : undefined} aria-modal={full ? true : undefined}
     aria-label={full ? `${data.title || "Untitled collection"} Collection screen` : undefined}
     tabIndex={full ? -1 : undefined} onKeyDown={keepFocusInScreen}
-    className={"flex h-full w-full flex-col overflow-hidden text-slate-900 dark:text-slate-100 " + (darkMode ? "dark bg-slate-950 text-slate-100 " : "bg-slate-50 ") + (full ? "fixed inset-0 z-[9999] p-0" : "")}
+    className={"flex h-full w-full flex-col overflow-hidden bg-[var(--planner-canvas)] text-[var(--planner-text)] " + (darkMode ? "dark " : "") + (full ? "fixed inset-0 z-[9999] p-0" : "")}
     onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("[data-collection-drag-handle]")) e.stopPropagation(); }} onDoubleClick={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
     <CollectionKeyboard root={root} undo={undo} redo={redo} disabled={readOnly}
       onEscape={()=>{setTaskFilters({...EMPTY_TASK_FILTERS});setSearch("");setSettings(false);}} />
-    {expanded && <CollectionToolbar title={data.title} recordCount={data.records.length} readOnly={readOnly}
-      full={full} settings={settings} showHistory={showHistory} navigation={standaloneNavigation}
-      backButtonRef={backButton} onTitleChange={title => onChange({ ...data, title })}
-      onToggleSettings={() => { setSettings(!settings); setShowHistory(false); }}
-      onToggleHistory={() => { setShowHistory(!showHistory); setSettings(false); }} onCloseFull={closeFull}
-      actions={importExportMenu} />}
-    {!expanded && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950">
-      {!full && <span data-collection-drag-handle title="Drag collection on canvas" className="cursor-move select-none rounded border px-2 py-1 text-xs text-slate-400">⋮⋮</span>}
-      {!full && <input aria-label="Collection title" className="min-w-24 flex-1 bg-transparent text-sm font-semibold outline-none" value={data.title} disabled={readOnly} onChange={(e) => onChange({ ...data, title: e.target.value })} />}
-      <span className="text-xs text-slate-400">{data.records.length} records</span>
-      {importExportMenu}
-      <button ref={openCollectionButton} className={btnClass} onClick={openFull}>Open collection</button>
-      <button aria-pressed={settings} className={btnClass} onClick={() => { setSettings(!settings); setShowHistory(false); }}>Settings</button>
-      <button aria-pressed={showHistory} className={btnClass} onClick={() => { setShowHistory(!showHistory); setSettings(false); }}>{showHistory ? "Hide history" : "History"}</button>
-    </div>}
+    <CollectionPlannerHeader data={data} view={view} readOnly={readOnly}
+      filters={taskFilters} onFilters={setTaskFilters}
+      filterControl={plannerView ? <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
+       onChange={setTaskFilters} onDataChange={onChange}/> : null}
+      onTitle={title=>onChange({...data,title})}
+      onSelect={viewId=>{if(readOnly)setLocalViewId(viewId);else{setLocalViewId(null);onChange({...data,activeViewId:viewId});}}}
+      onDelete={viewId=>onChange(removeView(data,viewId))}
+      onAddView={kind=>onChange(addView(data,kind))}
+      onGroup={mode=>onChange(updateView(data,view.id,{boardGroupBy:mode}))}
+      settings={settings} showHistory={showHistory}
+      onSettings={()=>{setSettings(!settings);setShowHistory(false);}}
+      onHistory={()=>{setShowHistory(!showHistory);setSettings(false);}}
+      importExport={importExportMenu} canUndo={canUndo} canRedo={canRedo}
+      undo={undo} redo={redo} darkMode={darkMode} setDarkMode={setDarkMode}
+      navigation={standaloneNavigation} full={full} onExpand={openFull} onClose={closeFull} backRef={backButton}/>
     {revisionNotice?.stale && <div role="status" className="flex shrink-0 flex-wrap items-center gap-2 border-b px-2 py-1 text-xs">
       <span>Another session has saved a newer board version.</span>
       <button className={btnClass} disabled={revisionNotice.refreshing} onClick={() => void revisionNotice.refresh()}>
@@ -179,19 +180,9 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       </button>
       {revisionNotice.error && <span role="alert">{revisionNotice.error}</span>}
     </div>}
-    <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-950">
-      <CollectionViewTabs views={data.views} activeViewId={view.id} readOnly={readOnly}
-        onSelect={viewId => { if (readOnly) setLocalViewId(viewId); else { setLocalViewId(null); onChange({ ...data, activeViewId: viewId }); } }}
-        onDelete={viewId => onChange(removeView(data, viewId))} />
-      {!readOnly && <select aria-label="Add view" className={inputClass+" [color-scheme:light] dark:[color-scheme:dark] dark:bg-slate-900 dark:text-slate-100"} value="" onChange={(e) => e.target.value && onChange(addView(data, e.target.value as CollectionView["kind"]))}><option value="">+ View</option>{VIEW_KINDS.map((v) => <option key={v} value={v}>{v}</option>)}</select>}
-      {!plannerView && <input aria-label="Search records" className={inputClass + " ml-auto w-44"} placeholder="Search records" value={search} onChange={(e) => setSearch(e.target.value)} />}
-    </div>
-    <CollectionPhase4Controls readOnly={readOnly} canUndo={canUndo} canRedo={canRedo} undo={undo} redo={redo}
-      darkMode={darkMode} setDarkMode={setDarkMode} />
     {revisionNotice?.error && <p role="alert" className="border-b px-3 py-2 text-sm text-red-700 dark:text-red-300">{revisionNotice.error}</p>}
     {revisionNotice?.refreshing && <p role="status" className="px-3 py-1 text-xs text-blue-600">Refreshing collection…</p>}
-    {plannerView && <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
-      onChange={setTaskFilters} onDataChange={onChange} />}
+    {plannerView&&<CollectionFilterChips data={data} value={taskFilters} onChange={setTaskFilters}/>}
     <div className={"flex min-h-0 flex-1 flex-col overflow-hidden " + (settings || showHistory ? "md:flex-row" : "")}>
     {(settings || showHistory) && <aside className="max-h-[min(55vh,28rem)] min-h-0 shrink-0 overflow-y-auto overscroll-contain px-3 py-2 md:h-full md:max-h-none md:w-[min(24vw,20rem)] md:border-r md:border-slate-200 dark:md:border-slate-700">
     {showHistory && <CollectionAuditPanel data={data} onClose={() => setShowHistory(false)} />}

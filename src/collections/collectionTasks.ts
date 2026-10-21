@@ -75,13 +75,21 @@ export function createBoardTask(data: CollectionBlockPayload, title: string,
   const name = title.trim();
   const titleField = primaryField(data);
   if (!name || !titleField) return data;
+  const status = data.fields.find(field => field.type === "select" &&
+    /^(status|progress)$/i.test(field.name.trim()));
+  // Legacy Status mirrors the chosen bucket, but never controls a new task's progress.
+  const legacyValue = status?.options?.includes(bucket) ? bucket
+    : status?.options?.includes("To do") ? "To do" : status?.options?.[0] ?? "";
   const values: Record<string, string> = { [titleField.id]: name };
   if (groupFieldId) values[groupFieldId] = bucket;
+  if (status && legacyValue) values[status.id] = legacyValue;
   const added = addRecord(data, values);
   const fresh = added.records[added.records.length - 1];
   const minimum = Math.min(0, ...data.records.map(row => row.boardOrder ?? 0));
   return { ...added, records: added.records.map(row => row.id === fresh.id
-    ? { ...row, progress: "not_started", priority: "medium", boardOrder: minimum - 1 } : row) };
+    ? { ...row, values: status && legacyValue
+        ? { ...row.values, [status.id]: legacyValue } : row.values,
+        progress: "not_started", priority: "medium", boardOrder: minimum - 1 } : row) };
 }
 export function addTaskComment(data: CollectionBlockPayload, recordId: string, text: string): CollectionBlockPayload {
   if (!text.trim() || text.length > 5000) return data;
