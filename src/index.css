@@ -11,3 +11,8 @@ html.dark select option, html.dark select optgroup {
   color: #f8fafc;
 }
 .dark [role="menu"], .dark [role="listbox"] { color: #f1f5f9; }
+
+:root { --planner-canvas:#FAF9F8; --planner-surface:#FFF; --planner-border:#E1DFDD;
+  --planner-text:#242424; --planner-secondary:#616161; --planner-accent:#5B5FC7; --planner-hover:#F3F2F1; }
+html.dark { --planner-canvas:#191919; --planner-surface:#242424; --planner-border:#454545;
+  --planner-text:#F5F5F5; --planner-secondary:#C2C2C2; --planner-accent:#AAA6FF; --planner-hover:#343434; }
