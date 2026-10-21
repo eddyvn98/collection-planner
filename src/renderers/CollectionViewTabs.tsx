@@ -37,7 +37,7 @@ export function CollectionViewTabs({ views, activeViewId, readOnly, onSelect, on
   const menuTarget = views.find(view => view.id === contextMenu?.viewId);
   const menu = contextMenu && menuTarget && typeof document !== "undefined" ? createPortal(
     <div ref={contextMenuRef} role="menu" aria-label={`${menuTarget.name} view actions`}
-      className="fixed z-[130] min-w-40 rounded-lg border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+      className="fixed z-[130] min-w-40 rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-xl dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]"
       style={{ left: Math.max(8, Math.min(contextMenu.x, window.innerWidth - 176)), top: Math.max(8, Math.min(contextMenu.y, window.innerHeight - 52)) }}>
       <button type="button" role="menuitem" disabled={readOnly || views.length <= 1}
         className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-rose-950"
@@ -48,9 +48,9 @@ export function CollectionViewTabs({ views, activeViewId, readOnly, onSelect, on
       className="fixed inset-0 z-[120] flex items-center justify-center bg-black/30 p-4"
       onMouseDown={event => { if (event.target === event.currentTarget) setDeleteViewId(null); }}
       onKeyDown={event => { if (event.key === "Escape") setDeleteViewId(null); }}>
-      <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900">
+      <div className="w-full max-w-sm rounded-2xl bg-[var(--planner-surface)] p-4 shadow-2xl dark:bg-[var(--planner-surface)]">
         <h2 id="collection-delete-view-title" className="text-sm font-semibold">Delete “{target.name}” view?</h2>
-        <p className="mt-1 text-sm text-slate-500">This removes the view and its filters. Collection records will remain.</p>
+        <p className="mt-1 text-sm text-[var(--planner-secondary)]">This removes the view and its filters. Collection records will remain.</p>
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" autoFocus className={btnClass} onClick={() => setDeleteViewId(null)}>Cancel</button>
           <button type="button" className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
