@@ -25,7 +25,7 @@ export function CollectionKeyboard({ root, undo, redo, onEscape, disabled }: {
       }
       if (event.key.toLowerCase()==="n" && !event.shiftKey) {
         const field=node.querySelector<HTMLInputElement>('[aria-label="New task title"]');
-        const add=node.querySelector<HTMLButtonElement>('[data-testid="collection-kanban"] button:not(:disabled)[type="button"]');
+        const add=node.querySelector<HTMLButtonElement>('[data-planner-add-task]:not(:disabled)');
         if (field) {event.preventDefault();field.focus();}
         else if (add) {event.preventDefault();add.click();}
       }
