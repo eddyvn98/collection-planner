@@ -15,7 +15,7 @@ export function CollectionGridToolbar({data,view,visibleCount,selectedIds,readOn
     {kind,value} as GridBulkAction,readOnly));onClear();
  };
  return <div data-testid="planner-grid-toolbar" className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-2 text-xs dark:bg-slate-900">
-  <strong className="text-slate-600 dark:text-slate-200">Grid · {visibleCount} of {data.records.length} tasks</strong>
+  <strong className="text-slate-600 dark:text-slate-200">Grid · {visibleCount} of {data.records.length} {data.records.length===1?"task":"tasks"}</strong>
   <details className="relative">
    <summary className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 font-medium dark:border-slate-700">
      Columns ({shown.length + 4}/{visiblePlannerFields(data).length + 4})
