@@ -172,7 +172,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       onHistory={()=>{setShowHistory(!showHistory);setSettings(false);}}
       importExport={importExportMenu} canUndo={canUndo} canRedo={canRedo}
       undo={undo} redo={redo} darkMode={darkMode} setDarkMode={setDarkMode}
-      full={full} onExpand={openFull} onClose={closeFull} backRef={backButton}/>
+      navigation={standaloneNavigation} full={full} onExpand={openFull} onClose={closeFull} backRef={backButton}/>
     {revisionNotice?.stale && <div role="status" className="flex shrink-0 flex-wrap items-center gap-2 border-b px-2 py-1 text-xs">
       <span>Another session has saved a newer board version.</span>
       <button className={btnClass} disabled={revisionNotice.refreshing} onClick={() => void revisionNotice.refresh()}>
