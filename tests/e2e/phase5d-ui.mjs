@@ -62,6 +62,9 @@ try{
   await page.getByRole("menu",{name:"Task actions menu"}).getByRole("menuitem",{name:"Move task"}).click();
   assert.equal(await page.getByRole("menu",{name:"Task actions menu"}).locator("select[aria-label='Move task to bucket']").count(),1);
   await page.keyboard.press("Escape");
+  await page.getByRole("menu",{name:"Task actions menu"}).waitFor({state:"detached"});
+  assert.equal(await pane.isVisible(),true);
+  await page.keyboard.press("Escape");
   assert.equal(await pane.count(),0);
   await page.waitForFunction(()=>document.activeElement?.closest("[data-record-id]")?.getAttribute("data-record-id")==="rich");
   assert.equal(await rich.locator("[data-board-card-focus]").evaluate(el=>document.activeElement===el),true);
