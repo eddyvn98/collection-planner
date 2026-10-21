@@ -1,95 +1,74 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { primaryField, recordTitle, selectField, setRecordValue, updateRecordBody,
- type CollectionBlockPayload, type CollectionField, type CollectionSources } from "../collections/model";
-import { FieldEditor, hintClass, inputClass } from "./CollectionFieldEditor";
+import { CheckCircle2, Circle, X } from "lucide-react";
+import { primaryField, recordTitle, setRecordValue, type CollectionBlockPayload,
+ type CollectionField, type CollectionSources } from "../collections/model";
 import { isLegacyStatusField, plannerBucket } from "../collections/collectionPlannerFields";
+import { setTaskProgress } from "./collectionBoardGroups";
+import { FieldEditor, hintClass, inputClass } from "./CollectionFieldEditor";
 import { taskDateFields } from "../collections/collectionTasks";
+import { CollectionPlannerTaskFields } from "./CollectionPlannerTaskFields";
+import { CollectionPlannerTaskExtras } from "./CollectionPlannerTaskExtras";
 import { CollectionTaskActions } from "./CollectionTaskActions";
-import { CollectionTaskProperties } from "./CollectionTaskProperties";
-interface Props {
- data: CollectionBlockPayload; sources?: CollectionSources; recordId: string; group?: CollectionField;
- readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onClose: () => void;
- returnFocusTo?: HTMLElement | null;
-}
-/** Every view edits the same stable record. Parent onChange persists edits. */
-export function CollectionRecordDetails({data,sources,recordId,group,readOnly,onChange,onClose,returnFocusTo}:Props){
- const dialog=useRef<HTMLElement>(null),titleInput=useRef<HTMLInputElement>(null);
- const closeRef=useRef(onClose);
+interface Props{data:CollectionBlockPayload;sources?:CollectionSources;recordId:string;group?:CollectionField;
+ readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;onClose:()=>void;returnFocusTo?:HTMLElement|null;}
+/** Non-modal side pane: the Board stays clickable while task details are open. */
+export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange,onClose,returnFocusTo}:Props){
+ const titleInput=useRef<HTMLInputElement>(null),closeRef=useRef(onClose);
  closeRef.current=onClose;
- const record=data.records.find(r=>r.id===recordId);
+ const record=data.records.find(row=>row.id===recordId);
  useEffect(()=>{
-  const prior=returnFocusTo ?? (document.activeElement instanceof HTMLElement?document.activeElement:null);
+  const prior=returnFocusTo??(document.activeElement instanceof HTMLElement?document.activeElement:null);
   titleInput.current?.focus();
-  const keydown=(event:KeyboardEvent)=>{
-   if(event.key==="Escape"){
-    event.preventDefault();event.stopPropagation();closeRef.current();return;
-   }
-   if(event.key!=="Tab"||!dialog.current)return;
-   const focusable=[...dialog.current.querySelectorAll<HTMLElement>(
-    'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],summary,[tabindex]:not([tabindex="-1"])'
-   )].filter(node=>node.getClientRects().length>0);
-   const first=focusable[0],last=focusable[focusable.length-1];
-   if(!first)return;
-   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
-   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
-  };
+  const keydown=(event:KeyboardEvent)=>{if(event.key==="Escape"){
+    event.preventDefault();event.stopPropagation();closeRef.current();
+  }};
   window.addEventListener("keydown",keydown,true);
-  return ()=>{window.removeEventListener("keydown",keydown,true);requestAnimationFrame(() => { if (prior?.isConnected) prior.focus(); });};
+  return ()=>{window.removeEventListener("keydown",keydown,true);
+    requestAnimationFrame(()=>{if(prior?.isConnected)prior.focus();});};
  },[]);
  if(!record||typeof document==="undefined")return null;
- const title=primaryField(data);
- const bucket=group && !isLegacyStatusField(group) ? group : plannerBucket(data);
- const {start,due}=taskDateFields(data);
- const hidden=new Set([title?.id,bucket?.id,start?.id,due?.id,...data.fields.filter(isLegacyStatusField).map(f=>f.id)]);
- return createPortal(<div className="fixed inset-0 z-[10020] flex justify-end bg-black/50"
-  role="presentation" onPointerDown={event=>event.stopPropagation()}>
-  <button type="button" className="absolute inset-0 cursor-default" aria-label="Close task details"
-   onClick={onClose}/>
-  <section ref={dialog} role="dialog" aria-modal="true" aria-label={"Task "+recordTitle(data,record)}
-   className="relative z-10 flex h-full w-full max-w-2xl flex-col bg-white text-slate-900 shadow-xl dark:bg-slate-950 dark:text-slate-100">
-   <header className="flex shrink-0 items-center justify-between gap-3 border-b p-4 dark:border-slate-800">
-    <h2 className="truncate text-lg font-semibold">Task details</h2>
-    <button type="button" className="rounded-lg border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-blue-500"
-     onClick={onClose} aria-label="Close task details">Close</button>
+ const title=primaryField(data),bucket=plannerBucket(data);
+ const dates=taskDateFields(data);
+ const hidden=new Set([title?.id,bucket?.id,dates.start?.id,dates.due?.id,
+   ...data.fields.filter(isLegacyStatusField).map(f=>f.id)]);
+ const complete=record.progress==="completed";
+ return createPortal(<div className="pointer-events-none fixed inset-0 z-[10020] flex justify-end"
+  onPointerDown={e=>e.stopPropagation()}>
+  <section role="dialog" aria-modal="false" aria-label={"Task "+recordTitle(data,record)}
+   className="pointer-events-auto flex h-full w-full max-w-[420px] flex-col border-l border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)] shadow-[-8px_0_24px_#00000018]">
+   <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--planner-border)] px-4 py-3">
+     <h2 className="text-sm font-semibold">Task details</h2>
+     <button type="button" aria-label="Close task details" title="Close task details" onClick={onClose}
+       className="flex min-h-9 min-w-9 items-center justify-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+       <X size={16} strokeWidth={1.75}/></button>
    </header>
-   <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-    {title&&<label className="block space-y-1 text-xs font-semibold">
-     Task name<input ref={titleInput} className={inputClass+" w-full text-lg font-semibold"} maxLength={300}
-      value={record.values[title.id]??""} disabled={readOnly}
-      onChange={e=>onChange(setRecordValue(data,record.id,title.id,e.target.value))}/>
-    </label>}
-    {bucket&&<label className="block space-y-1 text-xs font-medium">
-     Bucket<FieldEditor field={bucket} value={record.values[bucket.id]??""} readOnly={readOnly}
-      data={data} recordId={record.id} sources={sources}
-      onSet={value=>onChange(setRecordValue(data,record.id,bucket.id,value))}/>
-    </label>}
-    <nav aria-label="Task details sections" className="flex flex-wrap gap-2 text-xs text-blue-700 dark:text-blue-300">
-     <a href="#task-notes" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Notes</a>
-     <a href="#task-attachments" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Attachments</a>
-     <a href="#task-comments" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Comments</a>
-     <a href="#task-activity" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Activity</a>
-    </nav>
-    <label id="task-notes" className="block space-y-1 text-sm">
-     <span className="font-semibold">Notes</span>
-     <textarea aria-label="Task notes" className={inputClass+" min-h-36 w-full resize-y"}
-      maxLength={20000} readOnly={readOnly} value={record.body??""}
-      placeholder="Describe the work, links and important decisions..."
-      onChange={e=>onChange(updateRecordBody(data,record.id,e.target.value))}/>
-    </label>
-    <CollectionTaskProperties data={data} record={record} readOnly={readOnly} onChange={onChange}/>
-    <CollectionTaskActions data={data} record={record} readOnly={readOnly} onChange={onChange}/>
-    {data.fields.some(field=>!hidden.has(field.id))&&<details className="rounded-lg border p-3 dark:border-slate-700">
-     <summary className="cursor-pointer text-sm font-semibold">Other fields</summary>
-     <div className="mt-3 space-y-3">
-      {data.fields.filter(field=>!hidden.has(field.id)).map(field=><label key={field.id} className="block space-y-1 text-sm">
-       <span className="text-xs">{field.name}</span>
-       <FieldEditor field={field} value={record.values[field.id]??""} readOnly={readOnly}
-        data={data} sources={sources} recordId={record.id}
-        onSet={value=>onChange(setRecordValue(data,record.id,field.id,value))}/>
-      </label>)}
-     </div>
+   <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+    <div className="flex items-center gap-2">
+      <button type="button" disabled={readOnly} aria-label={complete?"Reopen task":"Complete task"}
+       onClick={()=>onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"))}
+       className="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+       {complete?<CheckCircle2 size={22} strokeWidth={1.75}/>:<Circle size={22} strokeWidth={1.75}/>}
+      </button>
+      {title&&<input ref={titleInput} aria-label="Task name" maxLength={300} disabled={readOnly}
+        value={record.values[title.id]??""} onChange={e=>onChange(setRecordValue(data,record.id,title.id,e.target.value))}
+        className={"min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-2 text-base font-semibold outline-none focus-visible:border-[var(--planner-accent)] "+
+          (complete?"line-through text-[var(--planner-secondary)]":"")}/>}
+    </div>
+    <CollectionPlannerTaskFields data={data} record={record} readOnly={readOnly} onChange={onChange}/>
+    <CollectionPlannerTaskExtras data={data} record={record} readOnly={readOnly} onChange={onChange}/>
+    <details className="rounded border border-[var(--planner-border)] p-2">
+      <summary className="min-h-8 cursor-pointer text-sm font-medium">More task actions</summary>
+      <CollectionTaskActions data={data} record={record} readOnly={readOnly} onChange={onChange}/>
+    </details>
+    {data.fields.some(field=>!hidden.has(field.id))&&<details className="rounded border border-[var(--planner-border)] p-3">
+      <summary className="cursor-pointer text-sm font-semibold">Other fields</summary>
+      <div className="mt-2 space-y-3">{data.fields.filter(field=>!hidden.has(field.id)).map(field=>
+        <label className="block space-y-1 text-sm" key={field.id}>{field.name}
+         <FieldEditor field={field} value={record.values[field.id]??""} readOnly={readOnly}
+          data={data} sources={sources} recordId={record.id}
+          onSet={value=>onChange(setRecordValue(data,record.id,field.id,value))}/></label>)}</div>
     </details>}
     <p className={hintClass}>Changes save automatically · Task ID: {record.id}</p>
    </div>
