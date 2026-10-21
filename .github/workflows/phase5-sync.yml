@@ -13,6 +13,7 @@ jobs:
         with:
           ref: feat/planner-ui-c-drawer
           fetch-depth: 0
+      # Sync Phase B quick-add metadata/Enter regression fix into the task drawer stack.
       - name: Integrate current Phase B branch
         run: |
           git config user.name "github-actions[bot]"
