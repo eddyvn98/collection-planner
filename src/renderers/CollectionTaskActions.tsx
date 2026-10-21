@@ -1,5 +1,7 @@
 import type { CollectionBlockPayload, CollectionRecord } from "../collections/model";
 import { copyTask, moveTaskToBucket, setRecurrence, type TaskRecurrence } from "../collections/collectionRecurrence";
+import { rescheduleTask } from "../collections/collectionSchedule";
+import { taskDate } from "../collections/collectionTasks";
 import { plannerBucket } from "../collections/collectionPlannerFields";
 export function CollectionTaskActions({data,record,readOnly,onChange}: {
   data:CollectionBlockPayload; record:CollectionRecord; readOnly:boolean;
@@ -21,6 +23,15 @@ export function CollectionTaskActions({data,record,readOnly,onChange}: {
         className="rounded-md border px-3 py-1.5 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">
         Copy task
       </button>
+      <label className="text-xs">Move to date
+        <input type="date" aria-label="Move task to date" disabled={readOnly}
+          value={taskDate(data,record,"due")}
+          className="ml-2 rounded-md border border-slate-300 bg-white p-1.5 text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+          onChange={e=>{
+            const calendar=data.views.find(item=>item.kind==="calendar");
+            if(calendar&&e.target.value)onChange(rescheduleTask(data,calendar,record.id,e.target.value));
+          }}/>
+      </label>
       {bucket&&<label className="text-xs">Move to bucket
         <select aria-label="Move task to bucket" value={record.values[bucket.id]??""} disabled={readOnly}
           className="ml-2 rounded-md border border-slate-300 bg-white p-1.5 text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
