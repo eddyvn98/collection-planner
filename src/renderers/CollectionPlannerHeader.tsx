@@ -74,7 +74,7 @@ export function CollectionPlannerHeader(p:Props){
          undo={p.undo} redo={p.redo} darkMode={p.darkMode} setDarkMode={p.setDarkMode}/>
       </div>}
     </div>
-    <div className="relative"><button aria-label="Add view" title="Add view" className={menuButton} onClick={()=>setViewsMenu(!viewsMenu)}>
+    <div className="relative"><button disabled={p.readOnly} aria-label="Add view" title="Add view" className={menuButton} onClick={()=>setViewsMenu(!viewsMenu)}>
       <Plus size={16}/><span className="hidden xl:inline text-xs">View</span></button>
       {viewsMenu&&<div role="menu" className="absolute right-0 top-full z-50 w-40 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
         {(["table","kanban","calendar","charts","timeline","gallery","mindmap","form"] as const).map(kind=>
