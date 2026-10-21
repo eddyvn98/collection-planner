@@ -43,7 +43,7 @@ export function CollectionTaskCard({ data, record, groupKey, readOnly, onOpen }:
       {people.length > 0 && <div className="ml-auto flex -space-x-1">
         {people.map(person => <span key={person.id} title={person.name} aria-label={person.name}
           className="grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-blue-100 text-[10px] font-semibold text-blue-900 dark:border-slate-800">
-          {person.name.split(/\\s+/).slice(0, 2).map(part => part[0] ?? "").join("").toUpperCase()}</span>)}
+          {person.name.split(/\s+/).slice(0, 2).map(part => part[0] ?? "").join("").toUpperCase()}</span>)}
       </div>}
     </div>
   </article>;
