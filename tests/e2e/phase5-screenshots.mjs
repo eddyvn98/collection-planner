@@ -28,6 +28,8 @@ try{
    await page.addInitScript(data=>{localStorage.setItem("collection-planner:v1",JSON.stringify(data));localStorage.setItem("planner:dark","0");},fixture);
    await page.goto(url,{waitUntil:"networkidle"});
    await page.getByTestId("collection-kanban").waitFor({timeout:15000});
+   await page.locator("[data-board-card-focus]").first().click();
+   await page.locator("[role=dialog][aria-label]").waitFor();
    await page.screenshot({path:`screenshots/${name}-${width}.png`,fullPage:true,animations:"disabled"});
    console.log("Screenshot",name,width,await page.title());
    await context.close();
