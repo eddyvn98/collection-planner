@@ -53,6 +53,7 @@ try {
   await page.mouse.up();
   await page.locator('[data-date="2026-10-22"] [data-record-id="e2e-task"]').waitFor({ timeout: 8000 });
   await page.getByRole("button",{name:"More plan actions"}).click();
+  console.log("More menu inspect",await page.locator("[role=menu]").count(),await page.locator('button[aria-label="Undo last change"]').count());
   assert.equal(await page.locator('button[aria-label="Undo last change"]').isEnabled(), true,
     "Undo must become enabled after pointer drag");
   let persisted = await page.evaluate(() => JSON.parse(localStorage.getItem("collection-planner:v1")).records[0].values);
