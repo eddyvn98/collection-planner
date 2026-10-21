@@ -90,6 +90,16 @@ export function addTaskComment(data: CollectionBlockPayload, recordId: string, t
   const comment = { id: newId(), author: "You", text: text.trim(), at: new Date().toISOString() };
   return updateTask(data, recordId, { comments: [...(current.comments ?? []), comment] }, "Added a comment");
 }
+/** Local calendar dates only; a completed task never appears overdue. */
+export function isTaskOverdue(data: CollectionBlockPayload, record: CollectionRecord,
+ today = localToday()): boolean {
+  const due = taskDate(data, record, "due");
+  return !!due && due < today && record.progress !== "completed";
+}
+export function taskAssignees(data: CollectionBlockPayload, record: CollectionRecord) {
+  const selected = new Set(record.assigneeIds ?? []);
+  return (data.people ?? []).filter(person => selected.has(person.id));
+}
 export function localToday(date = new Date()): string {
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0")].join("-");
