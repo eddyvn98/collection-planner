@@ -34,7 +34,7 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
           <YAxis allowDecimals={false} width={28} tick={{ fontSize: 11 }} />
           <Tooltip />
           <Bar dataKey="value" name="Tasks" maxBarSize={44} radius={[5, 5, 0, 0]}>
-            {active.map((point, index) => <Cell key={point.key} fill={chartPointColor(points, point)}
+            {active.map((point) => <Cell key={point.key} fill={chartPointColor(points, point)}
               cursor="pointer" onClick={() => onChoose(dimension, point.key)} />)}
           </Bar>
         </BarChart>}
@@ -71,7 +71,7 @@ export function CollectionChartsView({ data, rows, onDrilldown }: {
   return <div data-testid="collection-charts" className="min-w-0 space-y-4">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-lg font-semibold">Charts</h2>
-        <p className="text-xs text-slate-500">{summary.total} tasks. Click any category to filter Grid.</p>
+        <p className="text-xs text-slate-500">{summary.total} {summary.total === 1 ? "task" : "tasks"}. Click any category to filter Grid.</p>
       </div>
       <label className="text-sm">Display <select aria-label="Chart type"
         className="ml-2 rounded-lg border bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900"
