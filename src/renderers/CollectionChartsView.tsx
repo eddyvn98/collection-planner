@@ -34,7 +34,7 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
           <YAxis allowDecimals={false} width={28} tick={{ fontSize: 11 }} />
           <Tooltip />
           <Bar dataKey="value" name="Tasks" maxBarSize={44} radius={[5, 5, 0, 0]}>
-            {active.map((point, index) => <Cell key={point.key} fill={COLORS[index % COLORS.length]}
+            {active.map((point, index) => <Cell key={point.key} fill={chartPointColor(points, point)}
               cursor="pointer" onClick={() => onChoose(dimension, point.key)} />)}
           </Bar>
         </BarChart>}
