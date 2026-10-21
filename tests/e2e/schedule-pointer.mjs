@@ -82,7 +82,7 @@ try {
   assert(await small.getByTestId("collection-calendar-agenda").getByText("Sun, 25 Oct 2026").count() === 1);
   console.log("PASS 375px agenda, all weekdays accessible and no horizontal overflow");
   await small.getByRole("button", { name: "Board", exact: true }).click();
-  const toggle=small.getByRole("button", { name: "Filters" });
+  const toggle=small.locator('button[aria-label="Filters"]');
   assert.equal(await toggle.getAttribute("aria-expanded"), "false");
   await toggle.click();
   await small.getByLabel("Filter priority").selectOption("urgent");
