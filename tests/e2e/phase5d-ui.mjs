@@ -59,8 +59,8 @@ try{
   await pane.waitFor();
   assert.equal(await pane.getByLabel("due formatted date").textContent(),"18/10/2026");
   await pane.getByRole("button",{name:"Task actions",exact:true}).click();
-  await pane.getByRole("menuitem",{name:"Move task"}).click();
-  assert.equal(await pane.locator("[role=menu] select[aria-label='Move task to bucket']").count(),1);
+  await page.getByRole("menu",{name:"Task actions menu"}).getByRole("menuitem",{name:"Move task"}).click();
+  assert.equal(await page.getByRole("menu",{name:"Task actions menu"}).locator("select[aria-label='Move task to bucket']").count(),1);
   await page.keyboard.press("Escape");
   assert.equal(await pane.count(),0);
   await page.waitForFunction(()=>document.activeElement?.closest("[data-record-id]")?.getAttribute("data-record-id")==="rich");
