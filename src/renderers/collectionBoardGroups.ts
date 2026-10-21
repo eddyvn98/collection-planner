@@ -1,3 +1,4 @@
+import { completeRecurringTask } from "../collections/collectionRecurrence";
 import { setRecordValue, type CollectionBlockPayload, type CollectionField,
  type CollectionRecord, type CollectionView, type TaskPriority, type TaskProgress } from "../collections/model";
 import { PRIORITIES, PROGRESS, createBoardTask, localToday, setTaskDate, taskDate, updateTask } from "../collections/collectionTasks";
@@ -49,13 +50,15 @@ export function parseCardDragId(id: string): [string,string] | null {
 }
 export function setTaskProgress(data: CollectionBlockPayload, recordId: string, progress: TaskProgress) {
  if(!PROGRESS.some(p=>p.value===progress))return data;
+ const previous=data.records.find(row=>row.id===recordId);
  let next=updateTask(data,recordId,{progress},"Changed progress");
  const status=data.fields.find(f=>f.type==="select"&&/^(status|progress)$/i.test(f.name.trim()));
  if(status){
   const value=progress==="completed"?"Done":progress==="in_progress"?"In progress":"To do";
   if(status.options?.includes(value))next=setRecordValue(next,recordId,status.id,value);
  }
- return next;
+ return progress==="completed" && previous && previous.progress!=="completed"
+  ? completeRecurringTask(next, previous) : next;
 }
 export function moveGroupedTask(data: CollectionBlockPayload, id: string, from: string, to: string,
  mode: BoardGroupBy, field?: CollectionField, beforeId?: string, readOnly=false,
