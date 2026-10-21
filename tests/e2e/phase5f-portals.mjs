@@ -25,6 +25,8 @@ async function assertInside(page,locator,label){
 async function escRestores(page,anchor,menu){
  await page.keyboard.press("Escape");
  await menu.waitFor({state:"detached"});
+ const handle=await anchor.elementHandle();
+ await page.waitForFunction(element=>document.activeElement===element,handle,{timeout:2000});
  assert.equal(await anchor.evaluate(el=>document.activeElement===el),true,
   "Escape must restore focus to trigger");
 }
