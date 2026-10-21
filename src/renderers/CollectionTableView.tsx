@@ -16,6 +16,8 @@ import { COLLECTION_PAGE_SIZES, collectionTablePage, type CollectionPageSize } f
 import { gridFields } from "../collections/collectionPlannerFilters";
 import { CollectionGridToolbar } from "./CollectionGridToolbar";
 import { CollectionGridAddRow } from "./CollectionGridAddRow";
+import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
+import { CollectionGridAddQuick } from "./CollectionGridAddRow";
 import { gridTaskColumns } from "./collectionGridTaskColumns";
 
 interface Props {
@@ -124,8 +126,13 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   return <div className="min-w-0 space-y-2" data-testid="collection-paged-table">
     <CollectionGridToolbar data={data} view={view} visibleCount={rows.length} selectedIds={selectedIds} readOnly={readOnly}
       onChange={onChange} onClear={() => setSelected([])} />
+    <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
+      onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
+      onOpen={setOpenRecordId} onChange={onChange}/>
+    {!page.rows.length && <p role="status" className="hidden rounded-lg border border-dashed p-4 text-center text-sm text-slate-500 sm:block">
+      No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
-    <div ref={tableScroll} className="max-w-full overflow-x-auto" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
+    <div ref={tableScroll} className="hidden max-w-full overflow-x-auto sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
     <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-xs" data-testid="collection-tanstack-table">
     <colgroup>
       <col style={{ width: 40 }} />
@@ -183,6 +190,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     </table>
     </div>
     </DndContext>
+    <div className="sm:hidden"><CollectionGridAddQuick data={data} readOnly={readOnly} onChange={onChange}/></div>
     <nav aria-label="Collection Table pagination" className="flex flex-wrap items-center gap-2 text-xs">
       <span role="status" aria-live="polite" data-testid="collection-page-summary">
         {page.total ? page.start + 1 : 0}–{page.end} of {page.total} matching records
