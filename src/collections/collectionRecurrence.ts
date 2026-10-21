@@ -2,7 +2,7 @@ import { addDays, addMonths, addWeeks, format, isValid, parseISO } from "date-fn
 import { newId, recordTitle, setRecordValue, type CollectionBlockPayload,
   type CollectionRecord } from "./model";
 import { taskDateFields, updateTask } from "./collectionTasks";
-import { plannerBucket } from "./collectionPlannerFields";
+import { isLegacyStatusField, plannerBucket } from "./collectionPlannerFields";
 export type TaskRecurrence = NonNullable<CollectionRecord["recurrence"]>;
 const nextDay = (day: string, cadence: TaskRecurrence): string => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return "";
@@ -39,6 +39,18 @@ export function completeRecurringTask(data: CollectionBlockPayload, original: Co
   const lastStart = start ? original.values[start.id] : original.startDate;
   if (!lastDue && !lastStart) return data;
   const values = { ...original.values };
+  const bucketField = plannerBucket(data);
+  if (bucketField) {
+    const sourceBucket = original.values[bucketField.id] ?? "";
+    // The canonical Bucket field is independent of the retired Status select.
+    // Completed buckets should not receive new, unstarted occurrences.
+    values[bucketField.id] = /^done$/i.test(sourceBucket.trim())
+      ? bucketField.options?.find(option => option.trim() && !/^done$/i.test(option.trim())) ?? ""
+      : sourceBucket;
+  }
+  const legacyStatus = data.fields.find(isLegacyStatusField);
+  // Keep compatibility values consistent with the new progress, never use them as a bucket.
+  if (legacyStatus?.options?.includes("To do")) values[legacyStatus.id] = "To do";
   if (start && lastStart) values[start.id] = nextDay(lastStart, original.recurrence);
   if (due && lastDue) values[due.id] = nextDay(lastDue, original.recurrence);
   const nextDue = lastDue && !due ? nextDay(lastDue, original.recurrence) : undefined;
