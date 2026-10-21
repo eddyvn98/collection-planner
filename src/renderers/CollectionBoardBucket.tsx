@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
-import { createGroupedTask, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
+import { createGroupedTask, splitBucketCompletion, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
 import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions";
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
@@ -13,8 +13,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
  const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
  const [renaming,setRenaming]=useState(false),[name,setName]=useState(group.title),[menu,setMenu]=useState(false);
  const bucket=group.key.slice(7),editable=mode==="bucket"&&!!field&&!!bucket;
- const pending=group.rows.filter(row=>row.progress!=="completed");
- const completed=group.rows.filter(row=>row.progress==="completed");
+ const {active:pending,completed}=splitBucketCompletion(group.rows);
  const save=()=>{const next=createGroupedTask(data,title,group.key,mode,field);
    if(next!==data){onChange(next);setTitle("");setAdding(false);}};
  const action=(operation:"rename"|"left"|"right"|"delete")=>{
