@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { CollectionDrawerActions } from "./CollectionDrawerActions";
+import { deleteRecord } from "../collections/model";
 import { CheckCircle2, Circle, X } from "lucide-react";
 import { primaryField, recordTitle, setRecordValue, type CollectionBlockPayload,
  type CollectionField, type CollectionSources } from "../collections/model";
@@ -40,9 +42,11 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
    className="pointer-events-auto flex h-full w-full max-w-[420px] flex-col border-l border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)] shadow-[-8px_0_24px_#00000018]">
    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--planner-border)] px-4 py-3">
      <h2 className="text-sm font-semibold">Task details</h2>
+     <div className="flex items-center gap-1"><CollectionDrawerActions data={data} record={record}
+       readOnly={readOnly} onChange={onChange} onDelete={()=>{onChange(deleteRecord(data,record.id));onClose();}}/>
      <button type="button" aria-label="Close task details" title="Close task details" onClick={onClose}
        className="flex min-h-9 min-w-9 items-center justify-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
-       <X size={16} strokeWidth={1.75}/></button>
+       <X size={16} strokeWidth={1.75}/></button></div>
    </header>
    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
     <div className="flex items-center gap-2">
