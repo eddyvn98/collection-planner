@@ -1,4 +1,5 @@
 import { createId } from "../utils/id";
+import { normalizeTaskRecord } from "./collectionTasks";
 import { matchesViewFilters, type CollectionFilter, type FilterLogic } from "./collectionFilters";
 import { buildCollectionRelationIndex, projectCollectionLookups, removeInboundRelations } from "./collectionRelations";
 import { applyCollectionAutomations, sanitizeCollectionAutomations, type CollectionAutomation } from "./collectionAutomations";
@@ -27,6 +28,13 @@ export interface CollectionField {
   formulaExpression?: string;
   formulaFieldIds?: string[];
 }
+export type TaskProgress = "not_started" | "in_progress" | "completed";
+export type TaskPriority = "urgent" | "important" | "medium" | "low";
+export interface CollectionPerson { id: string; name: string }
+export interface CollectionLabel { id: string; name: string; color: string }
+export interface TaskAttachment { id: string; name: string; url: string }
+export interface TaskComment { id: string; author: string; text: string; at: string }
+export interface TaskActivity { id: string; summary: string; at: string }
 export interface CollectionRecord {
   id: string;
   values: Record<string, string>;
@@ -37,6 +45,16 @@ export interface CollectionRecord {
   dependsOn?: string[];
   /** Checklist items shared by all views of this record. */
   checklist?: Array<{ id: string; text: string; done: boolean }>;
+  progress?: TaskProgress;
+  priority?: TaskPriority;
+  startDate?: string;
+  dueDate?: string;
+  assigneeIds?: string[];
+  labelIds?: string[];
+  attachments?: TaskAttachment[];
+  comments?: TaskComment[];
+  activity?: TaskActivity[];
+  boardOrder?: number;
 }
 export interface CollectionView {
   id: string;
@@ -69,6 +87,8 @@ export interface CollectionBlockPayload {
   automations?: CollectionAutomation[];
   auditTrail?: CollectionAuditEntry[];
   scheduledAutomations?: CollectionScheduledRule[];
+  people?: CollectionPerson[];
+  labels?: CollectionLabel[];
 }
 
 export function isCollectionBlockPayload(value: unknown): value is CollectionBlockPayload {
@@ -110,6 +130,9 @@ export function normalizeCollection(input: CollectionBlockPayload | null | undef
     && dates.length >= 2 && view.dateFieldId === view.endDateFieldId
       ? { ...view, dateFieldId: dates[0].id, endDateFieldId: dates[1].id } : view);
   return { ...input, version: 1, title: input.title || "Untitled collection", views,
+    records: input.records.map(row => normalizeTaskRecord(row, input.fields)),
+    people: Array.isArray(input.people) ? input.people : [],
+    labels: Array.isArray(input.labels) ? input.labels.slice(0, 25) : [],
     automations: sanitizeCollectionAutomations(input),
     scheduledAutomations: sanitizeCollectionSchedules(input), activeViewId: views.some((v) => v.id === input.activeViewId) ? input.activeViewId : views[0].id };
 }
