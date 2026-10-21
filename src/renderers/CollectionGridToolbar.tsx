@@ -31,7 +31,7 @@ export function CollectionGridToolbar({data,view,visibleCount,selectedIds,readOn
   </details>
   <span role="status" className="text-[var(--planner-secondary)]">{selectedIds.length} selected</span>
   {!!selectedIds.length&&<>
-   <select aria-label="Bulk task action" className="rounded-lg border bg-[var(--planner-surface)] px-2 py-2 text-xs "
+   <select aria-label="Bulk task action" className="rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 py-2 text-xs "
      value={action} onChange={e=>setAction(e.target.value)} disabled={readOnly}>
     <optgroup label="Progress">
      <option value="progress:not_started">Not started</option>
@@ -47,8 +47,8 @@ export function CollectionGridToolbar({data,view,visibleCount,selectedIds,readOn
     <option value="delete:">Delete selected</option>
    </select>
    <button type="button" disabled={readOnly} onClick={apply}
-    className="rounded-lg bg-blue-600 px-3 py-2 font-semibold text-white disabled:opacity-50">Apply to selected</button>
-   <button type="button" onClick={onClear} className="text-slate-600 underline dark:text-slate-300">Clear selection</button>
+    className="rounded-lg bg-[var(--planner-accent)] px-3 py-2 font-semibold text-white disabled:opacity-50">Apply to selected</button>
+   <button type="button" onClick={onClear} className="text-[var(--planner-secondary)] underline">Clear selection</button>
   </>}
  </div>;
 }
