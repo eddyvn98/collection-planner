@@ -94,7 +94,6 @@ export interface CollectionBlockPayload {
   labels?: CollectionLabel[];
   savedTaskFilters?: TaskFilterPreset[];
 }
-
 export function isCollectionBlockPayload(value: unknown): value is CollectionBlockPayload {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Record<string, unknown>;
@@ -126,7 +125,6 @@ export function createCollection(): CollectionBlockPayload {
   }));
   return { version: 1, title: "Untitled collection", fields, records: [], views, activeViewId: views.find(view => view.kind === "kanban")!.id };
 }
-
 export function normalizeCollection(input: CollectionBlockPayload | null | undefined): CollectionBlockPayload {
   if (!input || !Array.isArray(input.fields) || !Array.isArray(input.records) || !Array.isArray(input.views)) return createCollection();
   const legacyGroup = input.fields.find(field => field.type === "select" &&
