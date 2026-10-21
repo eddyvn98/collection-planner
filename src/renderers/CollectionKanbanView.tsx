@@ -36,7 +36,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
  };
  return <div className="flex min-h-0 flex-1 flex-col">
   <div className="mb-3 flex items-center justify-between gap-3">
-   <p className="text-xs text-slate-500">{rows.length} tasks · Swipe horizontally to see more groups</p>
+   <p className="text-xs text-slate-500">{rows.length} {rows.length===1?"task":"tasks"} · Swipe horizontally to see more groups</p>
    <label className="flex items-center gap-2 text-xs">Group by
     <select aria-label="Group tasks by" className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900"
      value={mode} disabled={readOnly}
