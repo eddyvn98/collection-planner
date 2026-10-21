@@ -53,7 +53,7 @@ export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
     <button type="submit" className="text-blue-600">Add</button></form>}
   </fieldset>
   <CollectionChecklist items={record.checklist} readOnly={readOnly} onChange={checklist=>patch({checklist})}/>
-  <section className="space-y-2"><h3 className="text-sm font-semibold">Attachments</h3>
+  <section id="task-attachments" className="scroll-mt-4 space-y-2"><h3 className="text-sm font-semibold">Attachments</h3>
    {(record.attachments??[]).map(a=><p key={a.id} className="flex justify-between gap-2 text-xs">
     <a href={a.url} target="_blank" rel="noopener noreferrer" className="truncate text-blue-600 underline">{a.name}</a>
     {!readOnly&&<button onClick={()=>patch({attachments:record.attachments?.filter(x=>x.id!==a.id)})}>Remove</button>}</p>)}
@@ -70,14 +70,14 @@ export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
      onChange={e=>onChange(setCollectionDependencies(data,record.id,e.target.checked?[...(record.dependsOn??[]),r.id]:(record.dependsOn??[]).filter(id=>id!==r.id)))}/>
     {r.values[data.fields[0]?.id]??r.id}</label>)}
   </section>
-  <section className="space-y-2"><h3 className="text-sm font-semibold">Comments</h3>
+  <section id="task-comments" className="scroll-mt-4 space-y-2"><h3 className="text-sm font-semibold">Comments</h3>
    {(record.comments??[]).map(c=><p key={c.id} className="rounded bg-slate-100 p-2 text-xs dark:bg-slate-800">
     <strong>{c.author}</strong> · {new Date(c.at).toLocaleString()}<span className="block whitespace-pre-wrap">{c.text}</span></p>)}
    {!readOnly&&<form onSubmit={e=>{e.preventDefault();onChange(addTaskComment(data,record.id,comment));setComment("");}}>
     <textarea aria-label="New comment" className={inputClass+" w-full"} maxLength={5000} value={comment} onChange={e=>setComment(e.target.value)}/>
     <button type="submit" disabled={!comment.trim()} className="text-blue-600">Post comment</button></form>}
   </section>
-  <section><h3 className="text-sm font-semibold">Activity</h3>
+  <section id="task-activity" className="scroll-mt-4"><h3 className="text-sm font-semibold">Activity</h3>
    {(record.activity??[]).slice().reverse().map(a=><p key={a.id} className="text-xs text-slate-500">{new Date(a.at).toLocaleString()} · {a.summary}</p>)}
   </section>
  </div>;
