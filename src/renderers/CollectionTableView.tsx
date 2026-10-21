@@ -13,6 +13,9 @@ import { CollectionRecordDetails } from "./CollectionRecordDetails";
 import { CollectionSelectChip } from "./CollectionSelectChip";
 import { calculateCollectionAggregate } from "../collections/collectionFormula";
 import { COLLECTION_PAGE_SIZES, collectionTablePage, type CollectionPageSize } from "./collectionTablePaging";
+import { gridFields } from "../collections/collectionPlannerFilters";
+import { CollectionGridToolbar } from "./CollectionGridToolbar";
+import { CollectionGridAddRow } from "./CollectionGridAddRow";
 
 interface Props {
   data: CollectionBlockPayload; sources?: CollectionSources;
@@ -33,6 +36,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   const sourcesRef = useRef(sources);
   sourcesRef.current = sources;
   const [requestedPage, setRequestedPage] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
   const [openRecordId, setOpenRecordId] = useState<string | null>(null);
   const [pendingDeleteFieldId, setPendingDeleteFieldId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor));
@@ -45,12 +49,14 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     }
     previousFieldCount.current = data.fields.length;
   }, [data.fields.length]);
+  const visibleFields = useMemo(() => gridFields(data, view), [data, view]);
+  const selectedIds = selected.filter(id => rows.some(record => record.id === id));
   const page = useMemo(() => collectionTablePage(rows, requestedPage, pageSize),
     [rows, requestedPage, pageSize]);
   // Stable controlled state: one sorting array per saved View configuration.
   const sorting = useMemo<SortingState>(() => viewSorts(view).map(s =>
     ({ id: s.fieldId, desc: s.direction === "desc" })), [view]);
-  const columns = useMemo<ColumnDef<CollectionRecord>[]>(() => data.fields.map(field => ({
+  const columns = useMemo<ColumnDef<CollectionRecord>[]>(() => visibleFields.map(field => ({
     id: field.id, accessorFn: record => record.values[field.id] ?? "", header: () => field.name,
     sortingFn: field.type === "number" ? "basic" : "alphanumeric",
     cell: ctx => field.type === "select"
@@ -64,7 +70,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         readOnly={readOnly} data={dataRef.current} sources={sourcesRef.current}
         recordId={ctx.row.original.id}
         compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
-  })), [data.fields, readOnly]);
+  })), [visibleFields, readOnly]);
   const numericFieldIds = useMemo(() => new Set(data.fields.filter(field => field.type === "number").map(field => field.id)), [data.fields]);
   const table = useReactTable({
     // Bind TanStack only to the visible page, not thousands of input editors.
@@ -106,14 +112,24 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     onChange({ ...data, fields });
   };
   return <div className="min-w-0 space-y-2" data-testid="collection-paged-table">
+    <CollectionGridToolbar data={data} view={view} selectedIds={selectedIds} readOnly={readOnly}
+      onChange={onChange} onClear={() => setSelected([])} />
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
     <div ref={tableScroll} className="overflow-x-auto">
-    <table style={{ width: table.getTotalSize() + 148 }} className="table-fixed border-collapse text-left text-xs" data-testid="collection-tanstack-table">
+    <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-xs" data-testid="collection-tanstack-table">
     <colgroup>
-      {data.fields.map(field => <col key={field.id} style={{ width: table.getColumn(field.id)?.getSize() ?? 160 }} />)}
+      <col style={{ width: 40 }} />
+      {visibleFields.map(field => <col key={field.id} style={{ width: table.getColumn(field.id)?.getSize() ?? 160 }} />)}
       <col style={{ width: 40 }} /><col style={{ width: 108 }} />
     </colgroup>
     <thead>{table.getHeaderGroups().map(group => <tr key={group.id}>
+      <th style={{width:40}} className="sticky top-0 z-30 border-b bg-slate-100 p-2 dark:bg-slate-800">
+        <input type="checkbox" aria-label="Select all visible tasks" disabled={readOnly || !page.rows.length}
+          checked={!!page.rows.length && page.rows.every(item => selectedIds.includes(item.id))}
+          onChange={e => setSelected(current => e.target.checked
+            ? [...new Set([...current, ...page.rows.map(item => item.id)])]
+            : current.filter(id => !page.rows.some(item => item.id === id)))} />
+      </th>
       {group.headers.map(header => {
         const field = data.fields.find(item => item.id === header.column.id);
         return field ? <CollectionTableColumnHeader key={header.id} field={field} header={header} data={data}
@@ -132,6 +148,9 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       <th style={{ width: 108 }} className="border-b"> </th>
     </tr>)}</thead>
     <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id}>
+      <td className="border-b p-2"><input type="checkbox" disabled={readOnly} checked={selectedIds.includes(row.original.id)}
+        aria-label={"Select task " + recordTitle(data, row.original)} onChange={e => setSelected(current => e.target.checked
+          ? [...new Set([...current, row.original.id])] : current.filter(id => id !== row.original.id))} /></td>
       {row.getVisibleCells().map(cell => <td style={{ width: cell.column.getSize() }} className={`border-b p-1 ${numericFieldIds.has(cell.column.id) ? "text-right" : "text-left"}`} key={cell.id}>
         {flexRender(cell.column.columnDef.cell, cell.getContext())}
       </td>)}
@@ -141,16 +160,9 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         <button aria-label={"Delete " + recordTitle(data, row.original)} className={btnClass}
         disabled={readOnly} onClick={() => onChange(deleteRecord(data, row.original.id))}>×</button></td>
     </tr>)}
-    <tr data-testid="collection-add-row">
-      <td colSpan={data.fields.length + 2} className="border-b p-1">
-        <button type="button" className="inline-flex items-center gap-1 rounded px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-          aria-label="Add row" disabled={readOnly} onClick={() => onChange(addRecord(data))}>
-          <Plus aria-hidden="true" className="h-3.5 w-3.5" /> New page
-        </button>
-      </td>
-    </tr>
+    <CollectionGridAddRow data={data} colSpan={visibleFields.length + 3} readOnly={readOnly} onChange={onChange} />
     </tbody>
-    {!!view.aggregations?.length && <tfoot><tr>{data.fields.map(field => {
+    {!!view.aggregations?.length && <tfoot><tr><td className="border-t" />{visibleFields.map(field => {
       const aggregate = view.aggregations?.find(item => item.fieldId === field.id);
       return <td key={field.id} className="border-t bg-slate-50 p-2 text-xs font-semibold dark:bg-slate-900">
         {aggregate ? aggregate.operation + ": " + calculateCollectionAggregate(rows, aggregate) : ""}</td>;
