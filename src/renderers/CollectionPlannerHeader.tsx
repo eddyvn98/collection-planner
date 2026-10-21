@@ -43,15 +43,15 @@ export function CollectionPlannerHeader(p:Props){
   <CollectionMobileViewPicker views={p.data.views} selected={p.view.id} onSelect={p.onSelect}/>
   <div className="ml-auto flex shrink-0 items-center gap-0 sm:gap-1">
     {p.filterControl}
-    <button aria-pressed={mine} className={menuButton+(mine?" bg-[var(--planner-hover)] text-[var(--planner-accent)]":"")}
-      onClick={toggleMe} title="My tasks" aria-label="My tasks"><UserRound size={16}/><span className="hidden xl:inline text-sm">My tasks</span></button>
+    <button aria-pressed={mine} className={menuButton+" xl:w-auto xl:px-2 xl:gap-1.5 "+(mine?" bg-[var(--planner-hover)] text-[var(--planner-accent)]":"")}
+      onClick={toggleMe} title="My tasks" aria-label="My tasks"><UserRound size={16}/><span className="hidden whitespace-nowrap xl:inline text-sm">My tasks</span></button>
     {chooseMe&&<select autoFocus aria-label="Select my identity" className="max-w-28 rounded border bg-[var(--planner-surface)] p-1 text-xs"
       defaultValue="" onChange={e=>{setMe(e.target.value);try{localStorage.setItem("planner:my-person",e.target.value);}catch{}
         p.onFilters({...p.filters,assignee:e.target.value});setChooseMe(false);}}>
       <option value="">Who am I?</option>{(p.data.people??[]).map(person=><option value={person.id} key={person.id}>{person.name}</option>)}
     </select>}
     {p.view.kind==="kanban"&&<div className="relative">
-      <button aria-label="Group by" aria-expanded={groupMenu} className={menuButton} onClick={()=>setGroupMenu(!groupMenu)}>
+      <button aria-label="Group by" aria-expanded={groupMenu} className={menuButton+" lg:w-auto lg:px-2"} onClick={()=>setGroupMenu(!groupMenu)}>
         <ListFilter size={16} strokeWidth={1.75}/><span className="hidden lg:inline text-xs">Group</span><ChevronDown className="hidden sm:block" size={14}/></button>
       {groupMenu&&<div role="menu" className="absolute right-0 top-full z-50 w-44 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
         {BOARD_MODES.map(mode=><button role="menuitem" className={item} key={mode.value}

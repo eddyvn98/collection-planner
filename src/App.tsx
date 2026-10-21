@@ -18,5 +18,5 @@ export function App() {
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* storage unavailable */ }
   }, [data]);
-  return <div className="h-full"><CollectionSurface blockId="main" data={data} onChange={setData} readOnly={false} standalone /></div>;
+  return <div className="min-h-[100dvh] bg-[var(--planner-canvas)]"><CollectionSurface blockId="main" data={data} onChange={setData} readOnly={false} standalone /></div>;
 }

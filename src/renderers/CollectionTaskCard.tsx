@@ -3,7 +3,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
  MessageCircle, Paperclip, StickyNote } from "lucide-react";
 import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
-import { taskAssignees } from "../collections/collectionTasks";
+import { taskAssignees, localToday } from "../collections/collectionTasks";
+import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
 import { cardIndicators } from "../collections/collectionCardIndicators";
 import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
@@ -53,16 +54,16 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
   </div>
   <div className="mt-1.5 flex flex-wrap items-center gap-3 pl-1 text-xs text-[var(--planner-secondary)]">
    {indicators.priority&&<span data-testid="card-priority" title={"Priority "+record.priority}
-     className="flex gap-1 text-red-600"><Flag size={15} strokeWidth={1.75}/>{record.priority}</span>}
+     className="flex gap-1 text-red-600"><Flag size={15} strokeWidth={1.75}/>{formatPlannerPriority(record.priority??"")}</span>}
    {!!indicators.checklist&&<span data-testid="card-checklist" title="Checklist" className="flex gap-1"><ClipboardCheck size={15}/>{indicators.checklist}</span>}
    {!!indicators.attachments&&<span data-testid="card-attachments" title="Attachments" className="flex gap-1"><Paperclip size={15}/>{indicators.attachments}</span>}
    {indicators.notes&&<span data-testid="card-notes" title="Notes"><StickyNote size={15}/></span>}
    {!!indicators.comments&&<span data-testid="card-comments" title="Comments" className="flex gap-1"><MessageCircle size={15}/>{indicators.comments}</span>}
   </div>
   {(due||people.length>0)&&<div className="mt-2 flex items-center justify-between gap-2 text-xs">
-   {due?<span data-testid="card-due" className={"inline-flex items-center gap-1 rounded px-1.5 py-1 "+
+   {due?<span data-testid="card-due" title={due} className={"inline-flex items-center gap-1 rounded px-1.5 py-1 "+
      (late?"bg-red-50 font-semibold text-red-700 dark:bg-red-950 dark:text-red-300":"text-[var(--planner-secondary)]")}>
-      <CalendarDays size={14}/>{due}</span>:<span/>}
+      <CalendarDays size={14}/>{formatPlannerCardDate(due,localToday())}</span>:<span/>}
    {!!people.length&&<div data-testid="card-avatars" className="flex -space-x-1.5">
      {people.slice(0,4).map(person=><span key={person.id} title={person.name} aria-label={person.name}
        className="grid h-7 w-7 place-items-center rounded-full border-2 border-[var(--planner-surface)] bg-[#dcdafa] text-[10px] font-bold text-[#32317a]">
