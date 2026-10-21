@@ -247,7 +247,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     </aside>}
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-slate-50/80 p-4 dark:bg-slate-950">
       {view.kind === "table" && <CollectionTableView data={data} sources={sources} view={view} rows={rows} readOnly={readOnly} onChange={onChange} patch={patch} onOpenFieldSettings={openFieldSettings} />}
-      {view.kind === "kanban" && <CollectionKanbanView data={data} rows={rows} group={group} groupOptions={groupOptions} readOnly={readOnly} onChange={onChange} patch={patch} />}
+      {view.kind === "kanban" && <CollectionKanbanView data={data} view={view} rows={rows} group={group} groupOptions={groupOptions} readOnly={readOnly} onChange={onChange} patch={patch} />}
       {view.kind === "gallery" && <CollectionGalleryView data={data} sources={sources} view={view} rows={rows} titleField={titleField} readOnly={readOnly} patch={patch} onChange={onChange} />}
       {view.kind === "calendar" && <CalendarView month={month} setMonth={setMonth} rows={rows} data={data} field={date} readOnly={readOnly} patch={patch} />}
       {view.kind === "timeline" && <TimelineView rows={rows} data={data} start={date} end={end} readOnly={readOnly} patch={patch} onChange={onChange} />}
