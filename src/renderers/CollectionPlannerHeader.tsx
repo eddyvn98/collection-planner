@@ -1,8 +1,9 @@
-import { useState, type ReactNode, type RefObject } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 import { Star, Plus, ChevronDown, Ellipsis, HelpCircle, Share2, UserRound, ArrowLeft, ExternalLink,
   Settings2, History, Maximize2, Minimize2 } from "lucide-react";
 import { CollectionViewTabs } from "./CollectionViewTabs";
 import { CollectionMobileViewPicker } from "./CollectionMobileViewPicker";
+import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { ListFilter } from "lucide-react";
 import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
 import { BOARD_MODES } from "./collectionBoardGroups";
@@ -23,6 +24,8 @@ const item="flex min-h-9 w-full items-center gap-2 rounded px-3 text-left text-s
 export function CollectionPlannerHeader(p:Props){
  const [more,setMore]=useState(false),[help,setHelp]=useState(false);
  const [groupMenu,setGroupMenu]=useState(false),[viewsMenu,setViewsMenu]=useState(false);
+ const moreRef=useRef<HTMLButtonElement>(null),helpRef=useRef<HTMLButtonElement>(null);
+ const groupRef=useRef<HTMLButtonElement>(null),viewsRef=useRef<HTMLButtonElement>(null);
  const [chooseMe,setChooseMe]=useState(false);
  const [me,setMe]=useState(()=>{try{return localStorage.getItem("planner:my-person")??"";}catch{return "";}});
  const [star,setStar]=useState(()=>{try{return localStorage.getItem("planner:star:"+p.data.title)==="1";}catch{return false;}});
@@ -51,24 +54,27 @@ export function CollectionPlannerHeader(p:Props){
       <option value="">Who am I?</option>{(p.data.people??[]).map(person=><option value={person.id} key={person.id}>{person.name}</option>)}
     </select>}
     {p.view.kind==="kanban"&&<div className="relative">
-      <button aria-label="Group by" aria-expanded={groupMenu} className={menuButton+" lg:w-auto lg:px-2"} onClick={()=>setGroupMenu(!groupMenu)}>
+      <button ref={groupRef} aria-label="Group by" aria-expanded={groupMenu} className={menuButton+" lg:w-auto lg:px-2"} onClick={()=>setGroupMenu(!groupMenu)}>
         <ListFilter size={16} strokeWidth={1.75}/><span className="hidden lg:inline text-xs">Group</span><ChevronDown className="hidden sm:block" size={14}/></button>
-      {groupMenu&&<div role="menu" className="absolute right-0 top-full z-50 w-44 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
+      <CollectionFloatingPanel open={groupMenu} anchorRef={groupRef} onClose={()=>setGroupMenu(false)}
+        role="menu" label="Group by" className="w-44 rounded p-1">
         {BOARD_MODES.map(mode=><button role="menuitem" className={item} key={mode.value}
          onClick={()=>{p.onGroup(mode.value);setGroupMenu(false);}}>{mode.label}</button>)}
-      </div>}
+      </CollectionFloatingPanel>
     </div>}
     <button title="Copy plan link" aria-label="Share plan" className={menuButton+" hidden sm:inline-flex"}
       onClick={()=>void navigator.clipboard?.writeText(window.location.href)}><Share2 size={16}/></button>
-    <div className="relative"><button aria-label="Shortcuts" title="Keyboard shortcuts" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setHelp(!help)}>
+    <div className="relative"><button ref={helpRef} aria-label="Shortcuts" title="Keyboard shortcuts" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setHelp(!help)}>
       <HelpCircle size={16}/></button>
-      {help&&<div role="dialog" aria-label="Shortcuts" className="absolute right-0 top-full z-50 w-56 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-3 text-xs shadow-lg">
+      <CollectionFloatingPanel open={help} anchorRef={helpRef} onClose={()=>setHelp(false)}
+        role="dialog" label="Shortcuts" className="w-56 rounded p-3 text-xs">
         <strong>Keyboard shortcuts</strong><p className="mt-2">N — New task (Board/Grid)</p><p>/ — Search</p>
-        <p>Esc — Close/clear</p><p>Ctrl/Cmd+Z — Undo</p><p>Ctrl/Cmd+Shift+Z — Redo</p></div>}
+        <p>Esc — Close/clear</p><p>Ctrl/Cmd+Z — Undo</p><p>Ctrl/Cmd+Shift+Z — Redo</p></CollectionFloatingPanel>
     </div>
-    <div className="relative"><button aria-label="More plan actions" title="More actions" className={menuButton} onClick={()=>setMore(!more)}>
+    <div className="relative"><button ref={moreRef} aria-label="More plan actions" title="More actions" className={menuButton} onClick={()=>setMore(!more)}>
       <Ellipsis size={18}/></button>
-      {more&&<div role="menu" className="absolute right-0 top-full z-50 w-64 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 shadow-lg">
+      <CollectionFloatingPanel open={more} anchorRef={moreRef} onClose={()=>setMore(false)}
+        role="menu" label="More plan actions" className="w-64 rounded p-2">
        <button role="menuitem" className={item} onClick={()=>{p.onSettings();setMore(false);}}><Settings2 size={16}/> {p.settings?"Hide settings":"Settings"}</button>
        <button role="menuitem" className={item} onClick={()=>{p.onHistory();setMore(false);}}><History size={16}/> {p.showHistory?"Hide history":"History"}</button>
        <button role="menuitem" className={item} onClick={()=>{p.full?p.onClose():p.onExpand();setMore(false);}}>
@@ -91,16 +97,17 @@ export function CollectionPlannerHeader(p:Props){
          <HelpCircle size={16}/> Keyboard shortcuts</button>
        <CollectionPhase4Controls readOnly={p.readOnly} canUndo={p.canUndo} canRedo={p.canRedo}
          undo={p.undo} redo={p.redo} darkMode={p.darkMode} setDarkMode={p.setDarkMode}/>
-      </div>}
+      </CollectionFloatingPanel>
     </div>
-    <div className="relative"><button disabled={p.readOnly} aria-label="Add view" title="Add view" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setViewsMenu(!viewsMenu)}>
+    <div className="relative"><button ref={viewsRef} disabled={p.readOnly} aria-label="Add view" title="Add view" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setViewsMenu(!viewsMenu)}>
       <Plus size={16}/><span className="hidden xl:inline text-xs">View</span></button>
-      {viewsMenu&&<div role="menu" className="absolute right-0 top-full z-50 w-40 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1 shadow-lg">
+      <CollectionFloatingPanel open={viewsMenu} anchorRef={viewsRef} onClose={()=>setViewsMenu(false)}
+        role="menu" label="Add view" className="w-40 rounded p-1">
         {(["table","kanban","calendar","charts","timeline","gallery","mindmap","form"] as const).map(kind=>
           <button role="menuitem" key={kind} className={item} onClick={()=>{p.onAddView(kind);setViewsMenu(false);}}>
             {({table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts",timeline:"Timeline",
               gallery:"Gallery",mindmap:"Mind Map",form:"Form"})[kind]}</button>)}
-      </div>}
+      </CollectionFloatingPanel>
     </div>
   </div>
  </header>;
