@@ -62,14 +62,20 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
       data={data} recordId={record.id} sources={sources}
       onSet={value=>onChange(setRecordValue(data,record.id,bucket.id,value))}/>
     </label>}
-    <CollectionTaskProperties data={data} record={record} readOnly={readOnly} onChange={onChange}/>
-    <label className="block space-y-1 text-sm">
+    <nav aria-label="Task details sections" className="flex flex-wrap gap-2 text-xs text-blue-700 dark:text-blue-300">
+     <a href="#task-notes" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Notes</a>
+     <a href="#task-attachments" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Attachments</a>
+     <a href="#task-comments" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Comments</a>
+     <a href="#task-activity" className="rounded-md bg-blue-50 px-2 py-1 dark:bg-slate-800">Activity</a>
+    </nav>
+    <label id="task-notes" className="block space-y-1 text-sm">
      <span className="font-semibold">Notes</span>
      <textarea aria-label="Task notes" className={inputClass+" min-h-36 w-full resize-y"}
       maxLength={20000} readOnly={readOnly} value={record.body??""}
       placeholder="Describe the work, links and important decisions..."
       onChange={e=>onChange(updateRecordBody(data,record.id,e.target.value))}/>
     </label>
+    <CollectionTaskProperties data={data} record={record} readOnly={readOnly} onChange={onChange}/>
     {data.fields.some(field=>!hidden.has(field.id))&&<details className="rounded-lg border p-3 dark:border-slate-700">
      <summary className="cursor-pointer text-sm font-semibold">Other fields</summary>
      <div className="mt-3 space-y-3">
