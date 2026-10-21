@@ -2,7 +2,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckSquare, GripVertical, Paperclip, StickyNote } from "lucide-react";
 import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
-import { localToday, taskDate } from "../collections/collectionTasks";
+import { isTaskOverdue, taskAssignees, taskDate } from "../collections/collectionTasks";
 import { cardDragId } from "./collectionBoardGroups";
 export function CollectionTaskCard({ data, record, groupKey, readOnly, onOpen }: {
   data: CollectionBlockPayload; record: CollectionRecord; groupKey: string; readOnly: boolean; onOpen: () => void;
@@ -10,9 +10,9 @@ export function CollectionTaskCard({ data, record, groupKey, readOnly, onOpen }:
   const drag = useDraggable({ id: cardDragId(record.id, groupKey), disabled: readOnly });
   const drop = useDroppable({ id: cardDragId(record.id, groupKey), disabled: readOnly });
   const due = taskDate(data, record, "due");
-  const late = due && due < localToday() && record.progress !== "completed";
+  const late = isTaskOverdue(data, record);
   const done = record.checklist?.filter(item => item.done).length ?? 0;
-  const people = (data.people ?? []).filter(p => record.assigneeIds?.includes(p.id));
+  const people = taskAssignees(data, record);
   const labels = (data.labels ?? []).filter(l => record.labelIds?.includes(l.id));
   return <article ref={node => { drag.setNodeRef(node); drop.setNodeRef(node); }}
     data-testid="collection-kanban-card" data-record-id={record.id}
@@ -35,15 +35,15 @@ export function CollectionTaskCard({ data, record, groupKey, readOnly, onOpen }:
         {record.progress === "completed" ? "✓ Completed" : record.progress === "in_progress" ? "◐ In progress" : "○ Not started"}
       </span>
       {record.priority && record.priority !== "medium" && <span className="capitalize">{record.priority}</span>}
-      {due && <span className={"inline-flex items-center gap-1 " + (late ? "font-semibold text-red-600" : "")}>
-        <CalendarDays className="h-3 w-3" />{due}</span>}
+      {due && <span className={"inline-flex items-center gap-1 " + (late ? "rounded-md bg-red-50 px-1.5 py-1 font-bold text-red-700 ring-1 ring-red-200 dark:bg-red-950 dark:text-red-300" : "")}>
+        <CalendarDays className="h-3 w-3" />{late ? "Overdue · " : ""}{due}</span>}
       {!!record.checklist?.length && <span className="inline-flex items-center gap-1"><CheckSquare className="h-3 w-3" />{done}/{record.checklist.length}</span>}
       {!!record.attachments?.length && <span title="Attachments"><Paperclip className="h-3.5 w-3.5" /></span>}
       {!!record.body?.trim() && <span title="Notes"><StickyNote className="h-3.5 w-3.5" /></span>}
       {people.length > 0 && <div className="ml-auto flex -space-x-1">
         {people.map(person => <span key={person.id} title={person.name} aria-label={person.name}
-          className="grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-blue-100 text-[10px] font-semibold text-blue-900 dark:border-slate-800">
-          {person.name.slice(0, 2).toUpperCase()}</span>)}
+          className="grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-blue-100 text-[10px] font-semibold text-blue-900 dark:border-slate-800">
+          {person.name.split(/\\s+/).slice(0, 2).map(part => part[0] ?? "").join("").toUpperCase()}</span>)}
       </div>}
     </div>
   </article>;
