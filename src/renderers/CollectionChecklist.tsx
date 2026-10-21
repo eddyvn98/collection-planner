@@ -4,6 +4,7 @@ import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useDraggable,
   useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { checklistReorder, checklistToggle, checklistTotals } from "../collections/collectionChecklistActions";
 import { newId, type CollectionRecord } from "../collections/model";
 
 type Item = NonNullable<CollectionRecord["checklist"]>[number];
@@ -30,7 +31,7 @@ function ChecklistItemRow({ item, readOnly, onUpdate, onRemove }: {
       disabled={readOnly} {...drag.attributes} {...drag.listeners}>
       <GripVertical aria-hidden="true" className="h-3.5 w-3.5" />
     </button>
-    <input type="checkbox" className="shrink-0 accent-blue-600 opacity-0 transition-opacity checked:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
+    <input type="checkbox" className="shrink-0 accent-[var(--planner-accent)] opacity-100 transition-opacity"
       checked={item.done} disabled={readOnly} aria-label={item.text || "Checklist item"}
       onChange={event => onUpdate({ done: event.target.checked })} />
     <textarea ref={textRef} rows={1} className={"min-h-6 min-w-0 flex-1 resize-none overflow-hidden break-words rounded border border-transparent bg-transparent px-1 py-1 text-xs leading-4 outline-none hover:border-slate-200 focus:border-blue-400 focus:bg-white dark:hover:border-slate-600 dark:focus:bg-slate-900 " +
@@ -55,22 +56,19 @@ export function CollectionChecklist({ items = [], readOnly, compact = false, onC
     setDraft("");
   };
   const update = (id: string, changes: Partial<Item>) =>
-    onChange(items.map(item => item.id === id ? { ...item, ...changes } : item));
+    onChange(Object.keys(changes).length===1&&changes.done!==undefined?
+      checklistToggle(items,id,changes.done):items.map(item=>item.id===id?{...item,...changes}:item));
   const reorder = ({ active, over }: DragEndEvent) => {
     if (readOnly || !over || active.id === over.id) return;
-    const from = items.findIndex(item => item.id === active.id);
-    const to = items.findIndex(item => item.id === over.id);
-    if (from < 0 || to < 0) return;
-    const next = [...items];
-    next.splice(to, 0, next.splice(from, 1)[0]);
-    onChange(next);
+    const next=checklistReorder(items,String(active.id),String(over.id));
+    if(next!==items)onChange(next);
   };
 
   return <div className={compact ? "mt-2 border-t border-slate-100 pt-2 dark:border-slate-700" : "space-y-2"}
     aria-label="Record checklist" data-testid="collection-checklist">
     <div className="flex items-center justify-between gap-2 text-xs">
       <span className="font-medium text-slate-600 dark:text-slate-300">Checklist</span>
-      <span className="tabular-nums text-slate-500">{items.filter(item => item.done).length}/{items.length}</span>
+      <span className="tabular-nums text-slate-500">{checklistTotals(items).completed}/{items.length}</span>
     </div>
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorder}>
       <div className="space-y-0.5" role="list" aria-label="Checklist items">
