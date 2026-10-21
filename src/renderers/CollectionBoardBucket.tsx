@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { Plus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Trash2, Pencil } from "lucide-react";
 import { createGroupedTask, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
 import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions";
 import { CollectionTaskCard } from "./CollectionTaskCard";
@@ -26,14 +26,15 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
     onKeyDown={e=>{if(e.key==="Escape"){setName(bucket);setRenaming(false);}if(e.key==="Enter")e.currentTarget.blur();}}
     onBlur={()=>{if(name!==bucket&&field)onChange(renameBucket(data,field.id,bucket,name));setRenaming(false);}} />
    : <button type="button" disabled={readOnly||!canEdit} onClick={()=>{setName(bucket);setRenaming(true);}}
-     className="min-w-0 flex-1 truncate text-left text-sm font-semibold">{group.title}</button>}
-   <span className="rounded-full bg-white px-2 py-0.5 text-xs dark:bg-slate-700">{group.rows.length}</span>
+     className="min-w-0 flex-1 truncate text-left text-sm font-semibold" aria-label={"Rename bucket "+bucket}>{group.title}</button>}
+   {canEdit&&!readOnly&&!renaming&&<Pencil className="h-3 w-3 text-slate-400" aria-hidden="true"/>}
+  <span className="rounded-full bg-white px-2 py-0.5 text-xs dark:bg-slate-700">{group.rows.length}</span>
    {!readOnly&&canEdit&&field&&<div className="flex">
-    <button title="Move bucket left" aria-label={"Move "+bucket+" left"} onClick={()=>onChange(moveBucket(data,field.id,bucket,-1))}>
+    <button className="rounded p-1 hover:bg-white focus-visible:ring-2 focus-visible:ring-blue-500" title="Move bucket left" aria-label={"Move "+bucket+" left"} onClick={()=>onChange(moveBucket(data,field.id,bucket,-1))}>
       <ChevronLeft className="h-4 w-4"/></button>
-    <button title="Move bucket right" aria-label={"Move "+bucket+" right"} onClick={()=>onChange(moveBucket(data,field.id,bucket,1))}>
+    <button className="rounded p-1 hover:bg-white focus-visible:ring-2 focus-visible:ring-blue-500" title="Move bucket right" aria-label={"Move "+bucket+" right"} onClick={()=>onChange(moveBucket(data,field.id,bucket,1))}>
       <ChevronRight className="h-4 w-4"/></button>
-    <button title="Delete bucket" aria-label={"Delete "+bucket}
+    <button className="rounded p-1 text-red-600 hover:bg-red-100 focus-visible:ring-2 focus-visible:ring-red-500" title="Delete bucket" aria-label={"Delete "+bucket}
       onClick={()=>{if(window.confirm("Move tasks to Unassigned and delete this bucket?"))onChange(deleteBucket(data,field.id,bucket));}}>
       <Trash2 className="h-4 w-4"/></button>
    </div>}
@@ -47,7 +48,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
     <button type="button" className="text-xs" onClick={()=>setAdding(false)}>Cancel</button>
    </div>
   </form>:<button type="button" onClick={()=>setAdding(true)}
-    className="mb-3 flex w-full items-center gap-1 rounded-lg bg-white p-2 text-left text-sm text-blue-700 dark:bg-slate-800 dark:text-blue-300">
+    className="mb-3 flex w-full items-center gap-1 rounded-lg border border-blue-100 bg-white p-2 text-left text-sm font-medium text-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300">
      <Plus className="h-4 w-4"/> Add task</button>)}
   <div aria-label={group.title+" tasks"} className="min-h-10">
    {group.rows.map(record=><CollectionTaskCard key={record.id} groupKey={group.key} data={data} record={record}
