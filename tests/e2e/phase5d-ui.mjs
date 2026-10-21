@@ -63,6 +63,7 @@ try{
   assert.equal(await pane.locator("[role=menu] select[aria-label='Move task to bucket']").count(),1);
   await page.keyboard.press("Escape");
   assert.equal(await pane.count(),0);
+  await page.waitForFunction(()=>document.activeElement?.closest("[data-record-id]")?.getAttribute("data-record-id")==="rich");
   assert.equal(await rich.locator("[data-board-card-focus]").evaluate(el=>document.activeElement===el),true);
   await page.getByRole("button",{name:"More plan actions"}).click();
   await page.getByRole("button",{name:"Toggle dark mode"}).click();
