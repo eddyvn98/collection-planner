@@ -27,7 +27,7 @@ describe("Planner phase 1 data", () => {
   const renamed = renameBucket(added, field, "To do", "Backlog");
   expect(renamed.records[0].values[field]).toBe("Backlog");
   const moved = moveBucket(renamed, field, "Review", -1);
-  expect(moved.fields[1].options?.[2]).not.toBe("Review");
+  expect(moved.fields[1].options?.[2]).toBe("Review");
   const deleted = deleteBucket(renamed, field, "Backlog");
   expect(deleted.records[0].values[field]).toBe("");
   expect(data.records[0].values[field]).toBe("To do");
