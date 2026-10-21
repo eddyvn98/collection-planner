@@ -9,7 +9,7 @@ import { sanitizeCollectionSchedules, type CollectionScheduledRule } from "./col
 import { projectCollectionFormulas, type CollectionAggregation, type FormulaOperation } from "./collectionFormula";
 
 export type CollectionFieldType = "text" | "number" | "date" | "select" | "checkbox" | "url" | "image" | "relation" | "lookup" | "rollup" | "formula";
-export type CollectionViewKind = "table" | "kanban" | "calendar" | "timeline" | "gallery" | "mindmap" | "form";
+export type CollectionViewKind = "table" | "kanban" | "calendar" | "timeline" | "gallery" | "mindmap" | "form" | "charts";
 
 export interface CollectionField {
   id: string;
@@ -104,7 +104,7 @@ export function isCollectionBlockPayload(value: unknown): value is CollectionBlo
 
 export type CollectionSources = Record<string, CollectionBlockPayload>;
 
-export const VIEW_KINDS: CollectionViewKind[] = ["table", "kanban", "calendar", "timeline", "gallery", "mindmap", "form"];
+export const VIEW_KINDS: CollectionViewKind[] = ["table", "kanban", "calendar", "charts", "timeline", "gallery", "mindmap", "form"];
 export const FIELD_TYPES: CollectionFieldType[] = ["text", "number", "date", "select", "checkbox", "url", "image", "relation", "lookup", "rollup", "formula"];
 export const newId = () => createId();
 
@@ -143,6 +143,7 @@ export function normalizeCollection(input: CollectionBlockPayload | null | undef
     return migrationBucket && fixed.kind === "kanban" && fixed.groupFieldId === legacyGroup?.id
       ? { ...fixed, groupFieldId: migrationBucket.id } : fixed;
   });
+  if (!views.some(view => view.kind === "charts")) views.push({ id: newId(), kind: "charts", name: "Charts" });
   const normalized = input.records.map(row => {
     const migrated = migrationBucket && legacyGroup && row.values[legacyGroup.id]
       ? { ...row, values: { ...row.values, [migrationBucket.id]: row.values[legacyGroup.id] } } : row;

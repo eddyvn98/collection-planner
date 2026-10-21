@@ -51,7 +51,9 @@ describe("Collection date view mapping migration", () => {
       expect(view.dateFieldId).toBe(start.id);
       expect(view.endDateFieldId).toBe(due.id);
     }
-    expect(migrated.views.map(view => view.id)).toEqual(old.map(view => view.id));
+    expect(migrated.views.filter(view => view.kind !== "charts").map(view => view.id))
+      .toEqual(old.filter(view => view.kind !== "charts").map(view => view.id));
+    expect(migrated.views.filter(view => view.kind === "charts")).toHaveLength(1);
     // This legacy record lacks Planner metadata, so migration may replace the array.
     expect(migrated.records).not.toBe(previous.records);
     expect(migrated.records.map(row => row.id)).toEqual(previous.records.map(row => row.id));
