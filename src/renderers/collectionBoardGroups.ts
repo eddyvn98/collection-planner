@@ -5,6 +5,10 @@ import { PRIORITIES, PROGRESS, createBoardTask, localToday, setTaskDate, taskDat
 import { bucketOptions, moveBoardCard, orderedCards } from "./collectionBoardActions";
 export type BoardGroupBy = NonNullable<CollectionView["boardGroupBy"]>;
 export interface BoardGroup { key: string; title: string; rows: CollectionRecord[] }
+export function splitBucketCompletion(rows:CollectionRecord[]){
+ return { active:rows.filter(row=>row.progress!=="completed"),
+  completed:rows.filter(row=>row.progress==="completed") };
+}
 export const BOARD_MODES: { value: BoardGroupBy; label: string }[] = [
  {value:"bucket",label:"Bucket"},{value:"progress",label:"Progress"},{value:"priority",label:"Priority"},
  {value:"assignee",label:"Assignee"},{value:"label",label:"Label"},{value:"due",label:"Due date"},
