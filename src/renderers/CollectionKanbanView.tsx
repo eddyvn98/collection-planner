@@ -37,7 +37,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
  };
  return <div className="flex min-h-0 flex-1 flex-col">
   <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-   <div className="flex min-h-0 flex-1 items-start gap-3 overflow-x-auto pb-3" data-testid="collection-kanban">
+   <div className="flex min-h-0 flex-1 items-start gap-2 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:snap-none" data-testid="collection-kanban">
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group}
      readOnly={readOnly} onChange={onChange} onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
     {mode==="bucket"&&!!group&&!readOnly&&(creating?
