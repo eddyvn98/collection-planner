@@ -21,7 +21,7 @@ export function CollectionCardFormSettings({ view, fields, readOnly, onChange }:
     if (isForm) onChange({ formFieldIds: next, formRequiredFieldIds: required.filter(item => next.includes(item)) });
     else onChange({ galleryFieldIds: next });
   };
-  return <section className="space-y-2 border-b border-slate-200 py-3 dark:border-slate-700" aria-label={isForm ? "Form settings" : "Gallery settings"}
+  return <section className="space-y-2 border-b border-[var(--planner-border)] py-3 dark:border-[var(--planner-border)]" aria-label={isForm ? "Form settings" : "Gallery settings"}
     data-testid="collection-card-form-settings">
     <strong>{isForm ? "Form fields" : "Gallery card fields"}</strong>
     {isForm && <p className={hintClass}>Required fields must be included in the form. Computed fields cannot be submitted.</p>}

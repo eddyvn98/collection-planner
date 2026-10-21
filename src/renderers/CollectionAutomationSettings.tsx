@@ -28,14 +28,14 @@ export function CollectionAutomationSettings({ data, readOnly, onChange }: Props
     </select> : <input className={inputClass} disabled={readOnly}
       value={value} maxLength={2000} onChange={e => onSet(e.target.value)} />;
   };
-  return <section className="space-y-2 border-b border-slate-200 py-3 dark:border-slate-700" data-testid="collection-automations">
+  return <section className="space-y-2 border-b border-[var(--planner-border)] py-3 dark:border-[var(--planner-border)]" data-testid="collection-automations">
     <div className="flex items-center gap-2">
       <strong>Record automations</strong>
       <button className={btnClass} type="button" disabled={readOnly || fields.length < 2 || rules.length >= 20}
         onClick={add}>+ Rule</button>
     </div>
     <p className={hintClass}>When a value changes to the trigger, update another field in the same record. Runs for manual and AI edits.</p>
-    {rules.map(rule => <div key={rule.id} className="flex flex-wrap items-center gap-2 border-l-2 border-slate-200 py-2 pl-3 dark:border-slate-700">
+    {rules.map(rule => <div key={rule.id} className="flex flex-wrap items-center gap-2 border-l-2 border-[var(--planner-border)] py-2 pl-3 dark:border-[var(--planner-border)]">
       <input type="checkbox" aria-label={"Enable rule " + rule.name} disabled={readOnly}
         checked={rule.enabled} onChange={e => edit(rule.id, { enabled: e.target.checked })} />
       <input className={inputClass} aria-label="Rule name" value={rule.name} disabled={readOnly} maxLength={80}

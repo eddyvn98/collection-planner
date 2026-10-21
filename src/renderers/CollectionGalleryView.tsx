@@ -26,20 +26,20 @@ export function CollectionGalleryView({ data, sources, view, rows, titleField, r
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {page.rows.map(record => {
         const url = image ? record.values[image.id] : undefined;
-        return <article key={record.id} className="group min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
+        return <article key={record.id} className="group min-w-0 overflow-hidden rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] shadow-sm transition-shadow hover:shadow-md dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]"
           data-testid="collection-gallery-card" data-record-id={record.id}>
           {url && /^https?:\/\//i.test(url)
-            && <img src={url} alt={`${recordTitle(data, record)} cover`} loading="lazy" className="h-36 w-full bg-slate-100 object-cover dark:bg-slate-800" />}
+            && <img src={url} alt={`${recordTitle(data, record)} cover`} loading="lazy" className="h-36 w-full bg-[var(--planner-hover)] object-cover dark:bg-[var(--planner-surface)]" />}
           <div className="space-y-3 p-4">
             <header className="flex min-w-0 items-start justify-between gap-2">
               <h3 className="min-w-0 flex-1 whitespace-normal break-words text-sm font-semibold leading-5" title={recordTitle(data, record)}>{recordTitle(data, record)}</h3>
-              <button type="button" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-800"
+              <button type="button" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-[var(--planner-surface)]"
                 onClick={() => setOpenRecordId(record.id)} aria-label={`Open ${recordTitle(data, record)}`} title="Open record details">
                 <SquareArrowOutUpRight aria-hidden="true" className="h-4 w-4" />
               </button>
             </header>
-            {details.map(field => <label key={field.id} className={`flex min-w-0 gap-3 border-t border-slate-100 pt-2 text-xs dark:border-slate-800 ${field.type === "text" ? "items-start" : "items-center justify-between"}`}>
-              <span className="shrink-0 text-slate-500 dark:text-slate-400">{field.name}</span>
+            {details.map(field => <label key={field.id} className={`flex min-w-0 gap-3 border-t border-[var(--planner-border)] pt-2 text-xs dark:border-[var(--planner-border)] ${field.type === "text" ? "items-start" : "items-center justify-between"}`}>
+              <span className="shrink-0 text-[var(--planner-secondary)] dark:text-[var(--planner-secondary)]">{field.name}</span>
               {field.type === "select" ? <CollectionSelectChip label={`${field.name} for ${recordTitle(data, record)}`}
                 value={record.values[field.id] ?? ""} options={field.options ?? []} disabled={readOnly}
                 onChange={value => patch(record, field, value)} />
