@@ -1,4 +1,5 @@
-import { X } from "lucide-react";
+import { X, XCircle } from "lucide-react";
+import { EMPTY_TASK_FILTERS } from "../collections/collectionPlannerFilters";
 import { activePlannerChips, clearPlannerChip } from "../collections/collectionFilterChips";
 import type { CollectionBlockPayload } from "../collections/model";
 import type { TaskFilterState } from "../collections/collectionPlannerFilters";
