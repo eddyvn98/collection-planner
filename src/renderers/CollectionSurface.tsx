@@ -25,7 +25,7 @@ import { createPortal } from "react-dom";
 import { useCollectionHistory } from "../collections/collectionHistory";
 import { CollectionKeyboard } from "./CollectionKeyboard";
 import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
-import { normalizeCollection } from "../collections/model";
+import { usePlannerDarkTheme } from "./usePlannerDarkTheme"; import { normalizeCollection } from "../collections/model";
 import { visiblePlannerFields, isLegacyStatusField } from "../collections/collectionPlannerFields";
 import type { CollectionBlockPayload, CollectionSources, CollectionField, CollectionRecord, CollectionView } from "../collections/model";
 import { addRecord, addView, dateField, deleteRecord, endDateField, FIELD_TYPES, newId, primaryField, recordTitle, removeField, removeView, selectField, setParent, setRecordValue, updateField, updateView, VIEW_KINDS, visibleRecords } from "../collections/model";
@@ -40,6 +40,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
   const root=useRef<HTMLDivElement>(null);
   const [darkMode,setDarkMode]=useState(()=>typeof localStorage!=="undefined"&&localStorage.getItem("planner:dark")==="1");
   useEffect(()=>{try{localStorage.setItem("planner:dark",darkMode?"1":"0");}catch{/* storage unavailable */}},[darkMode]);
+  usePlannerDarkTheme(darkMode);
   const [search, setSearch] = useState(""); const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS}); const [localViewId, setLocalViewId] = useState<string | null>(null); const [settings, setSettings] = useState(false); const [fieldSettingsTarget, setFieldSettingsTarget] = useState<string | null>(null); const [fieldsPanelOpen, setFieldsPanelOpen] = useState(false); const [showHistory, setShowHistory] = useState(false); const [full, setFull] = useState(false); const expanded = full || standalone; const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   useEffect(() => {
     if (!settings || !fieldSettingsTarget) return;
@@ -182,7 +183,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       <CollectionViewTabs views={data.views} activeViewId={view.id} readOnly={readOnly}
         onSelect={viewId => { if (readOnly) setLocalViewId(viewId); else { setLocalViewId(null); onChange({ ...data, activeViewId: viewId }); } }}
         onDelete={viewId => onChange(removeView(data, viewId))} />
-      {!readOnly && <select aria-label="Add view" className={inputClass} value="" onChange={(e) => e.target.value && onChange(addView(data, e.target.value as CollectionView["kind"]))}><option value="">+ View</option>{VIEW_KINDS.map((v) => <option key={v} value={v}>{v}</option>)}</select>}
+      {!readOnly && <select aria-label="Add view" className={inputClass+" [color-scheme:light] dark:[color-scheme:dark] dark:bg-slate-900 dark:text-slate-100"} value="" onChange={(e) => e.target.value && onChange(addView(data, e.target.value as CollectionView["kind"]))}><option value="">+ View</option>{VIEW_KINDS.map((v) => <option key={v} value={v}>{v}</option>)}</select>}
       {!plannerView && <input aria-label="Search records" className={inputClass + " ml-auto w-44"} placeholder="Search records" value={search} onChange={(e) => setSearch(e.target.value)} />}
     </div>
     <CollectionPhase4Controls readOnly={readOnly} canUndo={canUndo} canRedo={canRedo} undo={undo} redo={redo}
