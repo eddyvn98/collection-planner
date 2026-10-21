@@ -52,6 +52,7 @@ jobs:
         run: |
           STAGE=${GITHUB_REF_NAME##*-}
           mkdir -p "docs/phase5/$STAGE"
+          if [ -d /tmp/planner-before/docs/phase5 ]; then cp -R /tmp/planner-before/docs/phase5/. docs/phase5/; fi
           cp screenshots/*.png "docs/phase5/$STAGE/"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
