@@ -43,7 +43,11 @@ export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
    {(data.labels??[]).map(l=><label key={l.id} className="mr-3 inline-flex gap-1 text-xs">
     <input type="checkbox" disabled={readOnly} checked={!!record.labelIds?.includes(l.id)}
      onChange={e=>patch({labelIds:e.target.checked?[...(record.labelIds??[]),l.id]:(record.labelIds??[]).filter(id=>id!==l.id)})}/>
-    <span className="h-3 w-3 rounded" style={{backgroundColor:l.color}}/>{l.name}</label>)}
+    <input aria-label={"Color for "+l.name} title={"Color for "+l.name} type="color"
+     className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0" disabled={readOnly}
+     value={/^#[0-9a-fA-F]{6}$/.test(l.color)?l.color:"#2563eb"}
+     onChange={e=>onChange({...data,labels:(data.labels??[]).map(item=>item.id===l.id?{...item,color:e.target.value}:item)})}/>
+    {l.name}</label>)}
    {!readOnly&&(data.labels??[]).length<25&&<form className="flex gap-2" onSubmit={e=>{e.preventDefault();makeLabel();}}>
     <input aria-label="New label" className={inputClass+" min-w-0 flex-1"} value={label} onChange={e=>setLabel(e.target.value)} placeholder="New label (max 25)" maxLength={80}/>
     <button type="submit" className="text-blue-600">Add</button></form>}
