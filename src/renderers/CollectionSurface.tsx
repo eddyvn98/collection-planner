@@ -154,7 +154,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
   const content = <div ref={root} data-testid="collection-block" role={full ? "dialog" : undefined} aria-modal={full ? true : undefined}
     aria-label={full ? `${data.title || "Untitled collection"} Collection screen` : undefined}
     tabIndex={full ? -1 : undefined} onKeyDown={keepFocusInScreen}
-    className={"flex h-full w-full flex-col overflow-hidden bg-[var(--planner-canvas)] text-[var(--planner-text)] " + (darkMode ? "dark " : "") + (full ? "fixed inset-0 z-[9999] p-0" : "")}
+    className={"flex min-h-[100dvh] h-full w-full flex-col overflow-hidden bg-[var(--planner-canvas)] text-[var(--planner-text)] " + (darkMode ? "dark " : "") + (full ? "fixed inset-0 z-[9999] p-0" : "")}
     onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("[data-collection-drag-handle]")) e.stopPropagation(); }} onDoubleClick={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
     <CollectionKeyboard root={root} undo={undo} redo={redo} disabled={readOnly}
       onEscape={()=>{setTaskFilters({...EMPTY_TASK_FILTERS});setSearch("");setSettings(false);}} />
