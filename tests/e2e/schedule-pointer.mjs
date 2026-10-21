@@ -53,12 +53,12 @@ try {
   await page.mouse.up();
   await page.locator('[data-date="2026-10-22"] [data-record-id="e2e-task"]').waitFor({ timeout: 8000 });
   await page.getByRole("button",{name:"More plan actions"}).click();
-  assert.equal(await page.getByRole("button", { name: "Undo last change" }).isEnabled(), true,
+  assert.equal(await page.locator('button[aria-label="Undo last change"]').isEnabled(), true,
     "Undo must become enabled after pointer drag");
   let persisted = await page.evaluate(() => JSON.parse(localStorage.getItem("collection-planner:v1")).records[0].values);
   assert.equal(persisted.due, "2026-10-22");
   assert.equal(persisted.start, "2026-10-20");
-  await page.getByRole("button", { name: "Undo last change" }).click();
+  await page.locator('button[aria-label="Undo last change"]').click();
   await page.getByRole("button",{name:"More plan actions"}).click();
   await page.locator('[data-date="2026-10-21"] [data-record-id="e2e-task"]').waitFor({ timeout: 8000 });
   console.log("PASS desktop drag (12 pointer moves), persistence and Undo");
@@ -67,7 +67,7 @@ try {
   await page.locator('[role="dialog"][aria-label^="Task "] button[aria-label="Close task details"]').click();
   await page.locator('[data-date="2026-10-24"] [data-record-id="e2e-task"]').waitFor({ timeout: 8000 });
   await page.getByRole("button",{name:"More plan actions"}).click();
-  assert.equal(await page.getByRole("button", { name: "Undo last change" }).isEnabled(), true);
+  assert.equal(await page.locator('button[aria-label="Undo last change"]').isEnabled(), true);
   await page.getByRole("button",{name:"More plan actions"}).click();
   console.log("PASS Move to date fallback updates Schedule and Undo");
   const mobile = await browser.newContext({ viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true });
@@ -89,16 +89,16 @@ try {
   assert.equal(await toggle.getAttribute("aria-expanded"), "false");
   assert.equal(await small.getByLabel("1 active filters").count(), 1);
   await small.getByRole("button", { name: "More plan actions" }).click();
-  await small.getByRole("button", { name: "Toggle dark mode" }).click();
+  await small.locator('button[aria-label="Toggle dark mode"]').click();
   await small.getByRole("button", { name: "More plan actions" }).click();
   assert.equal(await small.locator("html.dark").count(), 1);
   await small.getByRole("button", { name: "Add view" }).click();
-  const colors=await small.getByRole("menu",{name:"Add view"}).evaluate(node => ({
+  const colors=await small.locator('[role="menu"]').last().evaluate(node => ({
     background: getComputedStyle(node).backgroundColor,
     foreground: getComputedStyle(node).color,
     colorScheme: getComputedStyle(node).colorScheme,
   }));
-  console.log("dark native Add view select",colors);
+  console.log("dark Add view menu",colors);
   assert.notEqual(colors.background, "rgb(255, 255, 255)");
   assert.equal(await small.locator("html.dark").count(),1);
   console.log("PASS collapsed mobile filters badge and dark native View dropdown");
