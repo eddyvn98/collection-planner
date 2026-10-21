@@ -1,0 +1,203 @@
+"use client";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { Plus } from "lucide-react";
+import { flexRender, getCoreRowModel, useReactTable,
+  type ColumnDef, type SortingState } from "@tanstack/react-table";
+import { addField, addRecord, deleteRecord, removeField, recordTitle, viewSorts, type CollectionBlockPayload,
+  type CollectionField, type CollectionRecord, type CollectionView, type CollectionSources } from "../collections/model";
+import { CollectionTableColumnHeader } from "./CollectionTableColumnHeader";
+import { CollectionWrappedTextCell } from "./CollectionWrappedTextCell";
+import { btnClass, FieldEditor } from "./CollectionFieldEditor";
+import { CollectionRecordDetails } from "./CollectionRecordDetails";
+import { CollectionSelectChip } from "./CollectionSelectChip";
+import { calculateCollectionAggregate } from "../collections/collectionFormula";
+import { COLLECTION_PAGE_SIZES, collectionTablePage, type CollectionPageSize } from "./collectionTablePaging";
+
+interface Props {
+  data: CollectionBlockPayload; sources?: CollectionSources;
+  view: CollectionView; rows: CollectionRecord[];
+  readOnly: boolean; onChange: (next: CollectionBlockPayload) => void;
+  patch: (record: CollectionRecord, field: CollectionField, value: string) => void;
+  onOpenFieldSettings: (fieldId: string) => void;
+}
+const getRecordId = (row: CollectionRecord) => row.id;
+
+export function CollectionTableView({ data, sources, view, rows, readOnly, onChange, patch, onOpenFieldSettings }: Props) {
+  // Keep the cell renderer identity stable while edits update Collection data.
+  // Calling the latest patch via a ref avoids unmounting the focused input.
+  const patchRef = useRef(patch);
+  patchRef.current = patch;
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const sourcesRef = useRef(sources);
+  sourcesRef.current = sources;
+  const [requestedPage, setRequestedPage] = useState(0);
+  const [openRecordId, setOpenRecordId] = useState<string | null>(null);
+  const [pendingDeleteFieldId, setPendingDeleteFieldId] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor));
+  const [pageSize, setPageSize] = useState<CollectionPageSize>(50);
+  const tableScroll = useRef<HTMLDivElement>(null);
+  const previousFieldCount = useRef(data.fields.length);
+  useEffect(() => {
+    if (data.fields.length > previousFieldCount.current) {
+      tableScroll.current?.scrollTo({ left: tableScroll.current.scrollWidth, behavior: "smooth" });
+    }
+    previousFieldCount.current = data.fields.length;
+  }, [data.fields.length]);
+  const page = useMemo(() => collectionTablePage(rows, requestedPage, pageSize),
+    [rows, requestedPage, pageSize]);
+  // Stable controlled state: one sorting array per saved View configuration.
+  const sorting = useMemo<SortingState>(() => viewSorts(view).map(s =>
+    ({ id: s.fieldId, desc: s.direction === "desc" })), [view]);
+  const columns = useMemo<ColumnDef<CollectionRecord>[]>(() => data.fields.map(field => ({
+    id: field.id, accessorFn: record => record.values[field.id] ?? "", header: () => field.name,
+    sortingFn: field.type === "number" ? "basic" : "alphanumeric",
+    cell: ctx => field.type === "select"
+      ? <CollectionSelectChip label={`${field.name} for ${recordTitle(dataRef.current, ctx.row.original)}`}
+        value={ctx.row.original.values[field.id] ?? ""} options={field.options ?? []} disabled={readOnly}
+        onChange={value => patchRef.current(ctx.row.original, field, value)} />
+      : field.type === "text" && field.wrapText
+        ? <CollectionWrappedTextCell label={field.name} value={ctx.row.original.values[field.id] ?? ""}
+            disabled={readOnly} onChange={value => patchRef.current(ctx.row.original, field, value)} />
+        : <FieldEditor field={field} value={ctx.row.original.values[field.id] ?? ""}
+        readOnly={readOnly} data={dataRef.current} sources={sourcesRef.current}
+        recordId={ctx.row.original.id}
+        compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
+  })), [data.fields, readOnly]);
+  const numericFieldIds = useMemo(() => new Set(data.fields.filter(field => field.type === "number").map(field => field.id)), [data.fields]);
+  const table = useReactTable({
+    // Bind TanStack only to the visible page, not thousands of input editors.
+    data: page.rows, columns, getRowId: getRecordId,
+    getCoreRowModel: getCoreRowModel(),
+    // visibleRecords already applies all saved sorts. Do not sort twice or
+    // auto-reset table state in response to a controlled input keystroke.
+    manualSorting: true, autoResetAll: false,
+    defaultColumn: { size: 160, minSize: 80, maxSize: 640 },
+    columnResizeMode: "onEnd", enableColumnResizing: !readOnly,
+    state: { sorting, columnSizing: view.columnWidths ?? {} }, enableMultiSort: true,
+    onColumnSizingChange: updater => {
+      if (readOnly) return;
+      const current = view.columnWidths ?? {};
+      const columnWidths = typeof updater === "function" ? updater(current) : updater;
+      onChange({ ...data, views: data.views.map(item => item.id === view.id ? { ...item, columnWidths } : item) });
+    },
+    onSortingChange: update => {
+      if (readOnly) return;
+      const next = typeof update === "function" ? update(sorting) : update;
+      const sorts = next.map(item => ({ fieldId: item.id, direction: item.desc ? "desc" as const : "asc" as const }));
+      onChange({ ...data, views: data.views.map(v => v.id === view.id ? { ...v, sorts, sort: undefined } : v) });
+    },
+  });
+  const adjustColumnSize = (fieldId: string, delta: number) => {
+    const currentSize = table.getColumn(fieldId)?.getSize() ?? 160;
+    table.setColumnSizing(previous => ({
+      ...previous,
+      [fieldId]: Math.max(80, Math.min(640, (previous[fieldId] ?? currentSize) + delta)),
+    }));
+  };
+  const reorderColumn = ({ active, over }: DragEndEvent) => {
+    if (readOnly || !over || active.id === over.id) return;
+    const from = data.fields.findIndex(field => field.id === active.id);
+    const to = data.fields.findIndex(field => field.id === over.id);
+    if (from < 0 || to < 0) return;
+    const fields = [...data.fields];
+    fields.splice(to, 0, fields.splice(from, 1)[0]);
+    onChange({ ...data, fields });
+  };
+  return <div className="min-w-0 space-y-2" data-testid="collection-paged-table">
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
+    <div ref={tableScroll} className="overflow-x-auto">
+    <table style={{ width: table.getTotalSize() + 148 }} className="table-fixed border-collapse text-left text-xs" data-testid="collection-tanstack-table">
+    <colgroup>
+      {data.fields.map(field => <col key={field.id} style={{ width: table.getColumn(field.id)?.getSize() ?? 160 }} />)}
+      <col style={{ width: 40 }} /><col style={{ width: 108 }} />
+    </colgroup>
+    <thead>{table.getHeaderGroups().map(group => <tr key={group.id}>
+      {group.headers.map(header => {
+        const field = data.fields.find(item => item.id === header.column.id);
+        return field ? <CollectionTableColumnHeader key={header.id} field={field} header={header} data={data}
+          readOnly={readOnly} onChange={onChange} onOpenFieldSettings={onOpenFieldSettings}
+          onRequestDelete={setPendingDeleteFieldId} onAdjustColumnSize={adjustColumnSize} /> : null;
+      })}
+      <th style={{ width: 40 }} className="sticky top-0 border-b bg-slate-100 p-1 dark:bg-slate-800">
+        <button type="button" className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-700"
+          aria-label="Add column" title="Add column" disabled={readOnly}
+          onClick={() => {
+            let index = data.fields.length + 1;
+            while (data.fields.some(field => field.name === `Property ${index}`)) index++;
+            onChange(addField(data, `Property ${index}`, "text"));
+          }}><Plus aria-hidden="true" className="h-4 w-4" /></button>
+      </th>
+      <th style={{ width: 108 }} className="border-b"> </th>
+    </tr>)}</thead>
+    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id}>
+      {row.getVisibleCells().map(cell => <td style={{ width: cell.column.getSize() }} className={`border-b p-1 ${numericFieldIds.has(cell.column.id) ? "text-right" : "text-left"}`} key={cell.id}>
+        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      </td>)}
+      <td aria-hidden="true" />
+      <td><button className={btnClass} aria-label={"Open " + recordTitle(data, row.original)}
+        onClick={() => setOpenRecordId(row.original.id)}>Open</button>
+        <button aria-label={"Delete " + recordTitle(data, row.original)} className={btnClass}
+        disabled={readOnly} onClick={() => onChange(deleteRecord(data, row.original.id))}>×</button></td>
+    </tr>)}
+    <tr data-testid="collection-add-row">
+      <td colSpan={data.fields.length + 2} className="border-b p-1">
+        <button type="button" className="inline-flex items-center gap-1 rounded px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+          aria-label="Add row" disabled={readOnly} onClick={() => onChange(addRecord(data))}>
+          <Plus aria-hidden="true" className="h-3.5 w-3.5" /> New page
+        </button>
+      </td>
+    </tr>
+    </tbody>
+    {!!view.aggregations?.length && <tfoot><tr>{data.fields.map(field => {
+      const aggregate = view.aggregations?.find(item => item.fieldId === field.id);
+      return <td key={field.id} className="border-t bg-slate-50 p-2 text-xs font-semibold dark:bg-slate-900">
+        {aggregate ? aggregate.operation + ": " + calculateCollectionAggregate(rows, aggregate) : ""}</td>;
+    })}<td className="border-t" /><td className="border-t text-xs">Visible totals</td></tr></tfoot>}
+    </table>
+    </div>
+    </DndContext>
+    <nav aria-label="Collection Table pagination" className="flex flex-wrap items-center gap-2 text-xs">
+      <span role="status" aria-live="polite" data-testid="collection-page-summary">
+        {page.total ? page.start + 1 : 0}–{page.end} of {page.total} matching records
+      </span>
+      <label>Rows per page <select aria-label="Rows per page" className="rounded border p-1"
+        value={pageSize} onChange={event => { setPageSize(Number(event.target.value) as CollectionPageSize); setRequestedPage(0); }}>
+        {COLLECTION_PAGE_SIZES.map(size => <option key={size} value={size}>{size}</option>)}
+      </select></label>
+      <button type="button" className={btnClass} aria-label="First collection page" disabled={page.pageIndex === 0}
+        onClick={() => setRequestedPage(0)}>«</button>
+      <button type="button" className={btnClass} aria-label="Previous collection page" disabled={page.pageIndex === 0}
+        onClick={() => setRequestedPage(page.pageIndex - 1)}>‹</button>
+      <span data-testid="collection-page-number">Page {page.pageIndex + 1} of {page.pageCount}</span>
+      <button type="button" className={btnClass} aria-label="Next collection page"
+        disabled={page.pageIndex >= page.pageCount - 1}
+        onClick={() => setRequestedPage(page.pageIndex + 1)}>›</button>
+      <button type="button" className={btnClass} aria-label="Last collection page"
+        disabled={page.pageIndex >= page.pageCount - 1}
+        onClick={() => setRequestedPage(page.pageCount - 1)}>»</button>
+    </nav>
+    {openRecordId && <CollectionRecordDetails data={data} sources={sources} recordId={openRecordId}
+      readOnly={readOnly} onChange={onChange} onClose={() => setOpenRecordId(null)} />}
+    {pendingDeleteFieldId && (() => {
+      const field = data.fields.find(item => item.id === pendingDeleteFieldId);
+      if (!field) return null;
+      return <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={event => { if (event.target === event.currentTarget) setPendingDeleteFieldId(null); }}>
+        <section role="alertdialog" aria-modal="true" aria-labelledby="delete-property-title" aria-describedby="delete-property-description"
+          onKeyDown={event => { if (event.key === "Escape") setPendingDeleteFieldId(null); }}
+          className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl dark:bg-slate-900">
+          <h2 id="delete-property-title" className="text-base font-semibold text-slate-900 dark:text-slate-100">Delete “{field.name}”?</h2>
+          <p id="delete-property-description" className="mt-2 text-sm text-slate-600 dark:text-slate-300">This removes the column and its values from every record, view, and automation that uses it.</p>
+          <div className="mt-5 flex justify-end gap-2">
+            <button type="button" autoFocus className={btnClass} onClick={() => setPendingDeleteFieldId(null)}>Cancel</button>
+            <button type="button" className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500" onClick={() => {
+              onChange(removeField(data, field.id));
+              setPendingDeleteFieldId(null);
+            }}>Delete property</button>
+          </div>
+        </section>
+      </div>;
+    })()}
+  </div>;
+}

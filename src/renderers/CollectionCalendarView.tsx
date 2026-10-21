@@ -1,0 +1,119 @@
+"use client";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { CollectionBlockPayload, CollectionField, CollectionRecord } from "../collections/model";
+import { recordTitle } from "../collections/model";
+import { btnClass, FieldEditor, hintClass, inputClass } from "./CollectionFieldEditor";
+import { calendarDays, shiftCalendarDay, type CalendarMode } from "./collectionCalendarDates";
+
+interface Props {
+  month: string;
+  setMonth: (value: string) => void;
+  rows: CollectionRecord[];
+  data: CollectionBlockPayload;
+  field?: CollectionField;
+  readOnly: boolean;
+  patch: (record: CollectionRecord, field: CollectionField, value: string) => void;
+}
+
+export function CalendarView({ month, setMonth, rows, data, field, readOnly, patch }: Props) {
+  const [mode, setMode] = useState<CalendarMode>("month");
+  const [anchor, setAnchor] = useState(() => month + "-01");
+  const mobileDefaulted = useRef(false);
+  const [expandedDays, setExpandedDays] = useState<string[]>([]);
+  const MAX_DAY_CARDS = 20;
+  useEffect(() => {
+    if (mobileDefaulted.current || !window.matchMedia("(max-width: 640px)").matches) return;
+    const firstScheduledDate = field && rows.map(record => record.values[field.id] ?? "")
+      .filter(Boolean).sort()[0];
+    const selectedDay = firstScheduledDate ?? new Date().toISOString().slice(0, 10);
+    setAnchor(selectedDay);
+    setMonth(selectedDay.slice(0, 7));
+    setMode("day");
+    mobileDefaulted.current = true;
+  }, [field, rows, setMonth]);
+  const days = useMemo(() => calendarDays(anchor, mode), [anchor, mode]);
+  const byDate = useMemo(() => {
+    const index = new Map<string, CollectionRecord[]>();
+    if (field) for (const record of rows) {
+      const date = record.values[field.id];
+      if (!date) continue;
+      index.set(date, [...(index.get(date) ?? []), record]);
+    }
+    return index;
+  }, [rows, field]);
+  const navigate = (date: string) => {
+    setAnchor(date);
+    setMonth(date.slice(0, 7));
+  };
+  const caption = mode === "month" ? anchor.slice(0, 7)
+    : mode === "week" ? days[0] + " – " + days[days.length - 1] : anchor;
+  const scheduledInPeriod = days.reduce((count, day) => count + (byDate.get(day)?.length ?? 0), 0);
+  const onDrop = (event: React.DragEvent, day: string) => {
+    event.preventDefault();
+    if (readOnly || !field) return;
+    const id = event.dataTransfer.getData("text/collection-record");
+    const record = rows.find(item => item.id === id);
+    if (record && record.values[field.id] !== day) patch(record, field, day);
+  };
+  return <div className="space-y-2" data-testid="collection-calendar">
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      <button type="button" aria-label="Previous calendar period" className={btnClass}
+        onClick={() => navigate(shiftCalendarDay(anchor, mode, -1))}>←</button>
+      <strong data-testid="collection-calendar-period">{caption}</strong>
+      <button type="button" aria-label="Next calendar period" className={btnClass}
+        onClick={() => navigate(shiftCalendarDay(anchor, mode, 1))}>→</button>
+      <label className="ml-2">Mode <select aria-label="Calendar mode" className={inputClass}
+        value={mode} onChange={event => setMode(event.target.value as CalendarMode)}>
+        <option value="month">Month</option><option value="week">Week</option><option value="day">Day</option>
+      </select></label>
+      <input type="date" aria-label="Calendar selected day" className={inputClass}
+        value={anchor} onChange={event => event.target.value && navigate(event.target.value)} />
+      {!field && <span className="text-amber-600">Add a date field to use Calendar</span>}
+    </div>
+    {(!field || scheduledInPeriod === 0) && <div role="status" className="flex items-start gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900">
+      <span aria-hidden="true" className="mt-0.5 text-lg text-slate-400">▦</span>
+      <div>
+        <p className="font-medium text-slate-800 dark:text-slate-100">{!field ? "Calendar needs a date field" : "Nothing scheduled in this period"}</p>
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{!field
+          ? "Add a date field in Settings to place records on the calendar."
+          : rows.length ? "Choose another period or add a date to a record in Table view."
+            : "Add a record, then give it a date to see it here."}</p>
+      </div>
+    </div>}
+    <div className={"grid gap-1 text-xs " + (mode === "day" ? "grid-cols-1" : "grid-cols-7")}>
+      {mode !== "day" && ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(label =>
+        <strong key={label} className="text-center">{label}</strong>)}
+      {days.map(day => {
+        const allMatches = byDate.get(day) ?? [];
+        const expanded = expandedDays.includes(day);
+        const matches = expanded ? allMatches : allMatches.slice(0, MAX_DAY_CARDS);
+        const outside = mode === "month" && !day.startsWith(anchor.slice(0, 7));
+        return <section key={day} data-testid="collection-calendar-day" data-date={day}
+          aria-label={"Date " + day}
+          className={"min-h-20 min-w-0 rounded border p-1 text-xs dark:border-slate-700 " + (outside ? "opacity-50" : "")}
+          onDragOver={event => { if (!readOnly && field) event.preventDefault(); }}
+          onDrop={event => onDrop(event, day)}>
+          <button type="button" className="text-slate-500 underline" aria-label={"Select " + day}
+            onClick={() => navigate(day)}>{day.slice(8)}</button>
+          {allMatches.length > MAX_DAY_CARDS && <button type="button"
+            aria-label={(expanded ? "Show fewer" : "Show all") + " records for " + day}
+            className={btnClass} onClick={() => setExpandedDays(current => expanded
+              ? current.filter(value => value !== day) : [...current, day])}>
+            {expanded ? "Show fewer" : "Show all " + allMatches.length + " records"}
+          </button>}
+          {matches.map(record => <div key={record.id} data-record-id={record.id}
+            className="mt-1 space-y-1 overflow-hidden rounded bg-blue-100 p-1 text-blue-900"
+            draggable={!readOnly && !!field}
+            onDragStart={event => event.dataTransfer.setData("text/collection-record", record.id)}>
+            <span className="block truncate" title={recordTitle(data, record)}>{recordTitle(data, record)}</span>
+            {field && <FieldEditor field={field} value={record.values[field.id] ?? ""}
+              readOnly={readOnly} onSet={value => patch(record, field, value)} />}
+          </div>)}
+        </section>;
+      })}
+    </div>
+    <p className={hintClass}>
+      Drag a card to change its date, or edit the date directly. Undated records remain in Table view.
+    </p>
+  </div>;
+}
