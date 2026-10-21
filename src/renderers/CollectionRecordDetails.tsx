@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { primaryField, recordTitle, selectField, setRecordValue, updateRecordBody,
  type CollectionBlockPayload, type CollectionField, type CollectionSources } from "../collections/model";
 import { FieldEditor, hintClass, inputClass } from "./CollectionFieldEditor";
+import { isLegacyStatusField, plannerBucket } from "../collections/collectionPlannerFields";
 import { taskDateFields } from "../collections/collectionTasks";
 import { CollectionTaskProperties } from "./CollectionTaskProperties";
 interface Props {
@@ -37,9 +38,9 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
  },[]);
  if(!record||typeof document==="undefined")return null;
  const title=primaryField(data);
- const bucket=group??selectField(data,data.views.find(v=>v.id===data.activeViewId)??data.views[0]);
+ const bucket=group && !isLegacyStatusField(group) ? group : plannerBucket(data);
  const {start,due}=taskDateFields(data);
- const hidden=new Set([title?.id,bucket?.id,start?.id,due?.id]);
+ const hidden=new Set([title?.id,bucket?.id,start?.id,due?.id,...data.fields.filter(isLegacyStatusField).map(f=>f.id)]);
  return createPortal(<div className="fixed inset-0 z-[10020] flex justify-end bg-black/50"
   role="presentation" onPointerDown={event=>event.stopPropagation()}>
   <button type="button" className="absolute inset-0 cursor-default" aria-label="Close task details"
@@ -58,7 +59,7 @@ export function CollectionRecordDetails({data,sources,recordId,group,readOnly,on
       onChange={e=>onChange(setRecordValue(data,record.id,title.id,e.target.value))}/>
     </label>}
     {bucket&&<label className="block space-y-1 text-xs font-medium">
-     Bucket ({bucket.name})<FieldEditor field={bucket} value={record.values[bucket.id]??""} readOnly={readOnly}
+     Bucket<FieldEditor field={bucket} value={record.values[bucket.id]??""} readOnly={readOnly}
       data={data} recordId={record.id} sources={sources}
       onSet={value=>onChange(setRecordValue(data,record.id,bucket.id,value))}/>
     </label>}
