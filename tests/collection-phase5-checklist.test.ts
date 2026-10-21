@@ -9,6 +9,7 @@ describe("Planner C checklist",()=>{
  it("toggles one item without mutating others and keeps no-ops reference stable",()=>{
   const changed=checklistToggle(items,"b",true);
   expect(changed[1].done).toBe(true);expect(changed[0]).toBe(items[0]);
+  expect(checklistTotals(changed).completed).toBe(2);
   expect(items[1].done).toBe(false);
   expect(checklistToggle(items,"b",false)).toBe(items);
  });
