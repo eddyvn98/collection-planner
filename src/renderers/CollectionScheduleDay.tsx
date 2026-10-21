@@ -18,7 +18,7 @@ function ScheduleTask({ data, view, record, today, readOnly, onOpen }: {
         : "border-blue-100 bg-blue-50 text-blue-900 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-200")}>
     <button type="button" {...drag.attributes} {...drag.listeners} disabled={readOnly}
       aria-label={"Drag " + recordTitle(data, record)}
-      className="shrink-0 cursor-grab rounded p-0.5 focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing">
+      className="shrink-0 cursor-grab touch-none rounded p-1.5 focus-visible:ring-2 focus-visible:ring-blue-500 active:cursor-grabbing">
       <GripVertical size={12} /></button>
     <button type="button" onClick={() => onOpen(record.id)} className="min-w-0 flex-1 truncate text-left font-medium"
       title={recordTitle(data, record)}>{recordTitle(data, record)}</button>
@@ -54,7 +54,7 @@ export function CollectionScheduleDay({ data, view, day, rows, today, outside, r
         <Plus size={14}/></button>}
     </div>
     {adding && !readOnly && <form className="mb-2 space-y-1" onSubmit={event => { event.preventDefault(); create(); }}>
-      <input autoFocus aria-label={"Task title for " + day} className="w-full rounded border p-1.5 text-xs text-slate-900"
+      <input autoFocus aria-label={"Task title for " + day} className="w-full rounded border border-slate-300 bg-white p-1.5 text-xs text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
         maxLength={300} placeholder="Task name" value={title} onChange={event => setTitle(event.target.value)}
         onKeyDown={event => { if (event.key === "Escape") setAdding(false); }} />
       <div className="flex gap-2"><button type="submit" disabled={!title.trim()} className="text-blue-700 disabled:opacity-40">Add</button>
