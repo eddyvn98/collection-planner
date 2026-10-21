@@ -4,7 +4,7 @@ on:
     branches: [feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   screenshots:
     runs-on: ubuntu-latest
@@ -47,3 +47,13 @@ jobs:
           path: screenshots/*.png
           if-no-files-found: warn
           retention-days: 30
+      - name: Publish visual comparison to branch
+        if: success()
+        run: |
+          STAGE=${GITHUB_REF_NAME##*-}
+          mkdir -p "docs/phase5/$STAGE"
+          cp screenshots/*.png "docs/phase5/$STAGE/"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/phase5
+          git diff --cached --quiet || (git commit -m "docs(ui-$STAGE): 1280px and 375px before-after screenshots [skip ci]" && git push origin HEAD:"$GITHUB_REF_NAME")
