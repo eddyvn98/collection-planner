@@ -3,7 +3,6 @@ import type { TaskFilterState } from "./collectionPlannerFilters";
 export type PlannerFilterKey = keyof TaskFilterState;
 export interface PlannerChip { key: PlannerFilterKey; label: string }
 export function activePlannerChips(data: CollectionBlockPayload, filters: TaskFilterState): PlannerChip[] {
- const buckets = data.fields.find(f => f.type === "select" && /^bucket$/i.test(f.name));
  const lookup = (name: "people"|"labels", id: string) =>
    (data[name] ?? []).find(item=>item.id===id)?.name ?? id;
  return ([
