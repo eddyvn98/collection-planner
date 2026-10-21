@@ -2,9 +2,9 @@ import { useState } from "react";
 import { gridFields, toggleGridField } from "../collections/collectionPlannerFilters";
 import { bulkUpdateGrid, type GridBulkAction } from "../collections/collectionGridActions";
 import { primaryField, type CollectionBlockPayload, type CollectionView } from "../collections/model";
-interface Props { data: CollectionBlockPayload; view: CollectionView; selectedIds: string[];
+interface Props { data: CollectionBlockPayload; view: CollectionView; visibleCount: number; selectedIds: string[];
  readOnly: boolean; onChange: (next: CollectionBlockPayload) => void; onClear: () => void; }
-export function CollectionGridToolbar({data,view,selectedIds,readOnly,onChange,onClear}:Props){
+export function CollectionGridToolbar({data,view,visibleCount,selectedIds,readOnly,onChange,onClear}:Props){
  const [action,setAction]=useState("progress:completed");
  const shown=gridFields(data,view);
  const apply=()=>{
@@ -14,7 +14,7 @@ export function CollectionGridToolbar({data,view,selectedIds,readOnly,onChange,o
     {kind,value} as GridBulkAction,readOnly));onClear();
  };
  return <div data-testid="planner-grid-toolbar" className="flex flex-wrap items-center gap-3 rounded-lg bg-white p-2 text-xs dark:bg-slate-900">
-  <strong className="text-slate-600 dark:text-slate-200">Grid · {data.records.length} tasks</strong>
+  <strong className="text-slate-600 dark:text-slate-200">Grid · {visibleCount} of {data.records.length} tasks</strong>
   <details className="relative">
    <summary className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 font-medium dark:border-slate-700">
      Columns ({shown.length}/{data.fields.length})
