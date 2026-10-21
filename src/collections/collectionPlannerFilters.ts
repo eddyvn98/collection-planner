@@ -1,5 +1,6 @@
 import { newId, primaryField, recordTitle, type CollectionBlockPayload,
   type CollectionRecord, type CollectionView } from "./model";
+import { isLegacyStatusField } from "./collectionPlannerFields";
 import { localToday, taskDate } from "./collectionTasks";
 
 export type TaskDueFilter = "all" | "overdue" | "today" | "next7" | "no_due";
@@ -78,7 +79,7 @@ export function deleteTaskFilterPreset(data: CollectionBlockPayload, id: string)
 export function gridFields(data: CollectionBlockPayload, view: CollectionView) {
   const hidden = new Set(view.gridHiddenFieldIds ?? []);
   const titleId = primaryField(data)?.id;
-  return data.fields.filter(field => field.id === titleId || !hidden.has(field.id));
+  return data.fields.filter(field => !isLegacyStatusField(field) && (field.id === titleId || !hidden.has(field.id)));
 }
 export function toggleGridField(data: CollectionBlockPayload, viewId: string,
   fieldId: string): CollectionBlockPayload {
