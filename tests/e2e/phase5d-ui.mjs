@@ -60,7 +60,7 @@ try{
   assert.equal(await pane.getByLabel("due formatted date").textContent(),"18/10/2026");
   await pane.getByRole("button",{name:"Task actions",exact:true}).click();
   await pane.getByRole("menuitem",{name:"Move task"}).click();
-  assert.equal(await pane.locator(\'[role="menu"] select[aria-label="Move task to bucket"]\').count(),1);
+  assert.equal(await pane.locator("[role=menu] select[aria-label='Move task to bucket']").count(),1);
   await page.keyboard.press("Escape");
   assert.equal(await pane.count(),0);
   assert.equal(await rich.locator("[data-board-card-focus]").evaluate(el=>document.activeElement===el),true);
