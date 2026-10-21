@@ -28,7 +28,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
    record={record} groupKey={group.key} readOnly={readOnly} onChange={onChange}
    onOpen={trigger=>onOpen(record.id,trigger)}/>;
  return <section ref={drop.setNodeRef} data-testid="collection-kanban-column" data-status={group.key}
-   className={"w-72 shrink-0 self-start rounded-md bg-[var(--planner-canvas)] p-2 "+
+   className={"w-[calc(100vw-24px)] max-w-[360px] shrink-0 snap-start self-start rounded-md sm:w-72 bg-[var(--planner-canvas)] p-2 "+
     (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}>
   <header className="mb-1 flex min-h-9 items-center gap-2">
    {renaming&&editable?<input autoFocus aria-label="Bucket name" value={name}
