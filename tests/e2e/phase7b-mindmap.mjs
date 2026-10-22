@@ -95,10 +95,16 @@ try {
   const undo=page.getByRole("button",{name:"Undo last change"}).first();
   assert(await undo.isVisible()&&await undo.isEnabled());
   await undo.click();
-  assert.equal((await records(page)).some(r=>r.id===created.id),false);
+  assert.equal((await records(page)).find(r=>r.id===created.id)?.values.name,"New sub-task",
+   "First Undo should revert the in-place rename");
+  await undo.click();
+  assert.equal((await records(page)).some(r=>r.id===created.id),false,
+   "Second Undo should remove the newly created child");
   const redo=page.getByRole("button",{name:"Redo last change"}).first();
   await redo.click();
-  assert.equal((await records(page)).some(r=>r.id===created.id),true);
+  await redo.click();
+  assert.equal((await records(page)).find(r=>r.id===created.id)?.values.name,"Draft child title",
+   "Redo should restore node creation and its name");
   console.log("PASS Mind Map visible Undo/Redo for branch creation");
   const dragSource=node(page,"sibling").locator("strong");
   const parentTarget=node(page,"root");
