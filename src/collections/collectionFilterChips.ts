@@ -12,7 +12,7 @@ export function activePlannerChips(data: CollectionBlockPayload, filters: TaskFi
   ["label", filters.label, "Label: "+lookup("labels",filters.label)],
   ["assignee", filters.assignee, "Assigned: "+(filters.assignee==="__unassigned__"?"Unassigned":lookup("people",filters.assignee))],
   ["progress", filters.progress??"", "Progress: "+(filters.progress??"").replaceAll("_"," ")],
-  ["priority", filters.priority, "Priority: "+filters.priority],
+  ["priority", filters.priority, "Priority: "+(filters.priority?filters.priority[0].toUpperCase()+filters.priority.slice(1):"")],
  ] as const).filter((entry)=>!!entry[1]).map(([key,,label])=>({key,label}));
 }
 export function clearPlannerChip(filters:TaskFilterState,key:PlannerFilterKey): TaskFilterState {
