@@ -1,6 +1,6 @@
 import { CollectionGridEditable } from "./CollectionGridEditable";
+import { Flag, Circle, CircleDot, CheckCircle2 } from "lucide-react";
 import { recordTitle } from "../collections/model";
-import { visibleGridTaskKeys } from "../collections/collectionPlannerFilters";
 import { CollectionGridMultiSelect } from "./CollectionGridMultiSelect";
 import type { ColumnDef } from "@tanstack/react-table";
 import { setTaskProgress } from "./collectionBoardGroups";
@@ -14,22 +14,33 @@ export function gridTaskColumns(data: () => CollectionBlockPayload,
     id, header: label, size, enableSorting: false,
     cell: ({ row }) => {
       const current = data(), record = row.original, title = recordTitle(current, record);
-      if (id === "__progress") return <select aria-label={"Progress for " + title}
-        className="w-full rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5 text-xs text-[var(--planner-text)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)] dark:text-white"
-        disabled={readOnly} value={record.progress ?? "not_started"}
-        onChange={e => save(setTaskProgress(current, record.id, e.target.value as TaskProgress))}>
-        {PROGRESS.map(p => <option value={p.value} key={p.value}>{p.label}</option>)}
-      </select>;
-      if (id === "__priority") return <select aria-label={"Priority for " + title}
-        className="w-full rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5 text-xs text-[var(--planner-text)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)] dark:text-white"
-        disabled={readOnly} value={record.priority ?? "medium"}
-        onChange={e => save(updateTask(current, record.id, { priority: e.target.value as TaskPriority }, "Changed priority"))}>
-        {PRIORITIES.map(p => <option value={p.value} key={p.value}>{p.label}</option>)}
-      </select>;
+      if (id === "__progress") {
+        const value=record.progress ?? "not_started";
+        return <CollectionGridEditable label={"Progress for "+title} value={value}
+          type="progress" options={PROGRESS} readOnly={readOnly}
+          onSave={next=>save(setTaskProgress(data(),record.id,next as TaskProgress))}>
+          <span className="inline-flex items-center gap-1.5">
+            {value==="completed"?<CheckCircle2 size={14} className="text-emerald-600"/>:
+              value==="in_progress"?<CircleDot size={14} className="text-[var(--planner-accent)]"/>:<Circle size={14}/>}
+            {PROGRESS.find(p=>p.value===value)?.label}
+          </span>
+        </CollectionGridEditable>;
+      }
+      if (id === "__priority") {
+        const value=record.priority ?? "medium";
+        return <CollectionGridEditable label={"Priority for "+title} value={value}
+          type="priority" options={PRIORITIES} readOnly={readOnly}
+          onSave={next=>save(updateTask(data(),record.id,{priority:next as TaskPriority},"Changed priority"))}>
+          {value==="medium"?null:<span className="inline-flex items-center gap-1.5">
+            <Flag size={14} className={value==="urgent"?"text-rose-600":value==="important"?"text-amber-600":"text-[var(--planner-secondary)]"}/>
+            {PRIORITIES.find(p=>p.value===value)?.label}
+          </span>}
+        </CollectionGridEditable>;
+      }
       return <CollectionGridMultiSelect data={data} record={record}
        kind={id==="__assignee"?"assignee":"label"} readOnly={readOnly} save={save}/>;
     },
   });
-  return [make("__progress", "Progress", 140), make("__priority", "Priority", 116),
-    make("__assignee", "Assignees", 148), make("__labels", "Labels", 132)];
+  return [make("__progress", "Progress", 132), make("__assignee", "Assignees", 148),
+    make("__priority", "Priority", 112), make("__labels", "Labels", 132)];
 }
