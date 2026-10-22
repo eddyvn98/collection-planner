@@ -4,6 +4,7 @@ import { Background, Controls, MiniMap, Position, ReactFlow, type Edge, type Nod
 import "@xyflow/react/dist/style.css";
 import type { CollectionBlockPayload, CollectionRecord } from "../collections/model";
 import { recordTitle, setParent } from "../collections/model";
+import { MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
 import { layoutMindMap } from "./collectionMindMapLayout";
 import { visibleMindMapSelection } from "./collectionMindMapSelection";
 import { hintClass, inputClass } from "./CollectionFieldEditor";
@@ -14,7 +15,7 @@ interface Props { rows: CollectionRecord[]; data: CollectionBlockPayload; readOn
 export function MindMapView({ rows, data, readOnly, onChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 200;
+  const PAGE_SIZE = MAX_VISIBLE_TREE_NODES;
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
   const graph = useMemo(() => layoutMindMap(rows, PAGE_SIZE, currentPage * PAGE_SIZE), [rows, currentPage]);
