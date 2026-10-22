@@ -18,8 +18,8 @@ try {
   for (const testCase of cases) {
     const column=page.locator('[data-testid="collection-kanban-column"]')
       .filter({has:page.locator("header h3",{hasText:testCase.bucket})}).first();
-    await column.locator("[data-planner-add-task]").click();
     const input=column.getByRole("textbox",{name:"New task in "+testCase.bucket});
+    if(!(await input.isVisible()))await column.locator("[data-planner-add-task]").click();
     await input.fill(testCase.title);
     if(testCase.method==="enter") await input.press("Enter");
     else await column.locator("form button[type=submit]").click();
