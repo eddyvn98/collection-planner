@@ -19,6 +19,8 @@ import { CollectionGridToolbar } from "./CollectionGridToolbar";
 import { CollectionGridAddRow } from "./CollectionGridAddRow";
 import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
 import { CollectionGridAddQuick } from "./CollectionGridAddRow";
+import { CollectionGridEditable } from "./CollectionGridEditable";
+import { visibleGridTaskKeys } from "../collections/collectionPlannerFilters";
 import { gridTaskColumns } from "./collectionGridTaskColumns";
 
 interface Props {
@@ -54,6 +56,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     previousFieldCount.current = data.fields.length;
   }, [data.fields.length]);
   const visibleFields = useMemo(() => gridFields(data, view), [data, view]);
+  const visibleTaskKeys = visibleGridTaskKeys(view);
   const selectedIds = selected.filter(id => rows.some(record => record.id === id));
   useEffect(() => {
     setSelected(ids => {
@@ -70,7 +73,10 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     const base = visibleFields.map(field => ({
     id: field.id, accessorFn: record => record.values[field.id] ?? "", header: () => field.name,
     sortingFn: field.type === "number" ? "basic" : "alphanumeric",
-    cell: ctx => field.type === "select"
+    cell: ctx => field.type === "date" ? <CollectionGridEditable label={`${field.name} for ${recordTitle(dataRef.current,ctx.row.original)}`}
+        value={ctx.row.original.values[field.id] ?? ""} type="date" readOnly={readOnly}
+        onSave={value=>patchRef.current(ctx.row.original,field,value)}/>
+      : field.type === "select"
       ? <CollectionSelectChip label={`${field.name} for ${recordTitle(dataRef.current, ctx.row.original)}`}
         value={ctx.row.original.values[field.id] ?? ""} options={field.options ?? []} disabled={readOnly}
         onChange={value => patchRef.current(ctx.row.original, field, value)} />
@@ -82,8 +88,8 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         recordId={ctx.row.original.id}
         compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
   })) as ColumnDef<CollectionRecord>[];
-    return [base[0], ...gridTaskColumns(() => dataRef.current, onChange, readOnly), ...base.slice(1)].filter(Boolean);
-  }, [visibleFields, readOnly, onChange]);
+    return [base[0], ...gridTaskColumns(() => dataRef.current, onChange, readOnly).filter(col => visibleTaskKeys.includes(col.id as typeof visibleTaskKeys[number])), ...base.slice(1)].filter(Boolean);
+  }, [visibleFields, visibleTaskKeys.join(","), readOnly, onChange]);
   const numericFieldIds = useMemo(() => new Set(data.fields.filter(field => field.type === "number").map(field => field.id)), [data.fields]);
   const table = useReactTable({
     // Bind TanStack only to the visible page, not thousands of input editors.
@@ -130,10 +136,10 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
       onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
       onOpen={setOpenRecordId} onChange={onChange}/>
-    {!page.rows.length && <p role="status" className="hidden rounded-lg border border-dashed p-4 text-center text-sm text-[var(--planner-secondary)] sm:block">
+    {!page.rows.length && <p role="status" className="rounded-lg border border-dashed p-4 text-center text-sm text-[var(--planner-secondary)]">
       No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
-    <div ref={tableScroll} className="hidden max-w-full overflow-x-auto rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
+    <div ref={tableScroll} className="hidden max-w-full overflow-x-auto rounded-md bg-[var(--planner-surface)] sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
     <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-sm text-[var(--planner-text)]" data-testid="collection-tanstack-table">
     <colgroup>
       <col style={{ width: 76 }} />
@@ -154,7 +160,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         return field ? <CollectionTableColumnHeader key={header.id} field={field} header={header} data={data}
           readOnly={readOnly} onChange={onChange} onOpenFieldSettings={onOpenFieldSettings}
           onRequestDelete={setPendingDeleteFieldId} onAdjustColumnSize={adjustColumnSize} /> :
-          <th key={header.id} className="sticky top-0 z-20 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-left font-semibold">
+          <th key={header.id} className="sticky top-0 z-20 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-left text-[11px] font-medium text-[var(--planner-secondary)]">
             {flexRender(header.column.columnDef.header, header.getContext())}</th>;
       })}
       <th style={{ width: 40 }} className="sticky top-0 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-1">
@@ -168,8 +174,8 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       </th>
       <th style={{ width: 108 }} className="border-b border-[var(--planner-border)]"> </th>
     </tr>)}</thead>
-    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id} className="h-10 hover:bg-[var(--planner-hover)]">
-      <td className="border-b border-[var(--planner-border)] p-1">
+    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id} className="h-10 border-b border-[var(--planner-border)] hover:bg-[var(--planner-hover)]">
+      <td className="p-0.5">
         <div className="flex items-center gap-1">
         <button type="button" aria-label={(row.original.progress==="completed"?"Reopen ":"Complete ")+recordTitle(data,row.original)}
           disabled={readOnly} className="grid h-8 w-8 place-items-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)]"
@@ -178,7 +184,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         </button><input type="checkbox" disabled={readOnly} checked={selectedIds.includes(row.original.id)}
         aria-label={"Select task " + recordTitle(data, row.original)} onChange={e => setSelected(current => e.target.checked
           ? [...new Set([...current, row.original.id])] : current.filter(id => id !== row.original.id))} /></div></td>
-      {row.getVisibleCells().map(cell => <td style={{ width: cell.column.getSize() }} className={`border-b border-[var(--planner-border)] p-1 ${numericFieldIds.has(cell.column.id) ? "text-right" : "text-left"}`} key={cell.id}>
+      {row.getVisibleCells().map(cell => <td style={{ width: cell.column.getSize() }} className={`p-0.5 ${numericFieldIds.has(cell.column.id) ? "text-right" : "text-left"}`} key={cell.id}>
         {flexRender(cell.column.columnDef.cell, cell.getContext())}
       </td>)}
       <td aria-hidden="true" />
