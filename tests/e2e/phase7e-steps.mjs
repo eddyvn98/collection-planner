@@ -76,6 +76,10 @@ function score(key,value){
 }
 async function test(width,attempt){
  const page=await open(width),toolbar=page.getByTestId("planner-unified-toolbar");
+ const quickCreate=toolbar.getByRole("textbox",{name:"Quick create task"});
+ const quickBounds=await quickCreate.boundingBox();
+ assert(quickBounds&&quickBounds.height>=44,
+  "Quick create task must be >=44px tall at "+width+"px: "+JSON.stringify(quickBounds));
  const a=card(page,"a"),dueButton=a.getByRole("button",{name:"Edit due date for Alpha"});
  await dueButton.click();
  await page.getByRole("dialog",{name:"Edit due date for Alpha"}).getByRole("button",{name:"Pick "+add(3)}).click();
@@ -91,7 +95,7 @@ async function test(width,attempt){
  await a.getByRole("button",{name:"Edit priority for Alpha"}).click();
  await page.getByRole("dialog",{name:"Edit priority for Alpha"}).getByRole("button",{name:"Urgent"}).click();
  await waitRecord(page,"a",{kind:"property",field:"priority",expected:"urgent"});score("priority",2);
- const input=toolbar.getByRole("textbox",{name:"Quick create task"});
+ const input=quickCreate;
  await input.fill("Release +3d @Mai #UI !urgent");
  await toolbar.getByTestId("quick-add-preview").locator('[data-token-kind="assignee"]').waitFor();
  await input.press("Enter");
@@ -99,6 +103,7 @@ async function test(width,attempt){
   .records.some(row=>row.values.name==="Release"));
  const release=(await saved(page)).records.find(row=>row.values.name==="Release");
  assert.equal(release.values.due,add(3));assert.deepEqual(release.assigneeIds,["mai"]);
+ await toolbar.getByText("Đã thêm công việc",{exact:true}).waitFor();
  score("quick-add",1);
  await toolbar.getByRole("button",{name:"Filters"}).click();
  await page.getByRole("dialog",{name:"Task filters"}).getByRole("button",{name:"Filter for Mai"}).click();
@@ -122,12 +127,14 @@ async function test(width,attempt){
   const alpha=card(page,"a"),beta=card(page,"b");
   await drag(page,alpha.getByRole("button",{name:"Drag dependency from Alpha renamed"}),beta);
   await waitRecord(page,"b",{kind:"member",field:"dependsOn",expected:"a"});
+  await page.getByRole("alert").filter({hasText:"Đã tạo phụ thuộc · Có thể hoàn tác"}).waitFor();
   score("dependency",1);
   const first=card(page,release.id).getByRole("button",{name:"Drag Release"});
   const destination=page.getByTestId("collection-kanban").locator(
    '[data-testid="collection-kanban-column"][data-status="bucket:Doing"] header');
   await drag(page,first,destination);
   await waitRecord(page,release.id,{kind:"value",field:"bucket",expected:"Doing"});
+  await page.getByTestId("planner-undo-toast").getByText("Đã di chuyển ·",{exact:true}).waitFor();
   score("bucket",1);
  }
  // The click right after a drop is lost while the board re-renders; wait for the Share button to stop moving.
