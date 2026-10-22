@@ -1,8 +1,9 @@
-import { CheckCircle2, Circle, CircleDot, Flag } from "lucide-react";
+import { CheckCircle2, Circle, CircleDot, Flag, Pencil, Trash2 } from "lucide-react";
 import { taskAssignees, taskDate, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { setTaskProgress } from "./collectionBoardGroups";
-import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
+import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
+import { deleteRecord, recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 interface Props {
  data:CollectionBlockPayload;rows:CollectionRecord[];selected:string[];readOnly:boolean;
  onSelect:(id:string,checked:boolean)=>void;onOpen:(id:string)=>void;
@@ -24,15 +25,22 @@ export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,
      </button>
      <button type="button" className="min-w-0 flex-1 truncate text-left text-sm font-medium focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
       onClick={()=>onOpen(record.id)} aria-label={"Open "+title}>{title}</button>
-     <input type="checkbox" className="h-4 w-4 shrink-0" aria-label={"Select task "+title}
-      disabled={readOnly} checked={selected.includes(record.id)}
-      onChange={e=>onSelect(record.id,e.target.checked)}/>
+     <button type="button" aria-label={"Select task "+title} aria-pressed={selected.includes(record.id)}
+      disabled={readOnly} onClick={()=>onSelect(record.id,!selected.includes(record.id))}
+      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[var(--planner-secondary)] focus-visible:ring-2">
+      {selected.includes(record.id)?<CheckCircle2 size={16} className="text-[var(--planner-accent)]"/>:<Circle size={16}/>}</button>
+     <button type="button" aria-label={"Edit "+title} title="Open task" onClick={()=>onOpen(record.id)}
+      className="grid h-8 w-8 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)]"><Pencil size={15}/></button>
+     <button type="button" aria-label={"Delete "+title} title="Delete task" disabled={readOnly}
+      onClick={()=>onChange(deleteRecord(data,record.id))}
+      className="grid h-8 w-8 shrink-0 place-items-center rounded text-[var(--planner-secondary)] hover:text-rose-600"><Trash2 size={14}/></button>
     </div>
     <button type="button" aria-label={"Edit "+title+" details"}
      className="ml-11 flex min-h-7 max-w-[calc(100%-2.75rem)] flex-wrap items-center gap-2 text-left text-[11px] text-[var(--planner-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
      onClick={()=>onOpen(record.id)}>
+     <CollectionBlockedBadge data={data} record={record}/>
      {due&&<span className={due<localToday()&&progress!=="completed"?"text-rose-600":""}>{formatPlannerCardDate(due,localToday())}</span>}
-     {record.priority&&record.priority!=="medium"&&<span className="inline-flex items-center gap-0.5"><Flag size={12}/>{record.priority}</span>}
+     {record.priority&&record.priority!=="medium"&&<span className="inline-flex items-center gap-0.5"><Flag size={12}/>{record.priority.charAt(0).toUpperCase()+record.priority.slice(1)}</span>}
      {labels.map(label=><span key={label.id} className="rounded px-1.5 py-0.5 text-white" style={{backgroundColor:/^#[0-9a-f]{6}$/i.test(label.color)?label.color:"#5B5FC7"}}>{label.name}</span>)}
      {people.map(person=><span key={person.id} className="rounded-full bg-[var(--planner-hover)] px-1.5 py-0.5" title={person.name}>{person.name}</span>)}
     </button>

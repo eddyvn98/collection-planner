@@ -27,7 +27,7 @@ export function CollectionTableColumnHeader({ field, header, data, readOnly, onC
   const [menuOpen,setMenuOpen]=useState(false);
   return <th ref={node => { drag.setNodeRef(node); drop.setNodeRef(node); }}
     style={{ width: header.getSize(), transform: CSS.Translate.toString(drag.transform), opacity: drag.isDragging ? 0.45 : 1 }}
-    className={`group sticky top-0 z-30 whitespace-nowrap border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-[var(--planner-text)] ${drop.isOver ? "ring-2 ring-inset ring-blue-400" : ""}`}>
+    className={`group sticky top-0 z-30 whitespace-nowrap border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-[11px] font-medium text-[var(--planner-secondary)] ${drop.isOver ? "ring-2 ring-inset ring-blue-400" : ""}`}>
     <div className="flex items-center gap-1">
       <button type="button" aria-label={`Reorder column ${field.name}`} title="Drag to reorder column"
         className="flex h-6 w-4 shrink-0 cursor-grab items-center justify-center rounded text-[var(--planner-secondary)] opacity-0 hover:bg-[var(--planner-surface)] group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing dark:hover:bg-[var(--planner-hover)]"
@@ -36,7 +36,7 @@ export function CollectionTableColumnHeader({ field, header, data, readOnly, onC
       </button>
       <CollectionFieldIcon type={field.type}/>
       <button type="button" disabled={readOnly} onClick={header.column.getToggleSortingHandler()}
-        className={`min-w-0 flex-1 truncate ${field.type === "number" ? "text-right" : "text-left"}`}
+        className={`min-w-0 flex-1 truncate ${header.column.getIsSorted() ? "font-semibold text-[var(--planner-accent)]" : "font-medium text-[var(--planner-secondary)]"} ${field.type === "number" ? "text-right" : "text-left"}`}
         aria-label={`Sort ${field.name}`} title="Shift-click to sort by multiple columns">
         {flexRender(header.column.columnDef.header, header.getContext())}
         {header.column.getIsSorted() === "asc" ? " ↑" : header.column.getIsSorted() === "desc" ? " ↓" : ""}

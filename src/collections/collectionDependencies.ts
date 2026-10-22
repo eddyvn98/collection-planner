@@ -1,5 +1,27 @@
 import type { CollectionBlockPayload, CollectionRecord } from "./model";
 
+/** A completed predecessor never blocks its successor. Broken historical IDs
+ * are ignored here; integrity diagnostics handle missing references. */
+export function blockingCollectionDependencies(data: CollectionBlockPayload,
+ record: CollectionRecord): CollectionRecord[] {
+ if(record.progress==="completed")return [];
+ const index = new Map(data.records.map(item => [item.id, item]));
+ return [...new Set(record.dependsOn ?? [])].flatMap(id => {
+  const item=index.get(id);
+  return item && item.progress!=="completed" ? [item] : [];
+ });
+}
+/** Can be selected as a new predecessor, excluding finished tasks and cycles.
+ * Already-selected tasks are managed separately, including finished ones. */
+export function availableCollectionDependencies(data: CollectionBlockPayload,
+ record: CollectionRecord): CollectionRecord[] {
+ const selected=new Set(record.dependsOn??[]);
+ if(selected.size>=20)return [];
+ return data.records.filter(item=>item.id!==record.id && item.progress!=="completed" &&
+  !selected.has(item.id) &&
+  validCollectionDependencies(data,record.id,[...selected,item.id]));
+}
+
 const DAY = 86400000;
 const dateMs = (value: string): number | null => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;

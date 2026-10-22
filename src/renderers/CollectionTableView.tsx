@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { Plus, Circle, CheckCircle2 } from "lucide-react";
+import { Plus, Circle, CheckCircle2, ExternalLink, Trash2 } from "lucide-react";
 import { setTaskProgress } from "./collectionBoardGroups";
 import { flexRender, getCoreRowModel, useReactTable,
   type ColumnDef, type SortingState } from "@tanstack/react-table";
@@ -18,6 +18,7 @@ import { CollectionGridAddRow } from "./CollectionGridAddRow";
 import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
 import { CollectionGridAddQuick } from "./CollectionGridAddRow";
 import { CollectionGridEditable } from "./CollectionGridEditable";
+import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { localToday } from "../collections/collectionTasks";
 import { visibleGridTaskKeys } from "../collections/collectionPlannerFilters";
@@ -73,7 +74,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     const base = visibleFields.map(field => ({
     id: field.id, accessorFn: record => record.values[field.id] ?? "", header: () => field.name,
     sortingFn: field.type === "number" ? "basic" : "alphanumeric",
-    cell: ctx => ["date","text","number","url","select"].includes(field.type)
+    cell: ctx => { const editor = ["date","text","number","url","select"].includes(field.type)
       ? <CollectionGridEditable label={`${field.name} for ${recordTitle(dataRef.current,ctx.row.original)}`}
          value={ctx.row.original.values[field.id] ?? ""} type={field.type} readOnly={readOnly}
          options={field.type==="select" ? [{value:"",label:"Unassigned"},...(field.options??[]).map(value=>({value,label:value}))] : undefined}
@@ -87,7 +88,13 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       : <FieldEditor field={field} value={ctx.row.original.values[field.id] ?? ""}
         readOnly={readOnly} data={dataRef.current} sources={sourcesRef.current}
         recordId={ctx.row.original.id}
-        compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
+        compact onSet={value => patchRef.current(ctx.row.original, field, value)} />;
+      return field.id !== visibleFields[0]?.id ? editor :
+        <div className="flex min-w-0 items-center gap-1">
+         <div className="min-w-0 flex-1">{editor}</div>
+         <CollectionBlockedBadge data={dataRef.current} record={ctx.row.original} compact/>
+        </div>;
+    },
   })) as ColumnDef<CollectionRecord>[];
     const task = gridTaskColumns(() => dataRef.current, onChange, readOnly)
       .filter(col => visibleTaskKeys.includes(col.id as typeof visibleTaskKeys[number]));
@@ -183,7 +190,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       </th>
       <th style={{ width: 108 }} className="border-b border-[var(--planner-border)]"> </th>
     </tr>)}</thead>
-    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id} className="h-10 border-b border-[var(--planner-border)] hover:bg-[var(--planner-hover)]">
+    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id} className="group h-10 border-b border-[var(--planner-border)] hover:bg-[var(--planner-hover)]">
       <td className="p-0.5">
         <div className="flex items-center gap-1">
         <button type="button" aria-label={(row.original.progress==="completed"?"Reopen ":"Complete ")+recordTitle(data,row.original)}
@@ -197,10 +204,11 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         {flexRender(cell.column.columnDef.cell, cell.getContext())}
       </td>)}
       <td aria-hidden="true" />
-      <td><button className={btnClass} aria-label={"Open " + recordTitle(data, row.original)}
-        onClick={() => setOpenRecordId(row.original.id)}>Open</button>
-        <button aria-label={"Delete " + recordTitle(data, row.original)} className={btnClass}
-        disabled={readOnly} onClick={() => onChange(deleteRecord(data, row.original.id))}>×</button></td>
+      <td><div className="flex items-center opacity-0 pointer-events-none transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+        <button className="grid h-8 w-8 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2" title="Open task" aria-label={"Open " + recordTitle(data, row.original)}
+          onClick={() => setOpenRecordId(row.original.id)}><ExternalLink size={14}/></button>
+        <button aria-label={"Delete " + recordTitle(data, row.original)} title="Delete task" className="grid h-8 w-8 place-items-center rounded text-[var(--planner-secondary)] hover:text-rose-600 focus-visible:ring-2"
+          disabled={readOnly} onClick={() => onChange(deleteRecord(data, row.original.id))}><Trash2 size={14}/></button></div></td>
     </tr>)}
     <CollectionGridAddRow data={data} colSpan={table.getAllLeafColumns().length + 3} readOnly={readOnly} onChange={onChange} />
     </tbody>

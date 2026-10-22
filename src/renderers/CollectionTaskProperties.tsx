@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { newId, type CollectionBlockPayload, type CollectionRecord, type TaskPriority, type TaskProgress } from "../collections/model";
 import { PROGRESS, PRIORITIES, updateTask, setTaskDate, taskDate, addTaskComment } from "../collections/collectionTasks";
-import { setCollectionDependencies } from "../collections/collectionDependencies";
+import { CollectionDependencyPicker } from "./CollectionDependencyPicker";
 import { CollectionChecklist } from "./CollectionChecklist";
 import { setTaskProgress } from "./collectionBoardGroups";
 import { inputClass } from "./CollectionFieldEditor";
@@ -65,10 +65,7 @@ export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
     <button type="submit" className="text-blue-600">Attach</button></form>}
   </section>
   <section className="space-y-2"><h3 className="text-sm font-semibold">Dependencies</h3>
-   {data.records.filter(r=>r.id!==record.id).map(r=><label key={r.id} className="mr-3 inline-flex gap-1 text-xs">
-    <input type="checkbox" disabled={readOnly} checked={!!record.dependsOn?.includes(r.id)}
-     onChange={e=>onChange(setCollectionDependencies(data,record.id,e.target.checked?[...(record.dependsOn??[]),r.id]:(record.dependsOn??[]).filter(id=>id!==r.id)))}/>
-    {r.values[data.fields[0]?.id]??r.id}</label>)}
+    <CollectionDependencyPicker data={data} record={record} readOnly={readOnly} onChange={onChange}/>
   </section>
   <section id="task-comments" className="scroll-mt-4 space-y-2"><h3 className="text-sm font-semibold">Comments</h3>
    {(record.comments??[]).map(c=><p key={c.id} className="rounded bg-[var(--planner-hover)] p-2 text-xs dark:bg-[var(--planner-surface)]">
