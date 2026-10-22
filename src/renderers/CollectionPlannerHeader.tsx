@@ -71,7 +71,7 @@ export function CollectionPlannerHeader(p:Props){
          onClick={()=>{p.onGroup(mode.value);setGroupMenu(false);}}>{mode.label}</button>)}
       </CollectionFloatingPanel>
     </div>}
-    <button title="Copy plan link" aria-label="Share plan" className={menuButton+" hidden sm:inline-flex"}
+    <button title="Copy page link (plan data stays local)" aria-label="Copy plan link" className={menuButton+" hidden sm:inline-flex"}
       onClick={()=>{void navigator.clipboard?.writeText(window.location.href).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2400);});}}><Share2 size={16}/></button>
     <button type="button" aria-label="Toggle dark theme from toolbar" title="Toggle dark mode"
       className={menuButton+" hidden lg:inline-flex"} onClick={()=>p.setDarkMode(!p.darkMode)}><Moon size={16}/></button>
@@ -110,7 +110,7 @@ export function CollectionPlannerHeader(p:Props){
          undo={p.undo} redo={p.redo} darkMode={p.darkMode} setDarkMode={p.setDarkMode}/>
       </CollectionFloatingPanel>
     </div>
-    {copied&&<span role="status" className="absolute right-2 top-full z-[100] rounded bg-[var(--planner-surface)] px-3 py-2 text-xs shadow-lg"><Check size={14} className="inline"/> Link copied</span>}
+    {copied&&<span role="status" className="absolute right-2 top-full z-[100] rounded bg-[var(--planner-surface)] px-3 py-2 text-xs shadow-lg"><Check size={14} className="inline"/> Page link copied · plan data stays local</span>}
     <div className="relative"><button ref={viewsRef} disabled={p.readOnly} aria-label="Add view" title="Add view" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setViewsMenu(!viewsMenu)}>
       <Plus size={16}/><span className="hidden xl:inline text-xs">View</span></button>
       <CollectionFloatingPanel open={viewsMenu} anchorRef={viewsRef} onClose={()=>setViewsMenu(false)}
