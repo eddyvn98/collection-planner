@@ -5,9 +5,9 @@ import type {CollectionBlockPayload,CollectionRecord} from "../collections/model
 type Kind="due"|"priority"|"labels"|"assignees";
 interface Props{kind:Kind;data:CollectionBlockPayload;record:CollectionRecord;
  readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;children:ReactNode;
- testId?:string;title:string;}
+ testId?:string;title:string;warning?:boolean;}
 const kindName:Record<Kind,string>={due:"due date",priority:"priority",labels:"labels",assignees:"assignees"};
-export function CollectionBoardQuickEdit({kind,data,record,readOnly,onChange,children,testId,title}:Props){
+export function CollectionBoardQuickEdit({kind,data,record,readOnly,onChange,children,testId,title,warning}:Props){
  const [open,setOpen]=useState(false),anchor=useRef<HTMLButtonElement>(null);
  const update=(ids:string[],field:"labelIds"|"assigneeIds")=>{
   const next=updateTask(data,record.id,{[field]:ids},"Updated task "+field);
@@ -23,7 +23,7 @@ export function CollectionBoardQuickEdit({kind,data,record,readOnly,onChange,chi
   <button ref={anchor} type="button" data-testid={testId} aria-label={label}
    title={label} aria-haspopup="dialog" aria-expanded={open} disabled={readOnly}
    onClick={event=>{event.stopPropagation();setOpen(value=>!value);}}
-   className="nodrag nopan inline-flex min-h-11 min-w-11 max-w-full items-center justify-center gap-1.5 rounded px-2 text-left text-xs text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] disabled:cursor-default">
+   className={"nodrag nopan inline-flex min-h-11 min-w-11 max-w-full items-center justify-center gap-1.5 rounded px-2 text-left text-xs hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] disabled:cursor-default "+(warning?"text-red-600 font-semibold":"text-[var(--planner-secondary)]")}>
    {children}
   </button>
   <CollectionFloatingPanel open={open} anchorRef={anchor} onClose={()=>setOpen(false)}
