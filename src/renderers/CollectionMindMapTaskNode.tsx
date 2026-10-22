@@ -1,4 +1,4 @@
-import {memo,useRef,useState} from "react";
+import {memo,useLayoutEffect,useRef,useState} from "react";
 import {Handle,Position,type Node,type NodeProps} from "@xyflow/react";
 import {ChevronDown,ChevronRight,Flag,Plus,CornerDownRight,CalendarDays,CheckCircle2} from "lucide-react";
 
@@ -12,6 +12,20 @@ export interface MindCardData extends Record<string,unknown>{
 export type MindCardNode=Node<MindCardData,"plannerTask">;
 function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
  const [draft,setDraft]=useState(data.label),cancel=useRef(false);
+ const renameInput=useRef<HTMLInputElement>(null);
+ useLayoutEffect(()=>{
+  if(!data.isEditing)return;
+  const input=renameInput.current;
+  if(!input)return;
+  // React Flow manages focus on nodes; return it to the newly mounted editor.
+  input.focus({preventScroll:true});input.select();
+  const frame=requestAnimationFrame(()=>{
+   if(input.isConnected&&document.activeElement!==input){
+    input.focus({preventScroll:true});input.select();
+   }
+  });
+  return()=>cancelAnimationFrame(frame);
+ },[data.isEditing,data.id]);
  const commit=()=>{if(!cancel.current)data.onSave(data.id,draft);};
  const shades=["#5B5FC7","#0F6CBD","#107C41","#A14ABC","#C45B08"];
  const tone=shades[[...data.bucket].reduce((sum,char)=>sum+char.charCodeAt(0),0)%shades.length];
@@ -24,7 +38,7 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
   <div className="flex min-h-8 items-start gap-1">
    <span className="mt-0.5 h-5 w-1 shrink-0 rounded-full" style={{backgroundColor:data.progress==="completed"?"#238636":
     data.priority==="urgent"?"#d13438":data.priority==="important"?"#ff8c00":"var(--planner-accent)"}}/>
-   {data.isEditing?<input data-mindmap-rename={data.id} autoFocus aria-label={"Rename "+data.label} defaultValue={data.label}
+   {data.isEditing?<input ref={renameInput} data-mindmap-rename={data.id} autoFocus aria-label={"Rename "+data.label} defaultValue={data.label}
      onFocus={event=>{cancel.current=false;event.currentTarget.select();setDraft(event.currentTarget.value);}}
      onChange={event=>setDraft(event.target.value)}
      onKeyDown={event=>{event.stopPropagation();if(event.key==="Enter")commit();
