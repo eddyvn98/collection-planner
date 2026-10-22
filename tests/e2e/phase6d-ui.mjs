@@ -55,7 +55,7 @@ try{
   assert((await saved(page)).records.some(x=>x.values.name==="Write release notes"&&x.parentId==="root"));
   await input.fill("Run final QA");await input.press("Enter");
   assert((await saved(page)).records.filter(x=>x.parentId==="root").length===3);
-  await drawer.locator('[data-subtask-id="design"]').getByRole("button",{name:"Design"}).first().click();
+  await drawer.locator('[data-subtask-id="design"]').getByRole("button",{name:"Design",exact:true}).click();
   await page.getByRole("dialog",{name:"Task Design"}).waitFor();
   const breadcrumb=page.getByRole("navigation",{name:"Task hierarchy"});
   assert((await breadcrumb.textContent()).includes("Project"));
