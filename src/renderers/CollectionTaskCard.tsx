@@ -3,7 +3,6 @@ import { useRef,useState } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
  MessageCircle, Paperclip, StickyNote } from "lucide-react";
-import { buildTaskTree } from "../collections/collectionTaskTree";
 import { deleteRecord,recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 import { taskAssignees, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
@@ -14,15 +13,16 @@ import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
  data:CollectionBlockPayload;record:CollectionRecord;groupKey:string;readOnly:boolean;
  onChange:(data:CollectionBlockPayload)=>void;onOpen:(trigger:HTMLButtonElement)=>void;
+ descendants?:{done:number;total:number};
 }
-export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpen}:Props){
+export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,onChange,onOpen}:Props){
  const tap=useRef<{id:number;x:number;y:number}|null>(null);
  const titleRef=useRef<HTMLButtonElement>(null);
  const [confirmDelete,setConfirmDelete]=useState(false);
  const drag=useDraggable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const drop=useDroppable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const title=recordTitle(data,record),complete=record.progress==="completed";
- const hasChildren=(buildTaskTree(data.records).children.get(record.id)?.length??0)>0;
+ const hasChildren=(descendants?.total??0)>0;
  const indicators=cardIndicators(data,record);
  const due=indicators.due,late=indicators.overdue;
  const people=taskAssignees(data,record);
@@ -74,6 +74,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
   </div>
   <div className="mt-1.5 flex flex-wrap items-center gap-3 pl-1 text-xs text-[var(--planner-secondary)]">
    <CollectionBlockedBadge data={data} record={record}/>
+   {!!descendants?.total&&<span data-testid="task-descendant-count" title="Completed sub-tasks / all descendants" className="rounded bg-[var(--planner-hover)] px-1.5 py-0.5">{descendants.done}/{descendants.total}</span>}
    {indicators.priority&&<span data-testid="card-priority" title={"Priority "+record.priority}
      className="flex gap-1 text-red-600"><Flag size={15} strokeWidth={1.75}/>{formatPlannerPriority(record.priority??"")}</span>}
    {!!indicators.checklist&&<span data-testid="card-checklist" title="Checklist" className="flex gap-1"><ClipboardCheck size={15}/>{indicators.checklist}</span>}
