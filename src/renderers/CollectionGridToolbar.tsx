@@ -1,7 +1,8 @@
+import { Columns3 } from "lucide-react";
 import { useRef, useState } from "react";
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
-import { gridFields, toggleGridField } from "../collections/collectionPlannerFilters";
+import { gridFields, visibleGridTaskKeys, GRID_TASK_COLUMNS, toggleGridField } from "../collections/collectionPlannerFilters";
 import { bulkUpdateGrid, type GridBulkAction } from "../collections/collectionGridActions";
 import { visiblePlannerFields } from "../collections/collectionPlannerFields";
 import { primaryField, type CollectionBlockPayload, type CollectionView } from "../collections/model";
@@ -14,22 +15,26 @@ export function CollectionGridToolbar({data,view,visibleCount,selectedIds,readOn
  const bulkRef=useRef<HTMLButtonElement>(null);
  const columnsRef=useRef<HTMLButtonElement>(null);
  const shown=gridFields(data,view);
+ const shownTasks=visibleGridTaskKeys(view);
+ const total=visiblePlannerFields(data).length+GRID_TASK_COLUMNS.length;
+ const visible=shown.length+shownTasks.length;
  const apply=()=>{
   const [kind,value]=action.split(":");
   if(kind==="delete"){setConfirmDelete(true);return; }
   onChange(bulkUpdateGrid(data,selectedIds,kind==="delete"?{kind:"delete"}:
     {kind,value} as GridBulkAction,readOnly));onClear();
  };
- return <div data-testid="planner-grid-toolbar" className="flex flex-wrap items-center gap-3 rounded-lg bg-[var(--planner-surface)] p-2 text-[var(--planner-text)] text-xs ">
+ return <div data-testid="planner-grid-toolbar" className="flex flex-wrap items-center gap-2 py-1 text-[var(--planner-text)] text-xs ">
   <strong className="text-[var(--planner-secondary)]">Grid · {visibleCount} of {data.records.length} {data.records.length===1?"task":"tasks"}</strong>
   <div className="relative">
    <button ref={columnsRef} type="button" aria-label="Grid column visibility" aria-expanded={columnsOpen}
-    className="min-h-9 rounded-lg border border-[var(--planner-border)] px-3 py-2 font-medium hover:bg-[var(--planner-hover)] focus-visible:ring-2"
+    className="flex min-h-9 items-center gap-1 rounded-lg px-2 font-medium hover:bg-[var(--planner-hover)] focus-visible:ring-2"
     onClick={()=>setColumnsOpen(!columnsOpen)}>
-     Columns ({shown.length + 4}/{visiblePlannerFields(data).length + 4})
+     <Columns3 size={16}/><span className="rounded-full bg-[var(--planner-hover)] px-1.5 text-[10px]">{visible}/{total}</span>
    </button>
    <CollectionFloatingPanel open={columnsOpen} anchorRef={columnsRef} onClose={()=>setColumnsOpen(false)}
     role="dialog" label="Grid column visibility" className="w-64 rounded-lg p-2">
+    {GRID_TASK_COLUMNS.map(item=><label key={item.id} className="flex min-h-9 items-center gap-2 px-2 py-1.5 text-sm"><input type="checkbox" aria-label={"Show column "+item.name} checked={shownTasks.includes(item.id)} disabled={readOnly} onChange={()=>onChange(toggleGridField(data,view.id,item.id))}/>{item.name}</label>)}
     {visiblePlannerFields(data).map(field=><label key={field.id}
       className="flex min-h-9 items-center gap-2 px-2 py-1.5 text-sm">
      <input type="checkbox" aria-label={"Show column "+field.name}
