@@ -81,7 +81,15 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         recordId={ctx.row.original.id}
         compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
   })) as ColumnDef<CollectionRecord>[];
-    return [base[0], ...gridTaskColumns(() => dataRef.current, onChange, readOnly).filter(col => visibleTaskKeys.includes(col.id as typeof visibleTaskKeys[number])), ...base.slice(1)].filter(Boolean);
+    const task = gridTaskColumns(() => dataRef.current, onChange, readOnly)
+      .filter(col => visibleTaskKeys.includes(col.id as typeof visibleTaskKeys[number]));
+    const primary = base[0];
+    const due = base.find(col => dataRef.current.fields.some(field =>
+      field.id === col.id && field.type === "date" && /^(due|deadline|end)( date)?$/i.test(field.name.trim())));
+    const first = (id: string) => task.find(col => col.id === id);
+    const remaining = base.slice(1).filter(col => col !== due);
+    return [primary, first("__progress"), first("__assignee"), due,
+      first("__priority"), first("__labels"), ...remaining].filter(Boolean) as ColumnDef<CollectionRecord>[];
   }, [visibleFields, visibleTaskKeys.join(","), readOnly, onChange]);
   const numericFieldIds = useMemo(() => new Set(data.fields.filter(field => field.type === "number").map(field => field.id)), [data.fields]);
   const table = useReactTable({
