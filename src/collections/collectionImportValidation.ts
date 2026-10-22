@@ -158,6 +158,7 @@ export function validateCollectionImport(value: unknown): CollectionBlockPayload
     }
   }
   validateParents(rows);
+  validateDependencies(rows, records);
   const parents=new Map(rows.map(row=>[row.id as string,row.parentId as string|null|undefined]));
   for(const row of rows)for(const other of row.dependsOn as string[] ?? []){
    const ancestor=(a:string,b:string)=>{
@@ -168,7 +169,6 @@ export function validateCollectionImport(value: unknown): CollectionBlockPayload
    if(ancestor(other,row.id as string)||ancestor(row.id as string,other))
     throw new Error("Collection dependency cannot connect ancestor and descendant");
   }
-  validateDependencies(rows, records);
   validateViews(value.views, fields);
   return value as unknown as CollectionBlockPayload;
 }
