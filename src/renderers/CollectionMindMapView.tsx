@@ -93,14 +93,13 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const pointerTarget=(id:string,event:DragPointer)=>{
   const p="changedTouches" in event?event.changedTouches[0]:event;
   const choices=[...root.current?.querySelectorAll<HTMLElement>(".react-flow__node[data-id]")??[]]
-   .filter(el=>el.dataset.id!==id&&el.dataset.id)
+   .filter(el=>el.dataset.id!==id&&el.dataset.id&&canSetTaskParent(data.records,id,el.dataset.id))
    .map(el=>{const rect=el.getBoundingClientRect();
     const dx=Math.max(rect.left-p.clientX,0,p.clientX-rect.right);
     const dy=Math.max(rect.top-p.clientY,0,p.clientY-rect.bottom);
     return {id:el.dataset.id!,distance:Math.hypot(dx,dy)};})
-   .filter(item=>item.distance<=32)
    .sort((a,b)=>a.distance-b.distance);
-  return choices.find(item=>canSetTaskParent(data.records,id,item.id))?.id??null;
+  return (choices[0]?.distance??Infinity)<=32?choices[0].id:null;
  };
  const drop=(id:string,x:number,y:number,event:DragPointer)=>{
   const target=pointerTarget(id,event)??dragTarget(id,x,y);
