@@ -102,7 +102,7 @@ async function test(width,attempt){
  score("quick-add",1);
  await toolbar.getByRole("button",{name:"Filters"}).click();
  await page.getByRole("dialog",{name:"Task filters"}).getByRole("button",{name:"Filter for Mai"}).click();
- await page.getByRole("button",{name:"Remove Assignee: Mai"}).waitFor();
+ await page.getByRole("button",{name:"Remove Assigned: Mai"}).waitFor();
  score("filter-person",2);
  await toolbar.getByRole("button",{name:"Filters"}).click();
  await page.getByRole("dialog",{name:"Task filters"}).getByRole("button",{name:"Filter for Everyone"}).click();
