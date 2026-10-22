@@ -25,6 +25,16 @@ const open=async(width,theme)=>{
  return page;
 };
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem("collection-planner:v1")));
+async function drag(page,source,target){
+ const a=await source.boundingBox(),b=await target.boundingBox();
+ assert(a&&b,"Missing drag source or target");
+ await page.mouse.move(a.x+a.width/2,a.y+a.height/2);
+ await page.mouse.down();
+ await page.mouse.move(a.x+a.width/2+12,a.y+a.height/2+5,{steps:8});
+ await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:24});
+ await page.waitForTimeout(160);
+ await page.mouse.up();
+}
 try{
  if(out){
   await mkdir(out,{recursive:true});
@@ -83,6 +93,21 @@ try{
   assert(result.records.find(x=>x.id==="design")?.parentId==null);
   console.log("PASS Board direct branch-delete promotion at 375px");
   await mobile.close();
+  const board=await open(1280,"light");
+  await board.getByRole("checkbox",{name:"Show sub-tasks"}).check();
+  const from=board.locator('[data-testid="collection-kanban-card"][data-record-id="ship"]').getByRole("button",{name:"Drag Ship"});
+  const destination=board.locator('[data-testid="collection-kanban-card"][data-record-id="design"]').getByTestId("board-make-subtask-target");
+  await drag(board,from,destination);
+  assert((await saved(board)).records.find(row=>row.id==="ship")?.parentId==="design");
+  console.log("PASS Board pointer drop onto Make sub-task of target");
+  await board.close();
+  const grid=await open(1280,"light");
+  await grid.getByRole("button",{name:"Grid",exact:true}).click();
+  const target=grid.getByTestId("collection-tanstack-table").locator('[data-record-id="root"]').getByTestId("tree-drop-child");
+  await drag(grid,grid.getByTestId("collection-tanstack-table").locator('[data-record-id="ship"]').getByRole("button",{name:"Move Ship"}),target);
+  assert((await saved(grid)).records.find(row=>row.id==="ship")?.parentId==="root");
+  console.log("PASS Grid pointer drop to parent");
+  await grid.close();
  }
 }catch(e){console.error("FAIL Phase 6D UI",e);process.exitCode=1;}
 finally{await browser.close();}
