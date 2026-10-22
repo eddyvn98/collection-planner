@@ -64,9 +64,9 @@ export function useGridSpreadsheet({data,rows,selectedIds,readOnly,onChange}:Pro
   // Inputs finish their own Enter commit; focus moves after React renders.
   const table=event.currentTarget;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-   const destination=[...table.querySelectorAll<HTMLTableRowElement>("tbody tr[data-record-id]")]
-    .find(tr=>tr.dataset.recordId===records[finalRow])
-    ?.querySelectorAll<HTMLTableCellElement>("td[data-grid-field]")??[]]
+   const targetRow=[...table.querySelectorAll<HTMLTableRowElement>("tbody tr[data-record-id]")]
+    .find(tr=>tr.dataset.recordId===records[finalRow]);
+   const destination=[...(targetRow?.querySelectorAll<HTMLTableCellElement>("td[data-grid-field]")??[])]
     .find(td=>td.dataset.gridField===fields[nextCol]);
    destination?.querySelector<HTMLButtonElement>("[data-grid-cell-editor]")?.focus();
   }));
