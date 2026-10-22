@@ -70,14 +70,15 @@ export function CollectionFormView({ data, sources, view, readOnly, onChange }: 
       <div className="mb-1 flex min-h-11 items-center gap-2">
        <CollectionReorderHandle kind="form" itemId={field.id} label={field.name}
         items={order} disabled={readOnly} onMove={move}/>
-       <label htmlFor={"form-field-"+field.id} className="min-w-0 flex-1 text-xs font-semibold">
+       <span className="min-w-0 flex-1 text-xs font-semibold">
         {field.name}{required.has(field.id)?" *":""}
-       </label>
+       </span>
       </div>
-      <div id={"form-field-"+field.id}>
+      <label className="block text-xs">
+       <span className="sr-only">{field.name}</span>
        <FormInput field={field} data={data} sources={sources} readOnly={readOnly} required={required.has(field.id)}
         value={draft[field.id] ?? ""} onSet={value => {setDraft(previous=>({...previous,[field.id]:value}));setFeedback("");}}/>
-      </div>
+      </label>
     </div>)}
     <button type="submit" className={btnClass} disabled={readOnly || !fields.length || data.records.length >= 5000}>Submit record</button>
     {readOnly && <p className={hintClass}>Read-only access: submissions are disabled.</p>}
