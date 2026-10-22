@@ -160,7 +160,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       onView={index=>{const kind=(["table","kanban","calendar","charts"] as const)[index];
        const item=data.views.find(v=>v.kind===kind);if(item){setAssignedMode(false);
         if(readOnly)setLocalViewId(item.id);else onChange({...data,activeViewId:item.id});}}}
-      onEscape={()=>{setTaskFilters({...EMPTY_TASK_FILTERS});setSearch("");setSettings(false);}} />
+      onEscape={()=>{setTaskFilters({...EMPTY_TASK_FILTERS});setSearch("");setSettings(false);setShowHistory(false);}} />
     <CollectionPlannerHeader data={data} view={view} readOnly={readOnly}
       onDataChange={onChange} assignedMode={assignedMode} onAssignedMode={setAssignedMode}
       filters={taskFilters} onFilters={setTaskFilters}
@@ -265,7 +265,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       {!assignedMode&&view.kind === "timeline" && <TimelineView rows={rows} data={data} start={date} end={end} readOnly={readOnly} patch={patch} onChange={onChange} />}
       {!assignedMode&&view.kind === "mindmap" && <MindMapView rows={rows} data={data} readOnly={readOnly} onChange={onChange} />}
       {!assignedMode&&view.kind === "form" && <CollectionFormView data={data} sources={sources} view={view} readOnly={readOnly} onChange={onChange} />}
-      {!assignedMode&&!rows.length && view.kind !== "form" && <div className="p-4 text-center text-xs text-[var(--planner-secondary)]">No matching records. Add one to get started.</div>}
+      {!assignedMode&&!rows.length && view.kind !== "form" && view.kind !== "table" && <div className="p-4 text-center text-xs text-[var(--planner-secondary)]">No matching records. Add one to get started.</div>}
     </div>
     </div>
     {view.kind !== "table" && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">

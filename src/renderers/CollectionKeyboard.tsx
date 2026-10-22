@@ -12,13 +12,13 @@ export function CollectionKeyboard({root,undo,redo,onEscape,onView,disabled}:{
    const editing=target.matches("input,textarea,select,[contenteditable=true]")||
     !!target.closest("[contenteditable=true]");
    const dialog=target.closest('[role="dialog"],[role="alertdialog"]');
-   if(dialog)return;
+   if(dialog && event.key!=="Escape")return;
    const mod=event.ctrlKey||event.metaKey;
    if(mod&&event.key.toLowerCase()==="z"&&!editing&&!disabled){
     event.preventDefault();(event.shiftKey?redo:undo)();return;
    }
    if(event.key==="Escape"&&editing&&target.matches('[aria-label^="New task in "]'))return;
-   if(event.key==="Escape"){onEscape();return;}
+   if(event.key==="Escape"){document.dispatchEvent(new Event("planner:escape"));onEscape();return;}
    if(editing||event.altKey||mod)return;
    if(event.key==="/"){event.preventDefault();
     document.dispatchEvent(new Event("planner:focus-search"));return;}

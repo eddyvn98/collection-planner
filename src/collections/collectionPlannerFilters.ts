@@ -81,16 +81,38 @@ export function deleteTaskFilterPreset(data: CollectionBlockPayload, id: string)
   if (!data.savedTaskFilters?.some(p => p.id === id)) return data;
   return { ...data, savedTaskFilters: data.savedTaskFilters.filter(p => p.id !== id) };
 }
-export function gridFields(data: CollectionBlockPayload, view: CollectionView) {
+export const GRID_TASK_COLUMNS = [
+  { id: "__progress", name: "Progress" }, { id: "__assignee", name: "Assignees" },
+  { id: "__priority", name: "Priority" }, { id: "__labels", name: "Labels" },
+] as const;
+export type GridTaskColumnId = typeof GRID_TASK_COLUMNS[number]["id"];
+
+/** New views start with Name + Due + four task properties (six columns max).
+ * Existing configured views retain their explicit visibility choices. */
+export function initialGridHiddenFields(data: CollectionBlockPayload): string[] {
+  const title = primaryField(data)?.id;
+  const due = data.fields.find(field => field.type === "date" &&
+    /^(due|deadline|end)( date)?$/i.test(field.name.trim()))?.id;
+  return data.fields.filter(field => !isLegacyStatusField(field) &&
+    field.id !== title && field.id !== due).map(field => field.id);
+}
+export function visibleGridTaskKeys(view: CollectionView): GridTaskColumnId[] {
   const hidden = new Set(view.gridHiddenFieldIds ?? []);
+  return GRID_TASK_COLUMNS.map(item => item.id).filter(id => !hidden.has(id));
+}
+export function gridFields(data: CollectionBlockPayload, view: CollectionView) {
+  const hidden = new Set(view.gridHiddenFieldIds ?? initialGridHiddenFields(data));
   const titleId = primaryField(data)?.id;
-  return data.fields.filter(field => !isLegacyStatusField(field) && (field.id === titleId || !hidden.has(field.id)));
+  return data.fields.filter(field => !isLegacyStatusField(field) &&
+    (field.id === titleId || !hidden.has(field.id)));
 }
 export function toggleGridField(data: CollectionBlockPayload, viewId: string,
   fieldId: string): CollectionBlockPayload {
   const view = data.views.find(v => v.id === viewId);
-  if (!view || !data.fields.some(f => f.id === fieldId) || primaryField(data)?.id === fieldId) return data;
-  const hidden = new Set(view.gridHiddenFieldIds ?? []);
+  const isTask = GRID_TASK_COLUMNS.some(item => item.id === fieldId);
+  if (!view || (!isTask && !data.fields.some(f => f.id === fieldId)) ||
+    primaryField(data)?.id === fieldId) return data;
+  const hidden = new Set(view.gridHiddenFieldIds ?? initialGridHiddenFields(data));
   if (hidden.has(fieldId)) hidden.delete(fieldId);
   else hidden.add(fieldId);
   return { ...data, views: data.views.map(v => v.id === viewId

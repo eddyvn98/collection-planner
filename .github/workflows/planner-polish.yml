@@ -52,3 +52,23 @@ jobs:
           node tests/e2e/phase5f-portals.mjs
           node tests/e2e/phase5g-keyboard.mjs
           node tests/e2e/phase6a-ui.mjs
+          node tests/e2e/grid-airy.mjs
+      - name: Capture before and after Grid screenshots (1280/375, light/dark)
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/grid-artifacts/before /tmp/grid-artifacts/after
+          SCREENSHOT_OUTPUT=/tmp/grid-artifacts/after node tests/e2e/grid-airy.mjs
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/grid-before FETCH_HEAD
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/grid-before/node_modules
+          (cd /tmp/grid-before && node_modules/.bin/vite --host 127.0.0.1 --port 4174 > /tmp/grid-before.log 2>&1) &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4174/ > /dev/null; then break; fi
+            sleep 1
+          done
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4174 SCREENSHOT_OUTPUT=/tmp/grid-artifacts/before node tests/e2e/grid-airy.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && github.event_name == 'pull_request'
+        with:
+          name: grid-airy-before-after
+          path: /tmp/grid-artifacts/

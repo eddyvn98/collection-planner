@@ -1,4 +1,6 @@
 import {useRef,useState} from "react";
+import {formatPlannerCardDate} from "../collections/collectionDateDisplay";
+import {localToday} from "../collections/collectionTasks";
 import {Bell,X} from "lucide-react";
 import {CollectionFloatingPanel} from "./CollectionFloatingPanel";
 import {CollectionRecordDetails} from "./CollectionRecordDetails";
@@ -27,7 +29,7 @@ export function CollectionReminderCenter({data,readOnly,onChange}:{
     <button className="min-h-10 min-w-0 flex-1 text-left text-sm hover:text-[var(--planner-accent)]"
      onClick={()=>{setOpen(false);setTask(item.record.id);}}>
       <span className="font-medium">{recordTitle(data,item.record)}</span>
-      <span className="block text-xs text-[var(--planner-secondary)]">{item.kind==="overdue"?"Overdue":"Due today"} · {item.due}</span>
+      <span className="block text-xs text-[var(--planner-secondary)]">{item.kind==="overdue"?"Overdue":"Due today"} · {formatPlannerCardDate(item.due,localToday())}</span>
     </button>
     <button aria-label={"Dismiss "+recordTitle(data,item.record)} className="grid h-9 w-9 place-items-center rounded hover:bg-[var(--planner-hover)]"
       onClick={()=>dismiss(item.id)}><X size={15}/></button>

@@ -1,50 +1,44 @@
-import { PROGRESS, PRIORITIES, taskAssignees, updateTask } from "../collections/collectionTasks";
+import { CheckCircle2, Circle, CircleDot, Flag } from "lucide-react";
+import { taskAssignees, taskDate, localToday } from "../collections/collectionTasks";
+import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { setTaskProgress } from "./collectionBoardGroups";
-import { recordTitle, type CollectionBlockPayload, type CollectionRecord, type TaskPriority, type TaskProgress } from "../collections/model";
+import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 interface Props {
-  data:CollectionBlockPayload; rows:CollectionRecord[]; selected:string[]; readOnly:boolean;
-  onSelect:(id:string,checked:boolean)=>void; onOpen:(id:string)=>void;
-  onChange:(next:CollectionBlockPayload)=>void;
+ data:CollectionBlockPayload;rows:CollectionRecord[];selected:string[];readOnly:boolean;
+ onSelect:(id:string,checked:boolean)=>void;onOpen:(id:string)=>void;
+ onChange:(next:CollectionBlockPayload)=>void;
 }
-export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,onOpen,onChange}:Props) {
-  return <div data-testid="collection-mobile-grid" className="space-y-2 p-2 sm:hidden">
-    {rows.map(record=>{
-      const people=taskAssignees(data,record);
-      const labels=(data.labels??[]).filter(label=>record.labelIds?.includes(label.id));
-      return <article key={record.id} className="rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-3 text-[var(--planner-text)] shadow-sm">
-        <header className="flex items-start gap-2">
-          <input aria-label={"Select task "+recordTitle(data,record)} type="checkbox" checked={selected.includes(record.id)}
-            disabled={readOnly} onChange={e=>onSelect(record.id,e.target.checked)} className="mt-1"/>
-          <button type="button" aria-label={"Open "+recordTitle(data,record)}
-            onClick={()=>onOpen(record.id)} className="min-w-0 flex-1 text-left text-sm font-semibold focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
-            {recordTitle(data,record)}</button>
-        </header>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <label className="text-xs">Progress
-            <select aria-label={"Progress for "+record.id} value={record.progress??"not_started"} disabled={readOnly}
-              className="mt-1 w-full rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5 text-xs text-[var(--planner-text)]"
-              onChange={e=>onChange(setTaskProgress(data,record.id,e.target.value as TaskProgress))}>
-              {PROGRESS.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}
-            </select></label>
-          <label className="text-xs">Priority
-            <select aria-label={"Priority for "+record.id} value={record.priority??"medium"} disabled={readOnly}
-              className="mt-1 w-full rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5 text-xs text-[var(--planner-text)]"
-              onChange={e=>onChange(updateTask(data,record.id,{priority:e.target.value as TaskPriority},"Changed priority"))}>
-              {PRIORITIES.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}
-            </select></label>
-          <div className="min-w-0 text-xs"><strong>Assignees</strong>
-            <div className="mt-1 flex flex-wrap gap-1">{people.length ? people.map(p=>
-              <span key={p.id} className="rounded bg-blue-100 px-1.5 py-1 text-blue-900">{p.name}</span>)
-              : <span className="text-[var(--planner-secondary)]">Unassigned</span>}</div></div>
-          <div className="min-w-0 text-xs"><strong>Labels</strong>
-            <div className="mt-1 flex flex-wrap gap-1">{labels.length ? labels.map(p=>
-              <span key={p.id} className="rounded px-1.5 py-1 text-white"
-                style={{backgroundColor:/^#[0-9a-f]{6}$/i.test(p.color)?p.color:"#475569"}}>{p.name}</span>)
-              : <span className="text-[var(--planner-secondary)]">No labels</span>}</div></div>
-        </div>
-      </article>;
-    })}
-    {!rows.length&&<p role="status" className="rounded-xl border border-dashed p-6 text-center text-sm text-[var(--planner-secondary)]">
-      No matching tasks. Change your filters or add a task.</p>}
-  </div>;
+export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,onOpen,onChange}:Props){
+ return <div data-testid="collection-mobile-grid" className="space-y-1 sm:hidden">
+  {rows.map(record=>{
+   const title=recordTitle(data,record),people=taskAssignees(data,record);
+   const labels=(data.labels??[]).filter(label=>record.labelIds?.includes(label.id));
+   const due=taskDate(data,record,"due"),progress=record.progress??"not_started";
+   return <article key={record.id} data-record-id={record.id}
+    className="rounded-lg border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)]">
+    <div className="flex items-center gap-2">
+     <button type="button" aria-label={(progress==="completed"?"Reopen ":"Complete ")+title}
+      disabled={readOnly} onClick={()=>onChange(setTaskProgress(data,record.id,progress==="completed"?"not_started":"completed"))}
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--planner-accent)] focus-visible:ring-2">
+      {progress==="completed"?<CheckCircle2 size={19}/>:progress==="in_progress"?<CircleDot size={19}/>:<Circle size={19}/>}
+     </button>
+     <button type="button" className="min-w-0 flex-1 truncate text-left text-sm font-medium focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
+      onClick={()=>onOpen(record.id)} aria-label={"Open "+title}>{title}</button>
+     <input type="checkbox" className="h-4 w-4 shrink-0" aria-label={"Select task "+title}
+      disabled={readOnly} checked={selected.includes(record.id)}
+      onChange={e=>onSelect(record.id,e.target.checked)}/>
+    </div>
+    <button type="button" aria-label={"Edit "+title+" details"}
+     className="ml-11 flex min-h-7 max-w-[calc(100%-2.75rem)] flex-wrap items-center gap-2 text-left text-[11px] text-[var(--planner-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
+     onClick={()=>onOpen(record.id)}>
+     {due&&<span className={due<localToday()&&progress!=="completed"?"text-rose-600":""}>{formatPlannerCardDate(due,localToday())}</span>}
+     {record.priority&&record.priority!=="medium"&&<span className="inline-flex items-center gap-0.5"><Flag size={12}/>{record.priority}</span>}
+     {labels.map(label=><span key={label.id} className="rounded px-1.5 py-0.5 text-white" style={{backgroundColor:/^#[0-9a-f]{6}$/i.test(label.color)?label.color:"#5B5FC7"}}>{label.name}</span>)}
+     {people.map(person=><span key={person.id} className="rounded-full bg-[var(--planner-hover)] px-1.5 py-0.5" title={person.name}>{person.name}</span>)}
+    </button>
+   </article>;
+  })}
+  {!rows.length&&<p role="status" className="rounded-lg border border-dashed p-5 text-center text-xs text-[var(--planner-secondary)]">
+   No matching tasks. Change filters or add a task.</p>}
+ </div>;
 }

@@ -6,7 +6,7 @@ import { setTaskProgress } from "../src/renderers/collectionBoardGroups";
 import { gridFields } from "../src/collections/collectionPlannerFilters";
 import { visiblePlannerFields } from "../src/collections/collectionPlannerFields";
 import { chartPointColor } from "../src/collections/collectionChartColors";
-import { gridTaskColumns, GRID_TASK_KEYS } from "../src/renderers/collectionGridTaskColumns";
+import { gridTaskColumns } from "../src/renderers/collectionGridTaskColumns";
 describe("Phase 4 — history and task actions", () => {
  const fixture = () => {
   const data = normalizeCollection(createCollection());
@@ -82,6 +82,6 @@ describe("Phase 4 — history and task actions", () => {
   expect(visiblePlannerFields(data).map(f=>f.name)).not.toContain("Status");
   const view=data.views.find(v=>v.kind==="table")!;
   expect(gridFields(data,view).some(f=>f.name==="Status")).toBe(false);
-  expect(gridTaskColumns(()=>data,()=>{},false).map(c=>c.id)).toEqual([...GRID_TASK_KEYS]);
+  expect(gridTaskColumns(()=>data,()=>{},false).map(c=>c.id)).toEqual(["__progress","__assignee","__priority","__labels"]);
  });
 });
