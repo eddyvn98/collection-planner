@@ -6,7 +6,8 @@ export function CollectionKeyboard({root,undo,redo,onEscape,onView,disabled}:{
  useEffect(()=>{
   const keydown=(event:KeyboardEvent)=>{
    const node=root.current;
-   if(!node||!node.contains(event.target as Node))return;
+   if(!node||(!node.contains(event.target as Node) &&
+     event.target!==document.body&&event.target!==document.documentElement))return;
    const target=event.target as HTMLElement;
    const editing=target.matches("input,textarea,select,[contenteditable=true]")||
     !!target.closest("[contenteditable=true]");
