@@ -7,6 +7,7 @@ import { deleteRecord,recordTitle, type CollectionBlockPayload, type CollectionR
 import { taskAssignees, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
 import { cardIndicators } from "../collections/collectionCardIndicators";
+import { CollectionBoardSubtaskDrop } from "./CollectionBoardSubtaskDrop";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
@@ -74,7 +75,10 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
   </div>
   <div className="mt-1.5 flex flex-wrap items-center gap-3 pl-1 text-xs text-[var(--planner-secondary)]">
    <CollectionBlockedBadge data={data} record={record}/>
-   {!!descendants?.total&&<span data-testid="task-descendant-count" title="Completed sub-tasks / all descendants" className="rounded bg-[var(--planner-hover)] px-1.5 py-0.5">{descendants.done}/{descendants.total}</span>}
+   {!!descendants?.total&&<span data-testid="task-descendant-count" title="Completed sub-tasks / all descendants" className="inline-flex items-center gap-1 rounded bg-[var(--planner-hover)] px-1.5 py-0.5">
+    <span>{descendants.done}/{descendants.total}</span><span className="inline-block h-1.5 w-8 rounded bg-[var(--planner-border)]">
+     <span className="block h-full rounded bg-[var(--planner-accent)]" style={{width:Math.round(100*descendants.done/descendants.total)+"%"}}/></span>
+   </span>}
    {indicators.priority&&<span data-testid="card-priority" title={"Priority "+record.priority}
      className="flex gap-1 text-red-600"><Flag size={15} strokeWidth={1.75}/>{formatPlannerPriority(record.priority??"")}</span>}
    {!!indicators.checklist&&<span data-testid="card-checklist" title="Checklist" className="flex gap-1"><ClipboardCheck size={15}/>{indicators.checklist}</span>}
@@ -92,6 +96,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
        {person.name.split(/\s+/).slice(0,2).map(x=>x[0]??"").join("").toUpperCase()}</span>)}
    </div>}
   </div>}
+  <CollectionBoardSubtaskDrop data={data} record={record}/>
   {confirmDelete&&<CollectionModalDialog label={"Delete "+title+" task?"} onClose={()=>setConfirmDelete(false)} trigger={titleRef.current}>
     <h3 className="font-semibold">Delete “{title}”?</h3>
     <p className="mt-2 text-xs text-[var(--planner-secondary)]">{hasChildren?"Keep children or delete all descendants?":"You can undo this change."}</p>
