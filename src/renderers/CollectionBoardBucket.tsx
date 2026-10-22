@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { createGroupedTask, splitBucketCompletion, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
 import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions";
+import { CollectionModalDialog } from "./CollectionModalDialog";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
@@ -14,6 +15,8 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
  const {active}=useDndContext();
  const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
  const [renaming,setRenaming]=useState(false),[name,setName]=useState(group.title),[menu,setMenu]=useState(false);
+ const [confirmDelete,setConfirmDelete]=useState(false);
+ const [collapsed,setCollapsed]=useState(false),regionId=useId();
  const bucket=group.key.slice(7),editable=mode==="bucket"&&!!field&&!!bucket;
  const {active:pending,completed}=splitBucketCompletion(group.rows);
  const save=()=>{const next=createGroupedTask(data,title,group.key,mode,field);
@@ -23,8 +26,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
    if(operation==="rename"){setName(bucket);setRenaming(true);}
    if(operation==="left")onChange(moveBucket(data,field.id,bucket,-1));
    if(operation==="right")onChange(moveBucket(data,field.id,bucket,1));
-   if(operation==="delete"&&window.confirm("Delete this bucket? Its tasks will move to the first bucket."))
-     onChange(deleteBucket(data,field.id,bucket));
+   if(operation==="delete")setConfirmDelete(true);
  };
  const card=(record:typeof group.rows[number])=><CollectionTaskCard key={record.id} data={data}
    record={record} groupKey={group.key} readOnly={readOnly} onChange={onChange}
@@ -41,6 +43,11 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
       onBlur={()=>{if(name.trim()!==bucket&&field)onChange(renameBucket(data,field.id,bucket,name));setRenaming(false);}}/>
     : <h3 className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-[var(--planner-text)]">{group.title}</h3>}
    <span aria-label={group.rows.length+" tasks"} className="rounded-full bg-[var(--planner-surface)] px-2 py-0.5 text-xs text-[var(--planner-secondary)]">{group.rows.length}</span>
+   <button type="button" aria-label={(collapsed?"Expand ":"Collapse ")+group.title+" bucket"}
+    aria-expanded={!collapsed} aria-controls={regionId} onClick={()=>setCollapsed(!collapsed)}
+    className="grid min-h-8 min-w-8 place-items-center rounded text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+    <ChevronDown size={16} strokeWidth={1.75} className={"transition-transform duration-planner-settle "+(collapsed?"-rotate-90":"")}/>
+   </button>
    {!readOnly&&editable&&<div className="relative">
      <button ref={bucketMenuRef} type="button" title={"Bucket actions "+bucket} aria-label={"Bucket actions "+bucket}
        aria-expanded={menu} className="flex min-h-8 min-w-8 items-center justify-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
@@ -55,6 +62,10 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
      </CollectionFloatingPanel>
    </div>}
   </header>
+  <div className={"grid transition-[grid-template-rows,opacity] duration-planner-settle "+
+    (collapsed?"grid-rows-[0fr] opacity-0":"grid-rows-[1fr] opacity-100")}
+    aria-hidden={collapsed}>
+   <div id={regionId} className="min-h-0 overflow-hidden">
   {!readOnly&&(adding?<form className="mb-2 space-y-1" onSubmit={e=>{e.preventDefault();save();}}>
     <input autoFocus aria-label={"New task in "+group.title} value={title} maxLength={300}
       placeholder="Task name" onChange={e=>setTitle(e.target.value)}
@@ -83,5 +94,18 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
      <ChevronDown size={16} strokeWidth={1.75}/>Completed ({completed.length})</summary>
     <div className="mt-2">{completed.map(card)}</div>
   </details>}
+   </div>
+  </div>
+  {confirmDelete&&<CollectionModalDialog label={"Delete "+bucket+" bucket?"}
+     trigger={bucketMenuRef.current} onClose={()=>setConfirmDelete(false)}>
+    <h2 className="text-base font-semibold">Delete “{bucket}” bucket?</h2>
+    <p className="my-3 text-sm text-[var(--planner-secondary)]">Tasks move to the first remaining bucket.</p>
+    <div className="flex justify-end gap-2">
+     <button data-dialog-initial className="min-h-9 rounded px-3 hover:bg-[var(--planner-hover)]" onClick={()=>setConfirmDelete(false)}>Cancel</button>
+     <button className="min-h-9 rounded bg-red-700 px-3 text-white" onClick={()=>{
+      if(field)onChange(deleteBucket(data,field.id,bucket));setConfirmDelete(false);
+     }}>Delete bucket</button>
+    </div>
+   </CollectionModalDialog>}
  </section>;
 }

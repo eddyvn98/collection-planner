@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
+import { CollectionModalDialog } from "./CollectionModalDialog";
 import { Copy, Ellipsis, Layers3, Trash2 } from "lucide-react";
 import { copyTask, moveTaskToBucket } from "../collections/collectionRecurrence";
 import { plannerBucket } from "../collections/collectionPlannerFields";
@@ -9,6 +10,7 @@ export function CollectionDrawerActions({data,record,readOnly,onChange,onDelete}
  onChange:(next:CollectionBlockPayload)=>void;onDelete:()=>void;
 }){
  const [open,setOpen]=useState(false),[moving,setMoving]=useState(false);
+ const [confirmDelete,setConfirmDelete]=useState(false),deleteTrigger=useRef<HTMLButtonElement>(null);
  const trigger=useRef<HTMLButtonElement>(null);
  const bucket=plannerBucket(data);
  const duplicate=()=>{onChange(copyTask(data,record.id));setOpen(false);};
@@ -16,9 +18,9 @@ export function CollectionDrawerActions({data,record,readOnly,onChange,onDelete}
    <button ref={trigger} type="button" aria-label="Task actions" title="Copy, duplicate or move task"
     className="grid h-9 w-9 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2"
     onClick={()=>setOpen(!open)}><Ellipsis size={18} strokeWidth={1.75}/></button>
-   <button type="button" aria-label="Delete task" title="Delete task" disabled={readOnly}
+   <button ref={deleteTrigger} type="button" aria-label="Delete task" title="Delete task" disabled={readOnly}
     className="grid h-9 w-9 place-items-center rounded text-red-600 hover:bg-[var(--planner-hover)] focus-visible:ring-2 disabled:opacity-50"
-    onClick={()=>{if(window.confirm("Delete this task?"))onDelete();}}><Trash2 size={16}/></button>
+    onClick={()=>setConfirmDelete(true)}><Trash2 size={16}/></button>
    <CollectionFloatingPanel open={open} anchorRef={trigger} onClose={()=>{setOpen(false);setMoving(false);}}
      role="menu" label="Task actions menu" className="w-52 rounded p-1">
     <button role="menuitem" disabled={readOnly} onClick={duplicate}
@@ -36,5 +38,16 @@ export function CollectionDrawerActions({data,record,readOnly,onChange,onDelete}
      <option value="">Unassigned</option>{(bucket.options??[]).map(name=><option key={name} value={name}>{name}</option>)}
     </select>}
    </CollectionFloatingPanel>
+   {confirmDelete&&<CollectionModalDialog label="Delete task?" trigger={deleteTrigger.current}
+     onClose={()=>setConfirmDelete(false)}>
+     <h2 className="font-semibold">Delete this task?</h2>
+     <p className="mt-2 text-sm text-[var(--planner-secondary)]">This removes the task from the plan.</p>
+     <div className="mt-4 flex justify-end gap-2">
+      <button data-dialog-initial type="button" className="min-h-9 rounded px-3 hover:bg-[var(--planner-hover)]"
+        onClick={()=>setConfirmDelete(false)}>Cancel</button>
+      <button type="button" className="min-h-9 rounded bg-red-700 px-3 text-white"
+        onClick={()=>{setConfirmDelete(false);onDelete();}}>Delete task</button>
+     </div>
+   </CollectionModalDialog>}
   </div>;
 }

@@ -4,12 +4,15 @@
 :root {
   --planner-canvas:#FAF9F8;
   --planner-surface:#FFFFFF;
-  --planner-border:#E1DFDD;
+  --planner-border:#929292;
   --planner-text:#242424;
   --planner-secondary:#616161;
   --planner-accent:#5B5FC7;
   --planner-hover:#F3F2F1;
   --planner-focus:#5B5FC7;
+  --planner-motion-popover:140ms;
+  --planner-motion-drawer:200ms;
+  --planner-motion-settle:150ms;
   font-family:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
   font-size:14px;
 }
@@ -33,7 +36,7 @@ html.dark input[type="date"]::-webkit-calendar-picker-indicator {filter:invert(1
 html.dark {
   --planner-canvas:#1F1F1F;
   --planner-surface:#292929;
-  --planner-border:#3D3D3D;
+  --planner-border:#858585;
   --planner-text:#FFFFFF;
   --planner-secondary:#D1D1D1;
   --planner-accent:#7F85F5;
@@ -53,7 +56,9 @@ html.dark select option, html.dark select optgroup {
   background:var(--planner-canvas);
   color:var(--planner-text);
 }
-[data-testid="collection-block"] :is(button,input,select,textarea,a,summary):focus-visible {
+[data-testid="collection-block"] :is(button,input,select,textarea,a,summary,[tabindex]):focus-visible,
+[data-planner-floating] :is(button,input,select,textarea,a,summary,[tabindex]):focus-visible,
+[role="alertdialog"] :is(button,input,select,textarea,a):focus-visible {
   outline:2px solid var(--planner-focus);
   outline-offset:2px;
 }
@@ -66,4 +71,46 @@ html.dark select option, html.dark select optgroup {
 @media (max-width:639px) {
  [data-testid="collection-block"] :is(button,select,summary) {min-height:44px;}
  [data-testid="collection-block"] [data-testid="collection-kanban-card"] button {min-width:36px;}
+}
+
+/* Unified Fluent motion. CSS variables are also available to Tailwind utilities. */
+@keyframes planner-pop-in {
+ from {opacity:0;transform:translateY(6px);}
+ to {opacity:1;transform:translateY(0);}
+}
+@keyframes planner-drawer-in {
+ from {opacity:.95;transform:translateX(20px);}
+ to {opacity:1;transform:translateX(0);}
+}
+.planner-motion-popover {animation:planner-pop-in var(--planner-motion-popover) ease-out both;}
+.planner-motion-drawer {animation:planner-drawer-in var(--planner-motion-drawer) ease-out both;}
+.planner-motion-card {
+ transition:box-shadow var(--planner-motion-settle) ease,background-color var(--planner-motion-settle) ease,
+  opacity var(--planner-motion-settle) ease;
+}
+.planner-motion-card:hover {box-shadow:0 3px 12px #0000001c;}
+.planner-motion-card:active {filter:brightness(.96);}
+[data-testid="planner-completed-section"]::details-content {
+ transition:height var(--planner-motion-settle) ease,opacity var(--planner-motion-settle) ease,
+  content-visibility var(--planner-motion-settle) allow-discrete;
+ height:0;opacity:0;overflow:hidden;
+}
+[data-testid="planner-completed-section"][open]::details-content {height:auto;opacity:1;}
+[data-planner-floating], [role="alertdialog"]>div {
+ border-radius:8px; box-shadow:0 8px 24px #00000024;
+}
+@media (max-width:639px) {
+ [data-testid="collection-block"] :is(button,[role="tab"],[role="menuitem"],summary,select,
+ input[type="checkbox"],input[type="radio"]),
+ [data-planner-floating] :is(button,[role="menuitem"],[role="menuitemradio"],summary,select,
+ input[type="checkbox"],input[type="radio"]),
+ [role="alertdialog"] button {
+  min-width:44px;min-height:44px;
+ }
+ [data-testid="collection-block"] input[type="checkbox"],
+ [data-planner-floating] input[type="checkbox"] {cursor:pointer;}
+}
+@media (prefers-reduced-motion:reduce) {
+ :root {--planner-motion-popover:0ms;--planner-motion-drawer:0ms;--planner-motion-settle:0ms;}
+ *,*::before,*::after {animation-duration:0ms!important;transition-duration:0ms!important;scroll-behavior:auto!important;}
 }

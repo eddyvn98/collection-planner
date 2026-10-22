@@ -1,7 +1,7 @@
 name: Planner polish and browser pointer tests
 on:
   push:
-    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f]
+    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f, feat/planner-phase-5g]
   pull_request:
     branches: [main]
 permissions:
@@ -50,3 +50,4 @@ jobs:
           node tests/e2e/phase5d-ui.mjs
           node tests/e2e/phase5e-ui.mjs
           node tests/e2e/phase5f-portals.mjs
+          node tests/e2e/phase5g-keyboard.mjs

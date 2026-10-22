@@ -1,2 +1,2 @@
 /** @type {import('tailwindcss').Config} */
-export default { darkMode: ["class"], content: ["./index.html", "./src/**/*.{ts,tsx}"], theme: { extend: {} }, plugins: [] };
+export default { darkMode: ["class"], content: ["./index.html", "./src/**/*.{ts,tsx}"], theme: { extend: { transitionDuration: { "planner-popover": "var(--planner-motion-popover)", "planner-drawer": "var(--planner-motion-drawer)", "planner-settle": "var(--planner-motion-settle)" }, colors: { "planner-accent": "var(--planner-accent)", "planner-border": "var(--planner-border)" } } }, plugins: [] };
