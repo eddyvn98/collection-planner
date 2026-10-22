@@ -1,4 +1,5 @@
 import type { CollectionBlockPayload, CollectionRecord, TaskProgress } from "./model";
+import { relationIds, encodeRelationIds } from "./collectionRelations";
 
 export const MAX_TASK_DEPTH = 6;
 export const MAX_VISIBLE_TREE_NODES = 500;
@@ -123,8 +124,16 @@ export function removeTaskBranch(data:CollectionBlockPayload,id:string,mode:"sub
  const tree=buildTaskTree(data.records),parent=tree.byId.get(id);
  if(!parent)return data;
  const deleted=new Set(mode==="subtree"?taskBranch(tree,id).map(row=>row.id):[id]);
- const records=data.records.filter(row=>!deleted.has(row.id)).map(row=>
-  mode==="promote"&&row.parentId===id?{...row,parentId:parent.parentId??null}:row);
+ const relations=data.fields.filter(field=>field.type==="relation"&&!field.relationTargetBlockId);
+ const records=data.records.filter(row=>!deleted.has(row.id)).map(row=>{
+  const values={...row.values};
+  for(const field of relations){
+   const existing=relationIds(values[field.id]);
+   if(existing.some(other=>deleted.has(other)))values[field.id]=encodeRelationIds(
+    existing.filter(other=>!deleted.has(other)),!!field.relationMultiple);
+  }
+  return {...row,values,...(mode==="promote"&&row.parentId===id?{parentId:parent.parentId??null}:{})};
+ });
  return {...data,records:reconcileTaskProgress(records.map(row=>{
   const dependsOn=row.dependsOn?.filter(dep=>!deleted.has(dep));
   return row.dependsOn?.length!==dependsOn?.length?{...row,dependsOn}:row;
