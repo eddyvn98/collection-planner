@@ -31,7 +31,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
  };
  return <article ref={node=>{drag.setNodeRef(node);drop.setNodeRef(node);}}
    data-testid="collection-kanban-card" data-record-id={record.id}
-   className={"group mb-2 overflow-hidden rounded-[4px] border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)] shadow-[0_1px_3px_#00000013] transition hover:shadow-md "+
+   className={"planner-motion-card group mb-2 overflow-hidden rounded-[4px] border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)] shadow-[0_1px_3px_#00000013] transition hover:shadow-md "+
     (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}
    style={{transform:CSS.Translate.toString(drag.transform),opacity:drag.isDragging?.55:1}}>
   {img&&<img src={img.url} alt={img.name} loading="lazy" className="mb-2 h-24 w-full rounded object-cover"/>}
