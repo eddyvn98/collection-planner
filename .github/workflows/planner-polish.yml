@@ -45,6 +45,7 @@ jobs:
             if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          node tests/e2e/phase7e-steps.mjs
           node tests/e2e/schedule-pointer.mjs
           node tests/e2e/phase5-quick-add.mjs
           node tests/e2e/phase5d-ui.mjs
@@ -64,7 +65,6 @@ jobs:
           node tests/e2e/phase7c2b-board.mjs
           node tests/e2e/phase7c2c-views.mjs
           node tests/e2e/phase7d-input.mjs
-          node tests/e2e/phase7e-steps.mjs
       - name: Capture before and after Grid screenshots (1280/375, light/dark)
         if: success() && github.event_name == 'pull_request'
         run: |
