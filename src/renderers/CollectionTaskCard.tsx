@@ -1,5 +1,5 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { useRef,useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
  MessageCircle, Paperclip, StickyNote, Trash2, CornerDownRight } from "lucide-react";
@@ -17,7 +17,13 @@ interface Props {
  descendants?:{done:number;total:number};
 }
 export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,onChange,onOpen}:Props){
+ const tap=useRef<{id:number;x:number;y:number}|null>(null);
  const pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null);
+ useEffect(()=>()=>{if(pendingOpen.current)clearTimeout(pendingOpen.current);},[]);
+ const queueOpen=(trigger:HTMLButtonElement)=>{
+  if(pendingOpen.current)clearTimeout(pendingOpen.current);
+  pendingOpen.current=setTimeout(()=>{pendingOpen.current=null;onOpen(trigger);},220);
+ };
  const cancelledRename=useRef(false);
  const titleRef=useRef<HTMLButtonElement>(null);
  const [confirmDelete,setConfirmDelete]=useState(false);
@@ -75,14 +81,15 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
     className="min-h-11 min-w-0 flex-1 rounded border-2 border-[var(--planner-accent)] bg-[var(--planner-surface)] px-2 text-sm"/>:
    <button ref={titleRef} type="button" data-board-card-focus
     title="Double-click or F2 to rename"
-    onClick={event=>{
-     if(event.detail===0){onOpen(event.currentTarget);return;}
-     if(pendingOpen.current)clearTimeout(pendingOpen.current);
-     if(event.detail===1){
-      const trigger=event.currentTarget;
-      pendingOpen.current=setTimeout(()=>{pendingOpen.current=null;onOpen(trigger);},240);
-     }
+    onPointerDown={event=>{tap.current={id:event.pointerId,x:event.clientX,y:event.clientY};}}
+    onPointerUp={event=>{
+     const start=tap.current;tap.current=null;
+     if(start&&start.id===event.pointerId&&
+      Math.hypot(start.x-event.clientX,start.y-event.clientY)<4)
+      queueOpen(event.currentTarget);
     }}
+    onPointerCancel={()=>{tap.current=null;}}
+    onClick={event=>{if(event.detail===0)onOpen(event.currentTarget);}}
     onDoubleClick={event=>{
      event.preventDefault();if(pendingOpen.current)clearTimeout(pendingOpen.current);
      pendingOpen.current=null;beginRename();
