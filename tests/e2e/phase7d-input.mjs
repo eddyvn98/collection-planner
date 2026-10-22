@@ -73,6 +73,21 @@ async function run(width,attempt){
  await toolbar.getByRole("button",{name:"Complete selected"}).click();
  await page.waitForFunction(id=>JSON.parse(localStorage.getItem("collection-planner:v1"))
   .records.find(x=>x.id===id)?.progress==="completed",added.id);
+ if(width<640){
+  await page.getByRole("button",{name:"Choose view"}).click();
+  await page.getByRole("menuitemradio",{name:"Grid"}).click();
+ }else await page.getByRole("button",{name:"Grid",exact:true}).click();
+ const gridInput=page.locator('input[aria-label="New task title"]:visible');
+ await gridInput.fill("Grid handoff +3d #UI !important");
+ await page.locator('[data-testid="quick-add-preview"]:visible [data-token-kind="priority"]').waitFor();
+ await gridInput.press("Enter");
+ const gridTask=await awaitRecord(page,"Grid handoff");
+ assert.equal(gridTask.priority,"important");
+ assert.deepEqual(gridTask.labelIds,["ui"]);
+ if(width<640){
+  await page.getByRole("button",{name:"Choose view"}).click();
+  await page.getByRole("menuitemradio",{name:"Board"}).click();
+ }else await page.getByRole("button",{name:"Board",exact:true}).click();
  await page.getByRole("button",{name:"More plan actions"}).click();
  await page.getByRole("menuitem",{name:"Settings"}).click();
  await page.getByTestId("planner-input-settings").waitFor();
@@ -96,6 +111,17 @@ async function run(width,attempt){
   await client.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1"))
    .records.find(x=>x.id==="existing")?.progress==="completed");
+  const longCard=card(page,(await awaitRecord(page,"Literal !urgent #UI")).id);
+  const box=await longCard.boundingBox();
+  assert(box,"Long-press target exists");
+  const lx=box.x+box.width/2,ly=box.y+box.height/2;
+  await client.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x:lx,y:ly}]});
+  const longMenu=page.getByRole("menu",{name:"Task context actions"});
+  await longMenu.waitFor();
+  await client.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+  await longMenu.getByRole("menuitem",{name:"Select for bulk actions"}).click();
+  await page.getByRole("toolbar",{name:"Selected task actions"}).waitFor();
+  await page.getByRole("button",{name:"Clear selection"}).click();
  }
  console.log("PASS 7D input flow "+width+" iteration "+attempt);
  await context.close();
