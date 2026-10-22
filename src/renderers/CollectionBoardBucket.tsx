@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { createGroupedTask, splitBucketCompletion, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
@@ -15,6 +15,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
  const {active}=useDndContext();
  const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
+ useEffect(()=>{const close=()=>setAdding(false);document.addEventListener("planner:escape",close);return()=>document.removeEventListener("planner:escape",close);},[]);
  const [renaming,setRenaming]=useState(false),[name,setName]=useState(group.title),[menu,setMenu]=useState(false);
  const [confirmDelete,setConfirmDelete]=useState(false);
  const [collapsed,setCollapsed]=useState(false),regionId=useId();
