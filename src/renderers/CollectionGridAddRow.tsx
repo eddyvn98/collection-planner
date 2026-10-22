@@ -37,10 +37,10 @@ export function CollectionGridAddQuick({ data, readOnly, onChange }: {
     event.preventDefault();if (!name.trim() || readOnly) return;
     onChange(createBoardTask(data, name));setName("");
   }}>
-    <input aria-label="New task title" className="min-w-0 flex-1 rounded border bg-[var(--planner-surface)] p-2 text-sm dark:bg-[var(--planner-surface)]"
+    <input aria-label="New task title" className="h-[44px] min-h-[44px] min-w-0 flex-1 rounded border bg-[var(--planner-surface)] px-2 text-sm dark:bg-[var(--planner-surface)]"
       value={name} maxLength={300} disabled={readOnly} onChange={event => setName(event.target.value)}
       placeholder="Add new task" />
     <button type="submit" disabled={readOnly || !name.trim()}
-      className="rounded bg-blue-600 px-3 py-2 text-sm text-white disabled:opacity-50">Add task</button>
+      className="min-h-[44px] rounded bg-blue-600 px-3 py-2 text-sm text-white disabled:opacity-50">Add task</button>
   </form>;
 }
