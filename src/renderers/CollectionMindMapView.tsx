@@ -59,9 +59,20 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   setEditingId(null);const next=renameMindMapTask(data,id,value);
   if(next!==data)onChange(next);
  };
- const toggle=(id:string)=>setCollapsed(previous=>{
-  const next=new Set(previous);if(next.has(id))next.delete(id);else next.add(id);return next;
- });
+ const toggle=(id:string)=>{
+  // Commit the focused editor before hiding its branch. React Flow can
+  // remount the clicked control if blur saves synchronously on pointer-down.
+  const editor=root.current?.querySelector<HTMLInputElement>("input[data-mindmap-rename]");
+  const editing=editor?.dataset.mindmapRename;
+  if(editing){
+   const next=renameMindMapTask(data,editing,editor.value);
+   setEditingId(null);
+   if(next!==data)onChange(next);
+  }
+  setCollapsed(previous=>{
+   const next=new Set(previous);if(next.has(id))next.delete(id);else next.add(id);return next;
+  });
+ };
  const nodes=useMemo<MindCardNode[]>(()=>graph.nodes.map(item=>{
   const record=tree.byId.get(item.id),count=counts.get(item.id)??{done:0,total:0};
   const due=data.fields.find(f=>f.type==="date"&&/^(due|end)/i.test(f.name))?.id;
