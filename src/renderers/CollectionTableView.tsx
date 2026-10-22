@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { Plus } from "lucide-react";
 import { CollectionGridRows } from "./CollectionGridRows";
+import { buildTaskTree } from "../collections/collectionTaskTree";
 import { visibleTaskTree,moveTaskTree,type TreeDropMode } from "../collections/collectionTreeActions";
 import { flexRender, getCoreRowModel, useReactTable,
   type ColumnDef, type SortingState } from "@tanstack/react-table";
@@ -78,6 +79,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       return next.length === ids.length ? ids : next;
     });
   }, [rows]);
+  const treeIndex=useMemo(()=>buildTaskTree(data.records),[data.records]);
   const projected=useMemo(()=>visibleTaskTree(data,rows,collapsed),[data,rows,collapsed]);
   const page = useMemo(() => collectionTablePage(projected.rows, requestedPage, pageSize),
     [projected, requestedPage, pageSize]);
@@ -218,7 +220,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       <th style={{ width: 108 }} className="border-b border-[var(--planner-border)]"> </th>
     </tr>)}</thead>
     <CollectionGridRows table={table} data={data} readOnly={readOnly}
-      selected={selectedIds} setSelected={setSelected} collapsed={collapsed} toggle={toggleTree}
+      selected={selectedIds} setSelected={setSelected} collapsed={collapsed} tree={treeIndex} toggle={toggleTree}
       onChange={onChange} onOpen={setOpenRecordId} onDelete={setPendingDeleteTaskId}
       numbers={numericFieldIds}/>
 
