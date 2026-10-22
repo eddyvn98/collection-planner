@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { focusSelector,nextFocusIndex } from "./collectionInteraction";
 import { createPortal } from "react-dom";
 import { CollectionDrawerActions } from "./CollectionDrawerActions";
 import { deleteRecord } from "../collections/model";
@@ -18,6 +19,7 @@ interface Props{data:CollectionBlockPayload;sources?:CollectionSources;recordId:
 /** Non-modal side pane: the Board stays clickable while task details are open. */
 export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange,onClose,returnFocusTo}:Props){
  const titleInput=useRef<HTMLInputElement>(null),closeRef=useRef(onClose);
+ const paneRef=useRef<HTMLElement>(null);
  closeRef.current=onClose;
  const record=data.records.find(row=>row.id===recordId);
  useEffect(()=>{
@@ -38,9 +40,21 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
  const hidden=new Set([title?.id,bucket?.id,dates.start?.id,dates.due?.id,
    ...data.fields.filter(isLegacyStatusField).map(f=>f.id)]);
  const complete=record.progress==="completed";
+ const trapTab=(event:React.KeyboardEvent<HTMLElement>)=>{
+  if(event.key!=="Tab"||document.querySelector("[data-planner-floating]"))return;
+  const items=[...paneRef.current?.querySelectorAll<HTMLElement>(focusSelector)??[]]
+   .filter(item=>item.getClientRects().length>0);
+  const index=items.indexOf(document.activeElement as HTMLElement);
+  if(!items.length)return;
+  if(index<0||(!event.shiftKey&&index===items.length-1)||(event.shiftKey&&index===0)){
+   event.preventDefault();
+   items[nextFocusIndex(index,items.length,event.shiftKey)]?.focus();
+  }
+ };
+
  return createPortal(<div className="pointer-events-none fixed inset-0 z-[10020] flex justify-end"
   onPointerDown={e=>e.stopPropagation()}>
-  <section role="dialog" aria-modal="false" aria-label={"Task "+recordTitle(data,record)}
+  <section ref={paneRef} onKeyDown={trapTab} role="dialog" aria-modal="false" aria-label={"Task "+recordTitle(data,record)}
    className="planner-motion-drawer pointer-events-auto flex h-full w-full max-w-[420px] flex-col border-l border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)] shadow-[-8px_0_24px_#00000018]">
    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--planner-border)] px-4 py-3">
      <h2 className="text-sm font-semibold">Task details</h2>
