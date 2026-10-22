@@ -2,6 +2,7 @@ import { newId, primaryField, recordTitle, type CollectionBlockPayload,
   type CollectionRecord, type CollectionView } from "./model";
 import { isLegacyStatusField } from "./collectionPlannerFields";
 import { localToday, taskDate } from "./collectionTasks";
+import {matchesTaskSearch} from "./collectionTaskSearch";
 
 export type TaskDueFilter = "all" | "overdue" | "today" | "next7" | "no_due";
 export interface TaskFilterState {
@@ -30,8 +31,7 @@ const addDays = (date: string, days: number) => {
 export function matchesPlannerTask(data: CollectionBlockPayload, record: CollectionRecord,
   filters: TaskFilterState, today = localToday()): boolean {
   const query = filters.keyword.trim().toLocaleLowerCase();
-  if (query && ![recordTitle(data, record), record.body ?? "", ...Object.values(record.values)]
-    .some(text => text.toLocaleLowerCase().includes(query))) return false;
+  if (query && !matchesTaskSearch(data,record,query)) return false;
   const bucket = data.fields.find(field => field.type === "select" && /^bucket$/i.test(field.name));
   if (filters.bucket && (record.values[bucket?.id ?? ""] ?? "") !==
     (filters.bucket === "__unassigned__" ? "" : filters.bucket)) return false;
