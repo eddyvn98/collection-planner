@@ -21,7 +21,7 @@ export function CollectionGridAddRow({ data, colSpan, readOnly, onChange }: {
          disabled={readOnly} className="min-h-11 w-full rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm"
          placeholder="Task · mai @người #nhãn !urgent" />
         <button type="submit" disabled={readOnly||!title.trim()}
-          className="rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40">
+          className="min-h-11 rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40">
           <Plus size={16} className="inline-block"/> Add task
         </button>
       </form>
