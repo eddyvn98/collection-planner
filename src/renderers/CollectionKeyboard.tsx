@@ -12,7 +12,7 @@ export function CollectionKeyboard({root,undo,redo,onEscape,onView,disabled}:{
    const editing=target.matches("input,textarea,select,[contenteditable=true]")||
     !!target.closest("[contenteditable=true]");
    const dialog=target.closest('[role="dialog"],[role="alertdialog"]');
-   if(dialog)return;
+   if(dialog && event.key!=="Escape")return;
    const mod=event.ctrlKey||event.metaKey;
    if(mod&&event.key.toLowerCase()==="z"&&!editing&&!disabled){
     event.preventDefault();(event.shiftKey?redo:undo)();return;
