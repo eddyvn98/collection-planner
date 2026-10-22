@@ -3,7 +3,7 @@ import { useRef,useState } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
  MessageCircle, Paperclip, StickyNote, Trash2, CornerDownRight } from "lucide-react";
-import { deleteRecord,recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
+import { deleteRecord,primaryField,recordTitle,setRecordValue, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 import { taskAssignees, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
 import { cardIndicators } from "../collections/collectionCardIndicators";
@@ -17,12 +17,22 @@ interface Props {
  descendants?:{done:number;total:number};
 }
 export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,onChange,onOpen}:Props){
- const tap=useRef<{id:number;x:number;y:number}|null>(null);
+ const pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const cancelledRename=useRef(false);
  const titleRef=useRef<HTMLButtonElement>(null);
  const [confirmDelete,setConfirmDelete]=useState(false);
+ const [renaming,setRenaming]=useState(false),[draft,setDraft]=useState("");
  const drag=useDraggable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const drop=useDroppable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const title=recordTitle(data,record),complete=record.progress==="completed";
+ const finishRename=(save:boolean)=>{
+  const field=primaryField(data);
+  if(save&&field&&draft.trim()&&draft.trim()!==title)
+   onChange(setRecordValue(data,record.id,field.id,draft.trim()));
+  setRenaming(false);
+  requestAnimationFrame(()=>titleRef.current?.focus());
+ };
+ const beginRename=()=>{if(readOnly)return;setDraft(title);cancelledRename.current=false;setRenaming(true);};
  const hasChildren=(descendants?.total??0)>0;
  const indicators=cardIndicators(data,record);
  const due=indicators.due,late=indicators.overdue;
@@ -54,21 +64,39 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
     className="flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
      {complete?<CheckCircle2 size={18} strokeWidth={1.75}/>:<Circle size={18} strokeWidth={1.75}/>}
    </button>
-   <button ref={titleRef} type="button" data-board-card-focus
-    onPointerDown={e=>{tap.current={id:e.pointerId,x:e.clientX,y:e.clientY};}}
-    onPointerUp={e=>{
-      const start=tap.current;tap.current=null;
-      if(start&&start.id===e.pointerId&&Math.hypot(start.x-e.clientX,start.y-e.clientY)<4)
-        onOpen(e.currentTarget);
+   {renaming?<input autoFocus aria-label={"Rename "+title} value={draft} maxLength={300}
+    onFocus={event=>event.currentTarget.select()}
+    onChange={event=>setDraft(event.target.value)}
+    onBlur={()=>finishRename(!cancelledRename.current)}
+    onKeyDown={event=>{event.stopPropagation();
+     if(event.key==="Enter"){event.preventDefault();event.currentTarget.blur();}
+     if(event.key==="Escape"){cancelledRename.current=true;event.currentTarget.blur();}
     }}
-    onPointerCancel={()=>{tap.current=null;}}
-    onClick={e=>onOpen(e.currentTarget)} onKeyDown={e=>{
-    if(e.key===" "||e.key.toLowerCase()==="e"){e.preventDefault();onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"));return;}
-    if(e.key==="Delete"){e.preventDefault();setConfirmDelete(true);return;}
-    focusArrow(e);
-   }}
-    className={"min-h-8 min-w-0 flex-1 text-left text-sm font-medium hover:text-[var(--planner-accent)] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+
-     (complete?"text-[var(--planner-secondary)] line-through":"")}>{title}</button>
+    className="min-h-11 min-w-0 flex-1 rounded border-2 border-[var(--planner-accent)] bg-[var(--planner-surface)] px-2 text-sm"/>:
+   <button ref={titleRef} type="button" data-board-card-focus
+    title="Double-click or F2 to rename"
+    onClick={event=>{
+     if(event.detail===0){onOpen(event.currentTarget);return;}
+     if(pendingOpen.current)clearTimeout(pendingOpen.current);
+     if(event.detail===1){
+      const trigger=event.currentTarget;
+      pendingOpen.current=setTimeout(()=>{pendingOpen.current=null;onOpen(trigger);},240);
+     }
+    }}
+    onDoubleClick={event=>{
+     event.preventDefault();if(pendingOpen.current)clearTimeout(pendingOpen.current);
+     pendingOpen.current=null;beginRename();
+    }}
+    onKeyDown={event=>{
+     if(event.key==="F2"){event.preventDefault();beginRename();return;}
+     if(event.key===" "||event.key.toLowerCase()==="e"){
+      event.preventDefault();onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"));return;
+     }
+     if(event.key==="Delete"){event.preventDefault();setConfirmDelete(true);return;}
+     focusArrow(event);
+    }}
+    className={"min-h-11 min-w-0 flex-1 text-left text-sm font-medium hover:text-[var(--planner-accent)] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+
+     (complete?"text-[var(--planner-secondary)] line-through":"")}>{title}</button>}
    <button type="button" aria-label={"Delete "+title} title="Delete task or branch"
     disabled={readOnly} onClick={()=>setConfirmDelete(true)}
     className="grid h-8 w-8 shrink-0 place-items-center rounded text-[var(--planner-secondary)] opacity-80 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 hover:text-rose-600">

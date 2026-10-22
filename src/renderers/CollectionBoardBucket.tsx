@@ -45,7 +45,12 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
       onKeyDown={e=>{if(e.key==="Escape"){setName(bucket);setRenaming(false);}
         if(e.key==="Enter")e.currentTarget.blur();}}
       onBlur={()=>{if(name.trim()!==bucket&&field)onChange(renameBucket(data,field.id,bucket,name));setRenaming(false);}}/>
-    : <h3 className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-[var(--planner-text)]">{group.title}</h3>}
+    : <h3 tabIndex={editable&&!readOnly?0:undefined} title="Double-click or F2 to rename bucket"
+      onDoubleClick={()=>{if(editable&&!readOnly){setName(bucket);setRenaming(true);}}}
+      onKeyDown={event=>{if(event.key==="F2"&&editable&&!readOnly){
+       event.preventDefault();setName(bucket);setRenaming(true);
+      }}}
+      className="min-w-0 flex-1 truncate rounded px-1 text-sm font-semibold text-[var(--planner-text)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">{group.title}</h3>}
    <span aria-label={group.rows.length+" tasks"} className="rounded-full bg-[var(--planner-surface)] px-2 py-0.5 text-xs text-[var(--planner-secondary)]">{group.rows.length}</span>
    <button type="button" aria-label={(collapsed?"Expand ":"Collapse ")+group.title+" bucket"}
     aria-expanded={!collapsed} aria-controls={regionId} onClick={()=>setCollapsed(!collapsed)}

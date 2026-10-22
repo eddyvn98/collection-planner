@@ -24,7 +24,7 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
   <div className="flex min-h-8 items-start gap-1">
    <span className="mt-0.5 h-5 w-1 shrink-0 rounded-full" style={{backgroundColor:data.progress==="completed"?"#238636":
     data.priority==="urgent"?"#d13438":data.priority==="important"?"#ff8c00":"var(--planner-accent)"}}/>
-   {data.isEditing?<input autoFocus aria-label={"Rename "+data.label} defaultValue={data.label}
+   {data.isEditing?<input data-mindmap-rename={data.id} autoFocus aria-label={"Rename "+data.label} defaultValue={data.label}
      onFocus={event=>{cancel.current=false;event.currentTarget.select();setDraft(event.currentTarget.value);}}
      onChange={event=>setDraft(event.target.value)}
      onKeyDown={event=>{event.stopPropagation();if(event.key==="Enter")commit();

@@ -82,14 +82,28 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   type:"smoothstep",style:{stroke:"var(--planner-accent)",strokeWidth:1.5}
  })),[graph]);
  const structure=graph.nodes.map(n=>n.id+":"+n.parentId).join("|");
+ // React Flow mounts new nodes asynchronously. Keep focus on the rename editor.
  useEffect(()=>{
-  if(!flow||!root.current)return;
+  if(!editingId)return;
+  let frame=0,attempt=0,stopped=false;
+  const focus=()=>{
+   if(stopped)return;
+   const inputs=root.current?.querySelectorAll<HTMLInputElement>("input[data-mindmap-rename]");
+   const input=Array.from(inputs??[]).find(el=>el.dataset.mindmapRename===editingId);
+   if(input){if(document.activeElement!==input){input.focus({preventScroll:true});input.select();}return;}
+   if(++attempt<30)frame=requestAnimationFrame(focus);
+  };
+  frame=requestAnimationFrame(focus);
+  return()=>{stopped=true;cancelAnimationFrame(frame);};
+ },[editingId,graph.nodes.length,data.records.length]);
+ useEffect(()=>{
+  if(!flow||!root.current||editingId)return;
   const node=root.current;
   const refresh=()=>requestAnimationFrame(()=>{if(node.clientWidth>0&&node.clientHeight>0)
    void flow.fitView(fit);});
   const observer=new ResizeObserver(refresh);observer.observe(node);refresh();
   return()=>observer.disconnect();
- },[flow,structure,layoutEpoch]);
+ },[flow,structure,layoutEpoch,editingId]);
  const dragTarget=(id:string,x:number,y:number)=>
   candidateMindMapParent(data,id,graph.nodes,x,y);
  const pointerTarget=(id:string,event:DragPointer)=>{

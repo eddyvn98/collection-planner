@@ -62,7 +62,9 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
   <section ref={paneRef} onKeyDown={trapTab} role="dialog" aria-modal="false" aria-label={"Task "+recordTitle(data,record)}
    className="planner-motion-drawer pointer-events-auto flex h-full w-full max-w-[420px] flex-col border-l border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)] shadow-[-8px_0_24px_#00000018]">
    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--planner-border)] px-4 py-3">
-     <h2 className="text-sm font-semibold">Task details</h2>
+     <div className="flex items-center gap-2"><h2 className="text-sm font-semibold">Task details</h2>
+      <span role="status" aria-live="polite" data-testid="task-save-status"
+       className="inline-flex items-center gap-1 text-xs text-[var(--planner-secondary)]"><CheckCircle2 size={13}/>Saved</span></div>
      <div className="flex items-center gap-1"><CollectionDrawerActions data={data} record={record}
        readOnly={readOnly} onChange={onChange} onDelete={mode=>{onChange(deleteRecord(data,record.id,mode));onClose();}}/>
      <button type="button" aria-label="Close task details" title="Close task details" onClick={onClose}
@@ -84,7 +86,7 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
        className="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
        {complete?<CheckCircle2 size={22} strokeWidth={1.75}/>:<Circle size={22} strokeWidth={1.75}/>}
       </button>
-      {title&&<input ref={titleInput} aria-label="Task name" maxLength={300} disabled={readOnly}
+      {title&&<input ref={titleInput} aria-label="Task name" title="Click to edit title" maxLength={300} disabled={readOnly}
         value={record.values[title.id]??""} onChange={e=>onChange(setRecordValue(data,record.id,title.id,e.target.value))}
         className={"min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-2 text-base font-semibold outline-none focus-visible:border-[var(--planner-accent)] "+
           (complete?"line-through text-[var(--planner-secondary)]":"")}/>}
