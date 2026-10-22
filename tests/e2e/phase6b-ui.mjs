@@ -113,7 +113,7 @@ try{
   assert.equal(await card.locator('input[type="checkbox"]').count(),0);
   await card.getByRole("button",{name:"Select task Ship release"}).click();
   assert.equal(await card.getByRole("button",{name:"Select task Ship release"}).getAttribute("aria-pressed"),"true");
-  assert(await card.getByRole("button",{name:"Edit Ship release"}).isVisible());
+  assert(await card.getByRole("button",{name:"Edit Ship release",exact:true}).isVisible());
   assert(await card.getByRole("button",{name:"Delete Ship release"}).isVisible());
   assert((await mobile.evaluate(()=>document.documentElement.scrollWidth))<=375);
   console.log("PASS 375px mobile touch target, round select and action icons");
