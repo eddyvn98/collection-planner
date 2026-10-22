@@ -90,6 +90,7 @@ async function run(width,attempt){
  }else await page.getByRole("button",{name:"Board",exact:true}).click();
  await page.getByRole("button",{name:"More plan actions"}).click();
  await page.getByRole("menuitem",{name:"Settings"}).click();
+ await page.getByRole("region",{name:"Collection settings"}).getByText("Input",{exact:true}).click();
  await page.getByTestId("planner-input-settings").waitFor();
  const tokenSetting=page.getByRole("checkbox",{name:"Enable quick-add tokens"});
  assert.equal(await tokenSetting.isChecked(),true);
