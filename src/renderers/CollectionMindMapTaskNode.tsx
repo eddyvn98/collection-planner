@@ -64,7 +64,8 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
    className="nodrag nopan absolute -bottom-5 left-1/2 z-10 flex h-11 min-w-11 -translate-x-1/2 items-center gap-0.5 rounded-full border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[10px] shadow"
    aria-label={(data.isCollapsed?"Expand ":"Collapse ")+data.label}
    aria-expanded={!data.isCollapsed}
-   onClick={event=>{event.stopPropagation();data.onToggle(data.id);}}>
+   onPointerDown={event=>{if(event.pointerType==="mouse")event.preventDefault();}}
+   onClick={event=>{event.stopPropagation();data.onToggle(data.id);}}> 
    {data.isCollapsed?<ChevronRight size={12}/>:<ChevronDown size={12}/>}
    {data.total}
   </button>}
