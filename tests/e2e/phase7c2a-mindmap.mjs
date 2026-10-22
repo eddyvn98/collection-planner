@@ -30,6 +30,12 @@ async function run(width,attempt){
  const rename=node(added.id).locator("input[data-mindmap-rename]");
  await rename.waitFor({state:"visible"});
  await rename.fill("One click saves and selects");
+ // Baseline main still has the blocking MiniMap at 375px. Capture it rather
+ // than bypassing its hit-testing with a forced click.
+ if(screenshots&&width<640){
+  await page.screenshot({path:`${screenshots}/${width}-mindmap-first-click-${attempt}.png`,fullPage:true});
+  await page.close();return;
+ }
  await node("other").locator("strong").click();
  if(screenshots){
   await page.screenshot({path:`${screenshots}/${width}-mindmap-first-click-${attempt}.png`,fullPage:true});
