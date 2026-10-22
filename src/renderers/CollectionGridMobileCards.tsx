@@ -2,6 +2,7 @@ import { CheckCircle2, Circle, CircleDot, Flag, Pencil, Trash2 } from "lucide-re
 import { taskAssignees, taskDate, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { setTaskProgress } from "./collectionBoardGroups";
+import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { deleteRecord, recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 interface Props {
  data:CollectionBlockPayload;rows:CollectionRecord[];selected:string[];readOnly:boolean;
@@ -37,6 +38,7 @@ export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,
     <button type="button" aria-label={"Edit "+title+" details"}
      className="ml-11 flex min-h-7 max-w-[calc(100%-2.75rem)] flex-wrap items-center gap-2 text-left text-[11px] text-[var(--planner-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
      onClick={()=>onOpen(record.id)}>
+     <CollectionBlockedBadge data={data} record={record}/>
      {due&&<span className={due<localToday()&&progress!=="completed"?"text-rose-600":""}>{formatPlannerCardDate(due,localToday())}</span>}
      {record.priority&&record.priority!=="medium"&&<span className="inline-flex items-center gap-0.5"><Flag size={12}/>{record.priority.charAt(0).toUpperCase()+record.priority.slice(1)}</span>}
      {labels.map(label=><span key={label.id} className="rounded px-1.5 py-0.5 text-white" style={{backgroundColor:/^#[0-9a-f]{6}$/i.test(label.color)?label.color:"#5B5FC7"}}>{label.name}</span>)}
