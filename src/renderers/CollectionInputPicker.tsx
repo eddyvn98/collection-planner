@@ -59,13 +59,13 @@ export function CollectionInputPicker({label,value,onChange,disabled,kind,option
      <button type="button" aria-label="Next month" onClick={()=>setMonth(format(addMonths(first,1),"yyyy-MM-dd"))}
       className="grid h-11 w-11 place-items-center rounded hover:bg-[var(--planner-hover)]"><ChevronRight/></button>
     </div>
-    <div className="grid grid-cols-7 gap-0.5">
+    <div className="overflow-x-auto"><div className="grid min-w-[320px] grid-cols-7 gap-0.5">
      {["M","T","W","T","F","S","S"].map((name,i)=><span key={i} className="text-center text-xs">{name}</span>)}
      {days.map(day=><button type="button" key={day} aria-label={"Pick "+day}
-      className={"min-h-10 rounded text-xs hover:bg-[var(--planner-hover)] "+
+      className={"min-h-11 min-w-11 rounded text-xs hover:bg-[var(--planner-hover)] "+
        (date===day?"bg-[var(--planner-accent)] text-white":"")}
       onClick={()=>pick(day)}>{Number(day.slice(8))}</button>)}
-    </div>
+    </div></div>
    </div>}
   </CollectionFloatingPanel>
  </span>;
