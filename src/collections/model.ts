@@ -80,11 +80,11 @@ export interface CollectionView {
   gridHiddenFieldIds?: string[];
   /** Explicit field IDs shown on cards or form; undefined uses defaults. */
   galleryFieldIds?: string[];
+  galleryOrderIds?: string[];
   formFieldIds?: string[];
   formRequiredFieldIds?: string[];
 }
-export interface CollectionBlockPayload {
-  version: 1;
+export interface CollectionBlockPayload { version: 1;
   title: string;
   fields: CollectionField[];
   records: CollectionRecord[];

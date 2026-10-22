@@ -66,6 +66,20 @@ export function rescheduleTask(data: CollectionBlockPayload, view: CollectionVie
   })};
   return result;
 }
+/** Resize either end of a schedule range without moving the opposite end. */
+export function resizeScheduleRange(data:CollectionBlockPayload,view:CollectionView,
+ id:string,edge:"start"|"end",day:string):CollectionBlockPayload {
+ if(!parseScheduleDay(day))return data;
+ const row=data.records.find(record=>record.id===id);
+ const start=dateField(data,view),end=endDateField(data,view);
+ if(!row||!start||!end||start.id===end.id)return data;
+ const first=row.values[start.id]??"",last=row.values[end.id]??"";
+ if(edge==="start"&&parseScheduleDay(last)&&day>last)return data;
+ if(edge==="end"&&parseScheduleDay(first)&&day<first)return data;
+ const field=edge==="start"?start:end;
+ if(row.values[field.id]===day)return data;
+ return setRecordValue(data,id,field.id,day);
+}
 export function createScheduledTask(data: CollectionBlockPayload, view: CollectionView,
   day: string, title: string): CollectionBlockPayload {
   const name = title.trim(), date = parseScheduleDay(day), primary = primaryField(data);

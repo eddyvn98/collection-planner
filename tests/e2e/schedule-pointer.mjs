@@ -64,7 +64,8 @@ try {
   await page.getByRole("button",{name:"More plan actions"}).click();
   await page.locator('[data-date="2026-10-21"] [data-record-id="e2e-task"]').waitFor({ timeout: 8000 });
   console.log("PASS desktop drag (12 pointer moves), persistence and Undo");
-  await page.locator('[data-date="2026-10-21"] [data-record-id="e2e-task"] button').last().click();
+  await page.locator('[data-date="2026-10-21"] [data-record-id="e2e-task"]')
+    .getByRole("button",{name:"Drag task",exact:true}).click();
   await page.getByText("More task actions").click();
   await page.getByLabel("Move task to date").fill("2026-10-24");
   await page.locator('[role="dialog"][aria-label^="Task "] button[aria-label="Close task details"]').click();

@@ -5,16 +5,18 @@ import { GripVertical, Plus } from "lucide-react";
 import { recordTitle, type CollectionBlockPayload, type CollectionRecord, type CollectionView } from "../collections/model";
 import { scheduledTaskOverdue } from "../collections/collectionSchedule";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
+import { CollectionScheduleResizeHandle } from "./CollectionScheduleResizeHandle";
 
-function ScheduleTask({ data, view, record, today, readOnly, onOpen }: {
+function ScheduleTask({ data, view, record, today, readOnly, onOpen, onResize }: {
   data: CollectionBlockPayload; view: CollectionView; record: CollectionRecord;
   today: string; readOnly: boolean; onOpen: (id: string) => void;
+  onResize:(id:string,edge:"start"|"end",day:string)=>void;
 }) {
   const drag = useDraggable({ id: "schedule-task:" + record.id, disabled: readOnly });
   const late = scheduledTaskOverdue(data, view, record, today);
   return <article ref={drag.setNodeRef} data-testid="schedule-task" data-record-id={record.id}
     style={{ transform: CSS.Translate.toString(drag.transform), opacity: drag.isDragging ? 0.55 : 1 }}
-    className={"mb-1 flex min-w-0 items-center gap-1 rounded-md border p-1.5 shadow-sm " +
+    className={"mb-1 flex min-w-0 flex-wrap items-center gap-1 rounded-md border p-1.5 shadow-sm " +
       (late ? "border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
         : "border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)]")}>
     <button type="button" {...drag.attributes} {...drag.listeners} disabled={readOnly}
@@ -25,12 +27,19 @@ function ScheduleTask({ data, view, record, today, readOnly, onOpen }: {
       title={recordTitle(data, record)}>{recordTitle(data, record)}</button>
     <CollectionBlockedBadge data={data} record={record}/>
     {late && <span className="shrink-0 text-[10px] font-bold">Late</span>}
+    {!readOnly&&<div className="flex w-full items-center justify-between border-t border-[var(--planner-border)]">
+      <CollectionScheduleResizeHandle data={data} view={view} record={record} edge="start"
+       disabled={readOnly} onResize={onResize}/>
+      <CollectionScheduleResizeHandle data={data} view={view} record={record} edge="end"
+       disabled={readOnly} onResize={onResize}/>
+    </div>}
   </article>;
 }
-export function CollectionScheduleDay({ data, view, day, rows, today, outside, readOnly, onCreate, onOpen }: {
+export function CollectionScheduleDay({ data, view, day, rows, today, outside, readOnly, onCreate, onOpen, onResize }: {
   data: CollectionBlockPayload; view: CollectionView; day: string; rows: CollectionRecord[];
   today: string; outside: boolean; readOnly: boolean;
   onCreate: (day: string, title: string) => void; onOpen: (id: string) => void;
+  onResize:(id:string,edge:"start"|"end",day:string)=>void;
 }) {
   const drop = useDroppable({ id: "schedule-day:" + day, disabled: readOnly });
   const [adding, setAdding] = useState(false), [title, setTitle] = useState("");
@@ -41,6 +50,10 @@ export function CollectionScheduleDay({ data, view, day, rows, today, outside, r
   return <section ref={drop.setNodeRef} data-testid="collection-calendar-day" data-date={day}
     aria-label={"Date " + day}
     onClick={event => { if (!readOnly && event.target === event.currentTarget) setAdding(true); }}
+    onDoubleClick={event=>{
+      if(!readOnly&&!(event.target as HTMLElement).closest("button,input,form,[data-testid=schedule-task]"))
+       setAdding(true);
+    }}
     className={"min-h-28 min-w-0 rounded-lg border p-1.5 text-xs transition-colors " +
       (drop.isOver ? "border-[var(--planner-accent)] bg-[var(--planner-hover)] ring-2 ring-[var(--planner-accent)] "
         : "border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)] ") +
@@ -63,7 +76,7 @@ export function CollectionScheduleDay({ data, view, day, rows, today, outside, r
         <button type="button" onClick={() => { setAdding(false); setTitle(""); }}>Cancel</button></div>
     </form>}
     {shown.map(record => <ScheduleTask key={record.id} data={data} view={view} record={record}
-      today={today} readOnly={readOnly} onOpen={onOpen} />)}
+      today={today} readOnly={readOnly} onOpen={onOpen} onResize={onResize}/>)}
     {rows.length > 4 && <button type="button" aria-label={(expanded ? "Show less on " : "Show more on ") + day}
       className="rounded p-1 text-[var(--planner-accent)] underline" onClick={() => setExpanded(!expanded)}>
       {expanded ? "Show less" : "+" + (rows.length - 4) + " more"}</button>}

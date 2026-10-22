@@ -4,8 +4,10 @@ import { relationValueValid } from "./collectionRelations";
 /** Form values are validated before a single canonical Collection mutation. */
 export const formFields = (data: CollectionBlockPayload, view: CollectionView): CollectionField[] => {
   const eligible = data.fields.filter(field => !["formula", "lookup", "rollup"].includes(field.type));
-  return view.formFieldIds === undefined ? eligible :
-    eligible.filter(field => view.formFieldIds!.includes(field.id));
+  if(view.formFieldIds===undefined)return eligible;
+  const positions=new Map(view.formFieldIds.map((id,index)=>[id,index]));
+  return eligible.filter(field=>positions.has(field.id))
+   .sort((a,b)=>(positions.get(a.id)??0)-(positions.get(b.id)??0));
 };
 
 export const requiredFormFieldIds = (data: CollectionBlockPayload, view: CollectionView): string[] => {
