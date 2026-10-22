@@ -11,16 +11,24 @@ import { CollectionBoardSubtaskDrop } from "./CollectionBoardSubtaskDrop";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { CollectionBoardQuickEdit } from "./CollectionBoardQuickEdit";
+import {plannerInputEnabled} from "./CollectionInputSettings";
 import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
  data:CollectionBlockPayload;record:CollectionRecord;groupKey:string;readOnly:boolean;
  onChange:(data:CollectionBlockPayload)=>void;onOpen:(trigger:HTMLButtonElement)=>void;
  descendants?:{done:number;total:number};
+ selected?:boolean;onSelect?:()=>void;onContext?:(x:number,y:number)=>void;
+ onSwipe?:(direction:"right"|"left",x:number,y:number)=>void;
 }
-export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,onChange,onOpen}:Props){
+export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,onChange,onOpen,
+ selected=false,onSelect,onContext,onSwipe}:Props){
  const tap=useRef<{id:number;x:number;y:number}|null>(null);
+ const touch=useRef<{x:number;y:number}|null>(null);
+ const hold=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const clearHold=()=>{if(hold.current){clearTimeout(hold.current);hold.current=null;}};
+ const taskContext=(x:number,y:number)=>{if(!readOnly)onContext?.(x,y);};
  const pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null);
- useEffect(()=>()=>{if(pendingOpen.current)clearTimeout(pendingOpen.current);},[]);
+ useEffect(()=>()=>{if(pendingOpen.current)clearTimeout(pendingOpen.current);clearHold();},[]);
  const queueOpen=(trigger:HTMLButtonElement)=>{
   if(pendingOpen.current)clearTimeout(pendingOpen.current);
   pendingOpen.current=setTimeout(()=>{pendingOpen.current=null;onOpen(trigger);},220);
@@ -57,8 +65,31 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
  };
  return <article ref={node=>{drag.setNodeRef(node);drop.setNodeRef(node);}}
    data-testid="collection-kanban-card" data-record-id={record.id}
+   aria-selected={selected} data-selected={selected?"true":"false"}
+   onContextMenu={event=>{
+    if(readOnly)return;
+    event.preventDefault();taskContext(event.clientX,event.clientY);
+   }}
+   onTouchStart={event=>{
+    if(!plannerInputEnabled("gestures")||readOnly)return;
+    const t=event.touches[0];touch.current={x:t.clientX,y:t.clientY};
+    clearHold();hold.current=setTimeout(()=>taskContext(t.clientX,t.clientY),480);
+   }}
+   onTouchMove={event=>{
+    const start=touch.current,t=event.touches[0];
+    if(start&&Math.hypot(t.clientX-start.x,t.clientY-start.y)>12)clearHold();
+   }}
+   onTouchEnd={event=>{
+    clearHold();const start=touch.current;touch.current=null;
+    const t=event.changedTouches[0];
+    if(!start||!t||!plannerInputEnabled("gestures")||readOnly)return;
+    const dx=t.clientX-start.x,dy=t.clientY-start.y;
+    if(Math.abs(dx)>90&&Math.abs(dy)<40)
+     onSwipe?.(dx>0?"right":"left",t.clientX,t.clientY);
+   }}
+   onTouchCancel={()=>{clearHold();touch.current=null;}}
    className={"planner-motion-card group mb-2 overflow-hidden rounded-[4px] border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)] shadow-[0_1px_3px_#00000013] transition hover:shadow-md "+
-    (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}
+    (drop.isOver||selected?"ring-2 ring-[var(--planner-accent)]":"")}
    style={{transform:CSS.Translate.toString(drag.transform),opacity:drag.isDragging?.55:1}}>
   {img&&<img src={img.url} alt={img.name} loading="lazy" className="mb-2 h-24 w-full rounded object-cover"/>}
   <div className="flex items-start gap-1.5">
@@ -81,17 +112,25 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
     onPointerDown={event=>{tap.current={id:event.pointerId,x:event.clientX,y:event.clientY};}}
     onPointerUp={event=>{
      const start=tap.current;tap.current=null;
+     if(event.ctrlKey||event.metaKey||event.shiftKey)return;
      if(start&&start.id===event.pointerId&&
       Math.hypot(start.x-event.clientX,start.y-event.clientY)<4)
       queueOpen(event.currentTarget);
     }}
     onPointerCancel={()=>{tap.current=null;}}
-    onClick={event=>{if(event.detail===0)onOpen(event.currentTarget);}}
+    onClick={event=>{
+     if(event.ctrlKey||event.metaKey||event.shiftKey){onSelect?.();return;}
+     if(event.detail===0)onOpen(event.currentTarget);
+    }}
     onDoubleClick={event=>{
      event.preventDefault();if(pendingOpen.current)clearTimeout(pendingOpen.current);
      pendingOpen.current=null;beginRename();
     }}
     onKeyDown={event=>{
+     if(event.key==="ContextMenu"||(event.shiftKey&&event.key==="F10")){
+      event.preventDefault();const rect=event.currentTarget.getBoundingClientRect();
+      taskContext(rect.left+24,rect.top+24);return;
+     }
      if(event.key==="F2"){event.preventDefault();beginRename();return;}
      if(event.key===" "||event.key.toLowerCase()==="e"){
       event.preventDefault();onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"));return;
