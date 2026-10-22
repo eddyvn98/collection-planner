@@ -3,6 +3,7 @@ import { useRef,useState } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
  MessageCircle, Paperclip, StickyNote } from "lucide-react";
+import { buildTaskTree } from "../collections/collectionTaskTree";
 import { deleteRecord,recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 import { taskAssignees, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
@@ -21,6 +22,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
  const drag=useDraggable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const drop=useDroppable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const title=recordTitle(data,record),complete=record.progress==="completed";
+ const hasChildren=(buildTaskTree(data.records).children.get(record.id)?.length??0)>0;
  const indicators=cardIndicators(data,record);
  const due=indicators.due,late=indicators.overdue;
  const people=taskAssignees(data,record);
@@ -91,10 +93,14 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
   </div>}
   {confirmDelete&&<CollectionModalDialog label={"Delete "+title+" task?"} onClose={()=>setConfirmDelete(false)} trigger={titleRef.current}>
     <h3 className="font-semibold">Delete “{title}”?</h3>
-    <p className="mt-2 text-xs text-[var(--planner-secondary)]">You can undo this change.</p>
+    <p className="mt-2 text-xs text-[var(--planner-secondary)]">{hasChildren?"Keep children or delete all descendants?":"You can undo this change."}</p>
     <div className="mt-4 flex justify-end gap-2">
      <button data-dialog-initial className="min-h-9 rounded px-3 hover:bg-[var(--planner-hover)]" onClick={()=>setConfirmDelete(false)}>Cancel</button>
-     <button className="min-h-9 rounded bg-red-700 px-3 text-white" onClick={()=>{setConfirmDelete(false);onChange(deleteRecord(data,record.id));}}>Delete</button>
+     {hasChildren&&<button className="min-h-9 rounded border px-3" onClick={()=>{
+      setConfirmDelete(false);onChange(deleteRecord(data,record.id,"promote"));}}>Promote children</button>}
+     <button className="min-h-9 rounded bg-red-700 px-3 text-white" onClick={()=>{
+      setConfirmDelete(false);onChange(deleteRecord(data,record.id,hasChildren?"subtree":"promote"));}}>
+      {hasChildren?"Delete branch":"Delete"}</button>
     </div>
    </CollectionModalDialog>}
  </article>;
