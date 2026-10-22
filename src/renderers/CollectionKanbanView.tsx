@@ -51,7 +51,9 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   const card=parseCardDragId(target);
   const to=card?.[1]??(target.startsWith("bucket:")?target.slice(7):null);
   if(to===null)return;
-  const next=moveGroupedTask(data,moving[0],moving[1],to,mode,group,card?.[0],readOnly);
+  const next=mode==="bucket"&&card
+   ? moveTaskTree(data,moving[0],card[0],"before",to.slice(7))
+   :moveGroupedTask(data,moving[0],moving[1],to,mode,group,card?.[0],readOnly);
   if(next!==data)onChange(next);
  };
  return <div className="flex min-h-0 flex-1 flex-col">
