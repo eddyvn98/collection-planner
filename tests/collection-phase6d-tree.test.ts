@@ -60,7 +60,7 @@ describe("6D tree operations",()=>{
  });
  it("keeps illegal moves immutable, including dependency and depth violations",()=>{
   const data=plan();
-  const bad={...data,records:data.records.map(row=>row.id==="d"?{...row,dependsOn:["c"]}:row)};
+  const bad={...data,records:data.records.map(row=>row.id==="d"?{...row,dependsOn:["b"]}:row)};
   expect(moveTaskTree(bad,"d","b","child")).toBe(bad);
   expect(moveTaskTree(data,"b","c","child")).toBe(data);
   expect(moveTaskTree(data,"b","b","after")).toBe(data);
