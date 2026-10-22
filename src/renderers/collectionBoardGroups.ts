@@ -1,3 +1,4 @@
+import { buildTaskTree, taskBranch, reconcileTaskProgress } from "../collections/collectionTaskTree";
 import { completeRecurringTask } from "../collections/collectionRecurrence";
 import { setRecordValue, type CollectionBlockPayload, type CollectionField,
  type CollectionRecord, type CollectionView, type TaskPriority, type TaskProgress } from "../collections/model";
@@ -56,18 +57,26 @@ export function parseCardDragId(id: string): [string,string] | null {
   return Array.isArray(value)&&value.length===2&&value.every(x=>typeof x==="string") ? [value[0],value[1]] : null;
  }catch{return null;}
 }
-export function setTaskProgress(data: CollectionBlockPayload, recordId: string, progress: TaskProgress) {
+export function setTaskProgress(data:CollectionBlockPayload,recordId:string,progress:TaskProgress) {
  if(!PROGRESS.some(p=>p.value===progress))return data;
  const previous=data.records.find(row=>row.id===recordId);
- let next=updateTask(data,recordId,{progress},"Changed progress");
+ if(!previous)return data;
+ const branch=taskBranch(buildTaskTree(data.records),recordId);
+ const ids=new Set(branch.map(row=>row.id));
  const status=data.fields.find(f=>f.type==="select"&&/^(status|progress)$/i.test(f.name.trim()));
- if(status){
-  const value=progress==="completed"?"Done":progress==="in_progress"?"In progress":"To do";
-  if(status.options?.includes(value))next=setRecordValue(next,recordId,status.id,value);
- }
- return progress==="completed" && previous && previous.progress!=="completed"
-  ? completeRecurringTask(next, previous) : next;
+ const nextStatus=progress==="completed"?"Done":progress==="in_progress"?"In progress":"To do";
+ // Explicitly changing a parent applies to its descendants; rolling up then ensures
+ // no parent reports Completed with unfinished children.
+ const records=reconcileTaskProgress(data.records.map(row=>{
+  if(!ids.has(row.id))return row;
+  return {...row,progress,...(status?.options?.includes(nextStatus)
+   ?{values:{...row.values,[status.id]:nextStatus}}:{})};
+ }));
+ const next=records.every((row,i)=>row===data.records[i])?data:{...data,records};
+ return progress==="completed" && previous.progress!=="completed"
+  ? completeRecurringTask(next,previous):next;
 }
+
 export function moveGroupedTask(data: CollectionBlockPayload, id: string, from: string, to: string,
  mode: BoardGroupBy, field?: CollectionField, beforeId?: string, readOnly=false,
  today=localToday()): CollectionBlockPayload {
