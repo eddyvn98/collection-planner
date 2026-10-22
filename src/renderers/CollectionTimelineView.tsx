@@ -5,6 +5,7 @@ import {recordTitle} from "../collections/model";
 import {FieldEditor,btnClass,hintClass} from "./CollectionFieldEditor";
 import {addUtcDays,timelineLayout} from "./collectionTimelineDates";
 import {CollectionTimelineCanvas} from "./CollectionTimelineCanvas";
+import {CollectionInlineHistory,type CollectionInlineHistoryProps} from "./CollectionInlineHistory";
 import {useTimelineGestures} from "./useTimelineGestures";
 import {collectionTablePage} from "./collectionTablePaging";
 import {availableCollectionDependencies,longestCollectionDependencyChain,
@@ -14,9 +15,9 @@ import {dayNumber,TIMELINE_ZOOM,moveTimelineBranch,resizeTimelineTask,
 
 interface Props{rows:CollectionRecord[];data:CollectionBlockPayload;start?:CollectionField;
  end?:CollectionField;readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;
- patch:(r:CollectionRecord,f:CollectionField,v:string)=>void;}
+ patch:(r:CollectionRecord,f:CollectionField,v:string)=>void;history?:CollectionInlineHistoryProps;}
 const zooms:TimelineZoom[]=["day","week","month"];
-export function TimelineView({rows,data,start,end,readOnly,onChange,patch}:Props){
+export function TimelineView({rows,data,start,end,readOnly,onChange,patch,history}:Props){
  const [scale,setScale]=useState<TimelineZoom>("day");
  const [requestedPage,setRequestedPage]=useState(0);
  const [highlightChain,setHighlightChain]=useState(false);
@@ -74,6 +75,7 @@ export function TimelineView({rows,data,start,end,readOnly,onChange,patch}:Props
   {!start&&<p className="text-amber-600">Add a date field for Timeline.</p>}
   <div className="flex flex-wrap items-center gap-2 rounded-md bg-[var(--planner-surface)] px-2 py-1.5">
    <strong className="tabular-nums text-[var(--planner-text)]">{windowStart} – {windowEnd}</strong>
+   {history&&<CollectionInlineHistory {...history}/>}
    <button className={btnClass} type="button" onClick={jumpToday}>Today</button>
    <button className={btnClass} type="button" aria-label="Show previous 30 days"
     onClick={()=>shiftRange(-30)}>← 30d</button>
