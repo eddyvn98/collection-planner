@@ -36,10 +36,11 @@ export function visibleMindMapRecords(data:CollectionBlockPayload,
 }
 export function candidateMindMapParent(data:CollectionBlockPayload,moving:string,
  positioned:{id:string;x:number;y:number}[],x:number,y:number){
- const options=positioned.filter(item=>item.id!==moving)
+ const options=positioned.filter(item=>item.id!==moving&&
+  canSetTaskParent(data.records,moving,item.id))
   .map(item=>({...item,distance:Math.hypot(item.x-x,item.y-y)}))
-  .filter(item=>item.distance<150).sort((a,b)=>a.distance-b.distance);
- return options.find(item=>canSetTaskParent(data.records,moving,item.id))?.id??null;
+  .sort((a,b)=>a.distance-b.distance);
+ return (options[0]?.distance??Infinity)<150?options[0]?.id:null;
 }
 export function mindMapBadges(data:CollectionBlockPayload,id:string){
  const row=data.records.find(item=>item.id===id);
