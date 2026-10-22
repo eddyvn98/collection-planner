@@ -29,7 +29,8 @@ export function CollectionModalDialog({label,onClose,children,trigger}:{
   window.addEventListener("keydown",keydown,true);
   return ()=>{
    window.removeEventListener("keydown",keydown,true);
-   requestAnimationFrame(()=>{if(previous?.isConnected)previous.focus();});
+   const currentPanel=panel.current;
+   requestAnimationFrame(()=>{if(!currentPanel?.isConnected&&previous?.isConnected)previous.focus();});
   };
  },[]);
  return createPortal(<div className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/40 p-4"
