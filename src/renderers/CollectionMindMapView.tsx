@@ -18,6 +18,7 @@ interface Props{rows:CollectionRecord[];data:CollectionBlockPayload;readOnly:boo
  onChange:(next:CollectionBlockPayload)=>void;history?:CollectionInlineHistoryProps}
 const nodeTypes={plannerTask:MindMapTaskNode};
 const fit={padding:0.18,duration:200};
+type DragPointer={clientX:number;clientY:number}|{changedTouches:TouchList};
 export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const [selectedId,setSelectedId]=useState<string|null>(null),[page,setPage]=useState(0);
  const [collapsed,setCollapsed]=useState<Set<string>>(()=>new Set());
@@ -89,7 +90,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  },[flow,structure,layoutEpoch]);
  const dragTarget=(id:string,x:number,y:number)=>
   candidateMindMapParent(data,id,graph.nodes,x,y);
- const pointerTarget=(id:string,event:MouseEvent|TouchEvent)=>{
+ const pointerTarget=(id:string,event:DragPointer)=>{
   const p="changedTouches" in event?event.changedTouches[0]:event;
   const choices=[...root.current?.querySelectorAll<HTMLElement>(".react-flow__node[data-id]")??[]]
    .filter(el=>el.dataset.id!==id&&el.dataset.id&&canSetTaskParent(data.records,id,el.dataset.id))
@@ -100,7 +101,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    .sort((a,b)=>a.distance-b.distance);
   return (choices[0]?.distance??Infinity)<=32?choices[0].id:null;
  };
- const drop=(id:string,x:number,y:number,event:MouseEvent|TouchEvent)=>{
+ const drop=(id:string,x:number,y:number,event:DragPointer)=>{
   const target=pointerTarget(id,event)??dragTarget(id,x,y);
   setDropTarget(null);setDragPositions({});
   if(!target||readOnly)return;
