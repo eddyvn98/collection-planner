@@ -44,9 +44,6 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
           className="rounded p-2 hover:bg-[var(--planner-hover)]"><X size={16}/></button>
       </div>
     <div className="flex flex-col gap-2">
-      <label className="min-w-44 flex-1 text-xs">Search tasks
-        <input aria-label="Filter task keyword" className={control+" mt-1 w-full"} placeholder="Search title, notes, fields…"
-          value={value.keyword} onChange={e=>set("keyword",e.target.value)}/></label>
       <label className="text-xs">Due
         <select aria-label="Filter due date" className={control+" mt-1 block"} value={value.due}
           onChange={e=>set("due",e.target.value as TaskDueFilter)}>

@@ -18,13 +18,14 @@ export function copyTask(data: CollectionBlockPayload, id: string): CollectionBl
   if (!source) return data;
   const titleId = data.fields.find(field => field.type === "text")?.id;
   const values = { ...source.values };
-  if (titleId) values[titleId] = "Copy of " + recordTitle(data, source);
+  if (titleId) values[titleId] = recordTitle(data, source) + " (copy)";
   const copy: CollectionRecord = { ...source, id: newId(), values,
-    progress: "not_started", boardOrder: (source.boardOrder ?? 0) + 0.1,
-    checklist: source.checklist?.map(item => ({ ...item, id: newId(), done: false })),
+    boardOrder: (source.boardOrder ?? 0) + 0.1,
+    checklist: source.checklist?.map(item => ({ ...item, id: newId() })),
     attachments: source.attachments?.map(item => ({ ...item, id: newId() })),
     dependsOn: [], comments: [], activity: [] };
-  return { ...data, records: [...data.records, copy] };
+  const index=data.records.findIndex(row=>row.id===id);
+  return { ...data, records:[...data.records.slice(0,index+1),copy,...data.records.slice(index+1)] };
 }
 export function moveTaskToBucket(data: CollectionBlockPayload, id: string, bucket: string): CollectionBlockPayload {
   const field = plannerBucket(data);

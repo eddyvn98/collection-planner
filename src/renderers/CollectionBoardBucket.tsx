@@ -11,6 +11,7 @@ interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;
  readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;}
 export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,onOpen}:Props){
  const bucketMenuRef=useRef<HTMLButtonElement>(null);
+ const addTriggerRef=useRef<HTMLButtonElement>(null);
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
  const {active}=useDndContext();
  const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
@@ -20,7 +21,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
  const bucket=group.key.slice(7),editable=mode==="bucket"&&!!field&&!!bucket;
  const {active:pending,completed}=splitBucketCompletion(group.rows);
  const save=()=>{const next=createGroupedTask(data,title,group.key,mode,field);
-   if(next!==data){onChange(next);setTitle("");setAdding(false);}};
+   if(next!==data){onChange(next);setTitle("");}};
  const action=(operation:"rename"|"left"|"right"|"delete")=>{
    setMenu(false);if(!field)return;
    if(operation==="rename"){setName(bucket);setRenaming(true);}
@@ -70,7 +71,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
     <input autoFocus aria-label={"New task in "+group.title} value={title} maxLength={300}
       placeholder="Task name" onChange={e=>setTitle(e.target.value)}
       onKeyDown={e=>{
-       if(e.key==="Escape"){e.preventDefault();setAdding(false);}
+       if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setAdding(false);requestAnimationFrame(()=>addTriggerRef.current?.focus());}
        if(e.key==="Enter"&&!e.nativeEvent.isComposing&&!e.repeat){
         e.preventDefault();e.currentTarget.form?.requestSubmit();
        }
@@ -80,7 +81,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
       <button type="submit" disabled={!title.trim()} className="min-h-8 rounded bg-[var(--planner-accent)] px-3 text-xs text-white disabled:opacity-50">Add task</button>
       <button type="button" className="min-h-8 rounded px-2 text-xs hover:bg-[var(--planner-hover)]" onClick={()=>setAdding(false)}>Cancel</button>
     </div></form>:
-    <button type="button" data-planner-add-task onClick={()=>setAdding(true)}
+    <button ref={addTriggerRef} type="button" data-planner-add-task onClick={()=>setAdding(true)}
       className="mb-2 inline-flex min-h-9 w-full items-center gap-2 rounded px-2 text-left text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] hover:text-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
       <Plus size={16} strokeWidth={1.75}/>Add task</button>)}
   <div aria-label={group.title+" tasks"} className="min-h-4">

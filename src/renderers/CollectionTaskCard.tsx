@@ -1,12 +1,13 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { useRef } from "react";
+import { useRef,useState } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
  MessageCircle, Paperclip, StickyNote } from "lucide-react";
-import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
+import { deleteRecord,recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 import { taskAssignees, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
 import { cardIndicators } from "../collections/collectionCardIndicators";
+import { CollectionModalDialog } from "./CollectionModalDialog";
 import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
  data:CollectionBlockPayload;record:CollectionRecord;groupKey:string;readOnly:boolean;
@@ -14,6 +15,8 @@ interface Props {
 }
 export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpen}:Props){
  const tap=useRef<{id:number;x:number;y:number}|null>(null);
+ const titleRef=useRef<HTMLButtonElement>(null);
+ const [confirmDelete,setConfirmDelete]=useState(false);
  const drag=useDraggable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const drop=useDroppable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const title=recordTitle(data,record),complete=record.progress==="completed";
@@ -47,7 +50,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
     className="flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
      {complete?<CheckCircle2 size={18} strokeWidth={1.75}/>:<Circle size={18} strokeWidth={1.75}/>}
    </button>
-   <button type="button" data-board-card-focus
+   <button ref={titleRef} type="button" data-board-card-focus
     onPointerDown={e=>{tap.current={id:e.pointerId,x:e.clientX,y:e.clientY};}}
     onPointerUp={e=>{
       const start=tap.current;tap.current=null;
@@ -55,7 +58,11 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
         onOpen(e.currentTarget);
     }}
     onPointerCancel={()=>{tap.current=null;}}
-    onClick={e=>onOpen(e.currentTarget)} onKeyDown={focusArrow}
+    onClick={e=>onOpen(e.currentTarget)} onKeyDown={e=>{
+    if(e.key===" "||e.key.toLowerCase()==="e"){e.preventDefault();onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"));return;}
+    if(e.key==="Delete"){e.preventDefault();setConfirmDelete(true);return;}
+    focusArrow(e);
+   }}
     className={"min-h-8 min-w-0 flex-1 text-left text-sm font-medium hover:text-[var(--planner-accent)] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+
      (complete?"text-[var(--planner-secondary)] line-through":"")}>{title}</button>
    <button type="button" aria-label={"Drag "+title} title="Drag task" disabled={readOnly}
@@ -80,5 +87,13 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
        {person.name.split(/\s+/).slice(0,2).map(x=>x[0]??"").join("").toUpperCase()}</span>)}
    </div>}
   </div>}
+  {confirmDelete&&<CollectionModalDialog label={"Delete "+title+" task?"} onClose={()=>setConfirmDelete(false)} trigger={titleRef.current}>
+    <h3 className="font-semibold">Delete “{title}”?</h3>
+    <p className="mt-2 text-xs text-[var(--planner-secondary)]">You can undo this change.</p>
+    <div className="mt-4 flex justify-end gap-2">
+     <button data-dialog-initial className="min-h-9 rounded px-3 hover:bg-[var(--planner-hover)]" onClick={()=>setConfirmDelete(false)}>Cancel</button>
+     <button className="min-h-9 rounded bg-red-700 px-3 text-white" onClick={()=>{setConfirmDelete(false);onChange(deleteRecord(data,record.id));}}>Delete</button>
+    </div>
+   </CollectionModalDialog>}
  </article>;
 }
