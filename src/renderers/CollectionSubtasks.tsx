@@ -5,7 +5,7 @@ import {addSubtask} from "../collections/collectionTreeActions";
 import {primaryField,setRecordValue,recordTitle,type CollectionBlockPayload,
  type CollectionRecord} from "../collections/model";
 import {setTaskProgress} from "./collectionBoardGroups";
-import {setTaskDate,taskDate} from "../collections/collectionTasks";
+import {setTaskDate,taskDate,localToday} from "../collections/collectionTasks";
 import {formatPlannerCardDate} from "../collections/collectionDateDisplay";
 interface Props{data:CollectionBlockPayload;record:CollectionRecord;readOnly:boolean;
  onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string)=>void}
@@ -59,7 +59,7 @@ export function CollectionSubtasks({data,record,readOnly,onChange,onOpen}:Props)
      <span className="sr-only">Due {recordTitle(data,child)}</span>
      <input type="date" aria-label={"Due "+recordTitle(data,child)}
       disabled={readOnly} value={taskDate(data,child,"due")}
-      title={taskDate(data,child,"due")?formatPlannerCardDate(taskDate(data,child,"due")):"Set due date"}
+      title={taskDate(data,child,"due")?formatPlannerCardDate(taskDate(data,child,"due"),localToday()):"Set due date"}
       onChange={event=>onChange(setTaskDate(data,child.id,"due",event.target.value))}
       className="w-[100px] max-w-full rounded bg-transparent text-[11px]"/>
     </label>
