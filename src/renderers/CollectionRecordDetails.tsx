@@ -32,7 +32,8 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
   }};
   window.addEventListener("keydown",keydown,true);
   return ()=>{window.removeEventListener("keydown",keydown,true);
-    requestAnimationFrame(()=>{if(prior?.isConnected)prior.focus();});};
+    const currentPane=paneRef.current;
+    requestAnimationFrame(()=>{if(!currentPane?.isConnected&&prior?.isConnected)prior.focus();});};
  },[]);
  if(!record||typeof document==="undefined")return null;
  const title=primaryField(data),bucket=plannerBucket(data);
