@@ -33,7 +33,7 @@ export function CollectionUnifiedToolbar({data,view,filters,onFilters,readOnly,o
     onChange={value=>{setDraft(value);setFeedback("");}} disabled={readOnly}
     placeholder="Task · mai @người #nhãn !urgent"
     className="h-11 min-h-11 w-full min-w-[120px] rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-xs"/>
-   <button type="submit" aria-label="Create task in place" disabled={readOnly||!draft.trim()}
+   <button type="submit" style={{minWidth:44,minHeight:44}} aria-label="Create task in place" disabled={readOnly||!draft.trim()}
     className="inline-flex h-11 min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg bg-[var(--planner-accent)] px-3 text-xs text-white disabled:opacity-40">
     <Plus size={16}/> <span className="hidden lg:inline">Add</span>
    </button>
