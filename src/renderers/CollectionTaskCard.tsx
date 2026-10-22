@@ -1,4 +1,5 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { useRef } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
  MessageCircle, Paperclip, StickyNote } from "lucide-react";
@@ -12,6 +13,7 @@ interface Props {
  onChange:(data:CollectionBlockPayload)=>void;onOpen:(trigger:HTMLButtonElement)=>void;
 }
 export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpen}:Props){
+ const tap=useRef<{id:number;x:number;y:number}|null>(null);
  const drag=useDraggable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const drop=useDroppable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const title=recordTitle(data,record),complete=record.progress==="completed";
@@ -45,7 +47,15 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
     className="flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
      {complete?<CheckCircle2 size={18} strokeWidth={1.75}/>:<Circle size={18} strokeWidth={1.75}/>}
    </button>
-   <button type="button" data-board-card-focus onClick={e=>onOpen(e.currentTarget)} onKeyDown={focusArrow}
+   <button type="button" data-board-card-focus
+    onPointerDown={e=>{tap.current={id:e.pointerId,x:e.clientX,y:e.clientY};}}
+    onPointerUp={e=>{
+      const start=tap.current;tap.current=null;
+      if(start&&start.id===e.pointerId&&Math.hypot(start.x-e.clientX,start.y-e.clientY)<4)
+        onOpen(e.currentTarget);
+    }}
+    onPointerCancel={()=>{tap.current=null;}}
+    onClick={e=>onOpen(e.currentTarget)} onKeyDown={focusArrow}
     className={"min-h-8 min-w-0 flex-1 text-left text-sm font-medium hover:text-[var(--planner-accent)] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+
      (complete?"text-[var(--planner-secondary)] line-through":"")}>{title}</button>
    <button type="button" aria-label={"Drag "+title} title="Drag task" disabled={readOnly}
