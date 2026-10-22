@@ -21,7 +21,8 @@ try{
  const page=await load();
  await page.keyboard.press("/");
  const search=page.getByRole("textbox",{name:"Search plan tasks"});
- await search.waitFor();assert(await search.evaluate(x=>x===document.activeElement));
+ await search.waitFor();await page.waitForFunction(()=>document.activeElement?.getAttribute("aria-label")==="Search plan tasks");
+ assert(await search.evaluate(x=>x===document.activeElement));
  await search.fill("Launch");
  assert.equal(await page.locator('[data-record-id="r"][data-testid="collection-kanban-card"]').count(),1);
  await search.fill("unmatched");assert.equal(await page.locator('[data-record-id="r"][data-testid="collection-kanban-card"]').count(),0);
