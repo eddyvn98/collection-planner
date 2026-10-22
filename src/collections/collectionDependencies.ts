@@ -4,6 +4,7 @@ import type { CollectionBlockPayload, CollectionRecord } from "./model";
  * are ignored here; integrity diagnostics handle missing references. */
 export function blockingCollectionDependencies(data: CollectionBlockPayload,
  record: CollectionRecord): CollectionRecord[] {
+ if(record.progress==="completed")return [];
  const index = new Map(data.records.map(item => [item.id, item]));
  return [...new Set(record.dependsOn ?? [])].flatMap(id => {
   const item=index.get(id);
