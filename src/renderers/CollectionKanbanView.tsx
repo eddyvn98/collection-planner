@@ -35,33 +35,9 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   const nested=pointerWithin(args).filter(hit=>String(hit.id).startsWith("subtask:"));
   return nested.length?nested:rectIntersection(args);
  };
- const onDragEnd=(event:DragEndEvent)=>{
-  const {active,over}=event;
-  if(readOnly)return;
-  const activeId=String(active.id),targetId=String(over?.id??"");
-  if(activeId.startsWith("bucket-order:")){
-   if(mode!=="bucket"||!group)return;
-   const source=activeId.slice("bucket-order:bucket:".length);
-   // The 44px drag handle overlaps card and bucket droppables. Use the
-   // translated pointer position to identify the destination column.
-   const rect=active.rect.current.initial;
-   const x=rect?rect.left+rect.width/2+event.delta.x:null;
-   const y=rect?rect.top+rect.height/2+event.delta.y:null;
-   const hit=x===null?null:[...document.querySelectorAll<HTMLElement>(
-    '[data-testid="collection-kanban-column"][data-status]')].find(node=>{
-     const box=node.getBoundingClientRect();
-     return x>=box.left&&x<=box.right&&y!==null&&y>=box.top&&y<=box.bottom;
-    });
-   const target=hit?.dataset.status?.slice(7)||
-    (targetId.startsWith("bucket:bucket:")?targetId.slice("bucket:bucket:".length):
-     parseCardDragId(targetId)?.[1]?.slice(7));
-   if(target){const next=reorderBucket(data,group.id,source,target);
-    if(next!==data){setDragWarning("");onChange(next);}
-    else if(source!==target)setDragWarning("Could not reorder bucket.");}
-   else setDragWarning("Drop a bucket over another bucket.");
-   return;
-  }
-  if(!over)return;
+ const onDragEnd=({active,over}:DragEndEvent)=>{
+  if(readOnly||!over)return;
+  const activeId=String(active.id),targetId=String(over.id);
   const moving=parseCardDragId(activeId);
   if(!moving)return;
   const target=String(over.id);
@@ -97,7 +73,11 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={onDragEnd}>
    <div className="flex min-h-0 flex-1 items-start gap-2 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:snap-none" data-testid="collection-kanban">
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group} counts={counts}
-     readOnly={readOnly} onChange={onChange} showSubtasks={showSubtasks} onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
+     readOnly={readOnly} onChange={onChange} showSubtasks={showSubtasks}
+     onReorder={(source,target)=>{if(mode!=="bucket"||!group)return;
+      const next=reorderBucket(data,group.id,source,target);
+      if(next!==data){setDragWarning("");onChange(next);}}}
+     onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
     {mode==="bucket"&&!!group&&!readOnly&&(creating?
      <form className="w-64 shrink-0 space-y-2 rounded-xl bg-[var(--planner-hover)] p-3"
       onSubmit={e=>{e.preventDefault();const next=addBucket(data,group.id,newBucket);
