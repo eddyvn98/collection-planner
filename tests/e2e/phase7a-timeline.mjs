@@ -71,7 +71,7 @@ try{
   const other=page.locator('[data-testid="collection-timeline-row"][data-record-id="other"]');
   const a=await link.boundingBox(),b=await other.boundingBox();assert(a&&b);
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
-  await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:15});await page.mouse.up();
+  await page.mouse.move(b.x+Math.min(350, b.width-10),b.y+b.height/2,{steps:15});await page.mouse.up();
   assert((await record(page,"other")).dependsOn?.includes("parent"));
   const wire=page.getByTestId("timeline-dependency-wires").locator('[aria-label^="Remove timeline dependency"]');
   assert.equal(await wire.count(),1);
