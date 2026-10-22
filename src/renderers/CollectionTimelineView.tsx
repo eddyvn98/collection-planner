@@ -36,13 +36,13 @@ export function TimelineView({rows,data,start,end,readOnly,onChange,patch}:Props
  const highlightedIds=new Set(highlightChain?longest.ids:[]);
  const shiftRange=(days:number)=>{const next=addUtcDays(anchor,days);if(next)setAnchor(next);};
  const jumpToday=()=>{setAnchor(addUtcDays(today,-Math.floor(config.days/2))??today);};
- const changeZoom=(step:-1|1)=>{
-  const old=zooms.indexOf(scale),next=zooms[Math.min(2,Math.max(0,old+step))];
+ const selectZoom=(next:TimelineZoom)=>{
   if(next===scale)return;
   const center=addUtcDays(anchor,Math.floor(config.days/2))??anchor;
   setAnchor(addUtcDays(center,-Math.floor(TIMELINE_ZOOM[next].days/2))??anchor);
   setScale(next);
  };
+ const changeZoom=(step:-1|1)=>selectZoom(zooms[Math.min(2,Math.max(0,zooms.indexOf(scale)+step))]);
  useTimelineGestures(timelineScroll,changeZoom);
  const changeDates=(record:CollectionRecord,amount:number)=>{
   if(!start||readOnly)return;
@@ -81,7 +81,7 @@ export function TimelineView({rows,data,start,end,readOnly,onChange,patch}:Props
     onClick={()=>shiftRange(30)}>30d →</button>
    <label>Ruler <select className="rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5"
     aria-label="Timeline ruler" value={scale}
-    onChange={event=>changeZoom((zooms.indexOf(event.target.value as TimelineZoom)>zooms.indexOf(scale)?1:-1))}>
+    onChange={event=>selectZoom(event.target.value as TimelineZoom)}>
     <option value="day">Days</option><option value="week">Weeks</option><option value="month">Months</option>
    </select></label>
    <button type="button" className={btnClass} aria-label="Zoom in timeline"
@@ -169,10 +169,10 @@ export function TimelineView({rows,data,start,end,readOnly,onChange,patch}:Props
           onClick={() => changeDates(record, 1)}>1d →</button>
         <button className={btnClass} disabled={readOnly || !end || end.id === start?.id}
           aria-label={"Extend " + recordTitle(data, record) + " by one day"}
-          onClick={() => resize(record, 1)}>+ Duration</button>
+          onClick={() => resize(record, "right", 1)}>+ Duration</button>
         <button className={btnClass} disabled={readOnly || !end || end.id === start?.id}
           aria-label={"Shorten " + recordTitle(data, record) + " by one day"}
-          onClick={() => resize(record, -1)}>− Duration</button>
+          onClick={() => resize(record, "right", -1)}>− Duration</button>
         </div>
       </details>)}
     </div>
