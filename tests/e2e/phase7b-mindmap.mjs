@@ -101,6 +101,7 @@ try {
   await page.mouse.down();
   await page.mouse.move(to.x+to.width/2,to.y+to.height/2,{steps:20});
   await page.mouse.up();
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).records.find(r=>r.id==="sibling")?.parentId==="root",null,{timeout:6000});
   assert.equal((await records(page)).find(r=>r.id==="sibling").parentId,"root");
   console.log("PASS Mind Map pointer drag reparent persists ID");
   const existing=await records(page);
@@ -111,6 +112,7 @@ try {
   await page.mouse.down();
   await page.mouse.move(frame.x+frame.width-28,frame.y+35,{steps:22});
   await page.mouse.up();
+  await page.waitForFunction(count=>JSON.parse(localStorage.getItem("collection-planner:v1")).records.length===count+1,existing.length,{timeout:6000});
   const afterHandle=await records(page);
   assert(afterHandle.length===existing.length+1,"Handle to empty canvas creates a child");
   assert(afterHandle.find(row=>!existing.some(old=>old.id===row.id))?.parentId==="root");
