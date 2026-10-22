@@ -1,5 +1,5 @@
 import { addDays, addMonths, addWeeks, format, isValid, parseISO } from "date-fns";
-import { newId, recordTitle, setRecordValue, type CollectionBlockPayload,
+import { recordTitle, type CollectionBlockPayload,
   type CollectionRecord } from "./model";
 import { cloneTaskBranch } from "./collectionTaskCloning";
 import { buildTaskTree, taskBranch } from "./collectionTaskTree";
@@ -24,10 +24,10 @@ export function copyTask(data:CollectionBlockPayload,id:string):CollectionBlockP
 export function moveTaskToBucket(data: CollectionBlockPayload, id: string, bucket: string): CollectionBlockPayload {
   const field = plannerBucket(data);
   if (!field || (bucket !== "" && !(field.options ?? []).includes(bucket))) return data;
-  const branch=taskBranch(buildTaskTree(data.records),id);
-  if(!branch.length)return data;
+  const moved=new Set(taskBranch(buildTaskTree(data.records),id).map(row=>row.id));
+  if(!moved.size)return data;
   return {...data,records:data.records.map(row=>
-   branch.some(child=>child.id===row.id)&&row.values[field.id]!==bucket
+   moved.has(row.id)&&row.values[field.id]!==bucket
     ?{...row,values:{...row.values,[field.id]:bucket}}:row)};
 
 }
