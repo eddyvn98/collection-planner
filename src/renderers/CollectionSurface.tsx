@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { btnClass, fieldTypeGuidance, fieldTypeLabels, hintClass, inputClass, FieldEditor } from "./CollectionFieldEditor";
 import { CollectionScheduleView } from "./CollectionScheduleView"; import { CollectionChartsView } from "./CollectionChartsView";
-import { CollectionTaskFilterBar } from "./CollectionTaskFilterBar";
+import { CollectionUnifiedToolbar } from "./CollectionUnifiedToolbar";
 import { EMPTY_TASK_FILTERS, filterPlannerTasks, type TaskFilterState } from "../collections/collectionPlannerFilters";
 import { TimelineView } from "./CollectionTimelineView";
 import { MindMapView } from "./CollectionMindMapView";
@@ -103,7 +103,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     setFull(true);
   };
   const view = data.views.find((v) => v.id === (localViewId ?? data.activeViewId)) ?? data.views[0];
-  const plannerView = ["table", "kanban", "calendar", "charts"].includes(view.kind);
+  const plannerView = view.kind !== "form";
   const rows = useMemo(() => {
     const base = visibleRecords(data, view, plannerView ? "" : search, sources);
     return plannerView ? filterPlannerTasks(data, base, taskFilters) : base;
@@ -163,19 +163,19 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     <CollectionPlannerHeader data={data} view={view} readOnly={readOnly}
       onDataChange={onChange} assignedMode={assignedMode} onAssignedMode={setAssignedMode}
       filters={taskFilters} onFilters={setTaskFilters}
-      filterControl={plannerView ? <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
-       onChange={setTaskFilters} onDataChange={onChange}/> : null}
+      filterControl={null}
       onTitle={title=>onChange({...data,title})}
       onSelect={viewId=>{setAssignedMode(false);if(readOnly)setLocalViewId(viewId);else{setLocalViewId(null);onChange({...data,activeViewId:viewId});}}}
       onDelete={viewId=>onChange(removeView(data,viewId))}
       onAddView={kind=>onChange(addView(data,kind))}
-      onGroup={mode=>onChange(updateView(data,view.id,{boardGroupBy:mode}))}
       settings={settings} showHistory={showHistory}
       onSettings={()=>{setSettings(!settings);setShowHistory(false);}}
       onHistory={()=>{setShowHistory(!showHistory);setSettings(false);}}
       importExport={importExportMenu} canUndo={canUndo} canRedo={canRedo}
       undo={undo} redo={redo} darkMode={darkMode} setDarkMode={setDarkMode}
       navigation={standaloneNavigation} full={full} onExpand={openFull} onClose={closeFull} backRef={backButton}/>
+    <CollectionUnifiedToolbar data={data} view={view} filters={taskFilters} onFilters={setTaskFilters}
+      readOnly={readOnly} onChange={onChange}/>
     {revisionNotice?.stale && <div role="status" className="flex shrink-0 flex-wrap items-center gap-2 border-b px-2 py-1 text-xs">
       <span>Another session has saved a newer board version.</span>
       <button className={btnClass} disabled={revisionNotice.refreshing} onClick={() => void revisionNotice.refresh()}>
@@ -268,9 +268,6 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       {!assignedMode&&!rows.length && view.kind !== "form" && view.kind !== "table" && <div className="p-4 text-center text-xs text-[var(--planner-secondary)]">No matching records. Add one to get started.</div>}
     </div>
     </div>
-    {view.kind !== "table" && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
-      <button className={btnClass} disabled={readOnly} onClick={() => onChange(addRecord(data))}>+ Record</button>
-    </div>}
     <CollectionUndoToast message={toast} onUndo={undo} onClose={dismiss} canUndo={canUndo}/>
     <CollectionImportPrompts pending={pendingImport} error={importError}
       onConfirm={()=>{if(pendingImport)onChange(pendingImport);setPendingImport(null);}}
