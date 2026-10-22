@@ -84,20 +84,26 @@ export function moveGroupedTask(data: CollectionBlockPayload, id: string, from: 
  const valid=boardGroups(data,data.records,mode,field,today).some(g=>g.key===to);
  if(!valid||!to.startsWith(mode+":"))return data;
  if(mode==="bucket")return moveBoardCard(data,id,field?.id,to.slice(7),beforeId,readOnly);
- const r=data.records.find(row=>row.id===id)!;
+ const branchIds=new Set(taskBranch(buildTaskTree(data.records),id).map(row=>row.id));
+ const patchBranch=(sourceData:CollectionBlockPayload,mapper:(row:CollectionRecord)=>CollectionRecord)=>
+  ({...sourceData,records:sourceData.records.map(row=>branchIds.has(row.id)?mapper(row):row)});
  const target=to.slice(mode.length+1),source=from.startsWith(mode+":")?from.slice(mode.length+1):"";
  let next=data;
  if(mode==="progress")next=setTaskProgress(next,id,target as TaskProgress);
- if(mode==="priority")next=updateTask(next,id,{priority:target as TaskPriority},"Changed priority");
+ if(mode==="priority")next=patchBranch(next,row=>({...row,priority:target as TaskPriority}));
  if(mode==="assignee"||mode==="label"){
   const prop=mode==="assignee"?"assigneeIds":"labelIds";
-  const ids=(r[prop]??[]).filter(value=>value!==source&&value!==target);
-  next=updateTask(next,id,{[prop]:target?[...ids,target]:[]},"Changed "+mode);
+  next=patchBranch(next,row=>{
+   const ids=(row[prop]??[]).filter(value=>value!==source&&value!==target);
+   return {...row,[prop]:target?[...ids,target]:[]};
+  });
  }
  if(mode==="due"){
   const date=target==="none"?"":target==="late"?addDays(today,-1):target==="today"?today:
    target==="soon"?addDays(today,3):addDays(today,14);
-  next=setTaskDate(next,id,"due",date);
+  const dateField=data.fields.find(f=>f.type==="date" && /^(due|deadline|end)/i.test(f.name));
+  if(dateField)next=patchBranch(next,row=>({...row,values:{...row.values,[dateField.id]:date}}));
+  else next=patchBranch(next,row=>({...row,dueDate:date}));
  }
  // Reindex only destination cards. Unrelated records keep their existing order.
  const group=boardGroups(next,next.records,mode,field,today).find(g=>g.key===to);
