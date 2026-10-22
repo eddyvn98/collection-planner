@@ -36,16 +36,6 @@ export function CollectionBoardQuickEdit({kind,data,record,readOnly,onChange,chi
   <CollectionFloatingPanel open={open} anchorRef={anchor} onClose={()=>setOpen(false)}
    role="dialog" label={label} align="start" className="w-64 max-w-[calc(100vw-16px)] rounded-lg p-3">
    <h4 className="mb-2 text-sm font-semibold">{label}</h4>
-   {kind==="due"&&<label className="block text-xs">Due date
-    <input autoFocus type="date" aria-label={"Due date for "+title}
-     value={taskDate(data,record,"due")} disabled={readOnly}
-     onChange={event=>{const next=setTaskDate(data,record.id,"due",event.target.value);
-      if(next!==data)onChange(next);}}
-     className="mt-1 min-h-11 w-full rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-sm"/>
-    <button type="button" disabled={readOnly} className="mt-2 min-h-11 w-full rounded text-left text-xs underline"
-     onClick={()=>{const next=setTaskDate(data,record.id,"due","");
-      if(next!==data)onChange(next);setOpen(false);}}>Clear due date</button>
-   </label>}
    {kind==="priority"&&<div className="grid gap-1">
     {PRIORITIES.map(item=><button type="button" key={item.value}
      aria-pressed={(record.priority??"medium")===item.value}
