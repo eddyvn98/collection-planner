@@ -90,11 +90,17 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    if(stopped)return;
    const inputs=root.current?.querySelectorAll<HTMLInputElement>("input[data-mindmap-rename]");
    const input=Array.from(inputs??[]).find(el=>el.dataset.mindmapRename===editingId);
-   if(input){if(document.activeElement!==input){input.focus({preventScroll:true});input.select();}return;}
+   if(input&&document.activeElement!==input){input.focus({preventScroll:true});input.select();}
+   // React Flow and the toolbar can restore focus after the node has mounted.
+   // Retry only during the short mount transition; real interaction cancels it.
    if(++attempt<30)frame=requestAnimationFrame(focus);
   };
+  const stop=()=>{stopped=true;cancelAnimationFrame(frame);};
+  document.addEventListener("pointerdown",stop,true);
+  document.addEventListener("keydown",stop,true);
   frame=requestAnimationFrame(focus);
-  return()=>{stopped=true;cancelAnimationFrame(frame);};
+  return()=>{stop();document.removeEventListener("pointerdown",stop,true);
+   document.removeEventListener("keydown",stop,true);};
  },[editingId,graph.nodes.length,data.records.length]);
  useEffect(()=>{
   if(!flow||!root.current||editingId)return;
@@ -165,9 +171,9 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   <div className="flex flex-wrap items-center gap-1.5 text-xs">
    <span className={hintClass}>Drag node onto another to reparent · Tab adds child · Enter sibling · F2 rename · Shift selects multiple</span>
    {selected&&<><button type="button" aria-label="Add child node" disabled={readOnly}
-    className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>add(selected.id,"child")}><Plus size={14} className="inline"/> Child</button>
+    className="min-h-11 rounded border border-[var(--planner-border)] px-2" onPointerDown={event=>{if(event.pointerType==="mouse")event.preventDefault();}} onClick={()=>add(selected.id,"child")}><Plus size={14} className="inline"/> Child</button>
     <button type="button" aria-label="Add sibling node" disabled={readOnly}
-     className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>add(selected.id,"sibling")}>Sibling</button>
+     className="min-h-11 rounded border border-[var(--planner-border)] px-2" onPointerDown={event=>{if(event.pointerType==="mouse")event.preventDefault();}} onClick={()=>add(selected.id,"sibling")}>Sibling</button>
     <button type="button" aria-label="Rename selected node" disabled={readOnly}
      className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>setEditingId(selected.id)}><Pencil size={14} className="inline"/> Rename</button>
     <button type="button" aria-label="Delete selected node" disabled={readOnly}
