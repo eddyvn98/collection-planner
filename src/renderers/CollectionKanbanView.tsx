@@ -5,7 +5,7 @@ import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, pointerWithin, 
  useSensor, useSensors, type CollisionDetection, type DragEndEvent } from "@dnd-kit/core";
 import { descendantCounts, MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
 import { moveTaskTree } from "../collections/collectionTreeActions";
-import { addBucket } from "./collectionBoardActions";
+import { addBucket,reorderBucket } from "./collectionBoardActions";
 import { boardGroups, moveGroupedTask, parseCardDragId } from "./collectionBoardGroups";
 import { CollectionBoardBucket } from "./CollectionBoardBucket";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
@@ -37,7 +37,17 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
  };
  const onDragEnd=({active,over}:DragEndEvent)=>{
   if(readOnly||!over)return;
-  const moving=parseCardDragId(String(active.id));
+  const activeId=String(active.id),targetId=String(over.id);
+  if(activeId.startsWith("bucket-order:")){
+   if(mode!=="bucket"||!group)return;
+   const source=activeId.slice("bucket-order:bucket:".length);
+   const target=targetId.startsWith("bucket:bucket:")?targetId.slice("bucket:bucket:".length):
+    parseCardDragId(targetId)?.[1]?.slice(7);
+   if(target){const next=reorderBucket(data,group.id,source,target);
+    if(next!==data)onChange(next);}
+   return;
+  }
+  const moving=parseCardDragId(activeId);
   if(!moving)return;
   const target=String(over.id);
   if(target.startsWith("subtask:")){
