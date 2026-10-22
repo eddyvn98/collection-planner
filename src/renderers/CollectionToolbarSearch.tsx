@@ -4,16 +4,16 @@ export function CollectionToolbarSearch({value,onChange}:{
  value:string;onChange:(text:string)=>void;
 }){
  const [open,setOpen]=useState(false);
- const ref=useRef<HTMLInputElement>(null);
+ const ref=useRef<HTMLInputElement>(null),trigger=useRef<HTMLButtonElement>(null);
  useLayoutEffect(()=>{if(open)ref.current?.focus({preventScroll:true});},[open]);
  useEffect(()=>{
   const listen=()=>setOpen(true);
   document.addEventListener("planner:focus-search",listen);
   return ()=>document.removeEventListener("planner:focus-search",listen);
  },[]);
- const close=()=>{onChange("");setOpen(false);};
+ const close=()=>{onChange("");setOpen(false);requestAnimationFrame(()=>trigger.current?.focus());};
  return <div className="flex min-w-0 items-center">
-  <button type="button" aria-label="Search tasks" title="Search tasks (/)"
+  <button ref={trigger} type="button" aria-label="Search tasks" title="Search tasks (/)"
    onClick={()=>setOpen(true)}
    className="grid h-10 w-10 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2">
    <Search size={16}/></button>
