@@ -77,6 +77,8 @@ try{
   await picker.getByRole("button",{name:"Remove dependency API ready"}).click();
   await picker.getByRole("button",{name:"Remove dependency QA signoff"}).click();
   assert.equal(await ship.getByTestId("blocked-badge").count(),0);
+  // Re-add a predecessor for the desktop Grid indicator assertion below.
+  await picker.getByRole("checkbox",{name:"Add dependency API ready"}).click();
   console.log("PASS blocked tooltip, searchable bucket/due, cycle and completed exclusions, removal");
   await drawer.getByRole("button",{name:"Close task details"}).click();
   await page.getByRole("button",{name:"Grid",exact:true}).click();
