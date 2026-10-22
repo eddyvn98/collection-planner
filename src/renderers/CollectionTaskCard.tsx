@@ -13,14 +13,16 @@ import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
  data:CollectionBlockPayload;record:CollectionRecord;groupKey:string;readOnly:boolean;
  onChange:(data:CollectionBlockPayload)=>void;onOpen:(trigger:HTMLButtonElement)=>void;
+ descendants?:{done:number;total:number};
 }
-export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpen}:Props){
+export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,onChange,onOpen}:Props){
  const tap=useRef<{id:number;x:number;y:number}|null>(null);
  const titleRef=useRef<HTMLButtonElement>(null);
  const [confirmDelete,setConfirmDelete]=useState(false);
  const drag=useDraggable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const drop=useDroppable({id:cardDragId(record.id,groupKey),disabled:readOnly});
  const title=recordTitle(data,record),complete=record.progress==="completed";
+ const hasChildren=(descendants?.total??0)>0;
  const indicators=cardIndicators(data,record);
  const due=indicators.due,late=indicators.overdue;
  const people=taskAssignees(data,record);
@@ -72,6 +74,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
   </div>
   <div className="mt-1.5 flex flex-wrap items-center gap-3 pl-1 text-xs text-[var(--planner-secondary)]">
    <CollectionBlockedBadge data={data} record={record}/>
+   {!!descendants?.total&&<span data-testid="task-descendant-count" title="Completed sub-tasks / all descendants" className="rounded bg-[var(--planner-hover)] px-1.5 py-0.5">{descendants.done}/{descendants.total}</span>}
    {indicators.priority&&<span data-testid="card-priority" title={"Priority "+record.priority}
      className="flex gap-1 text-red-600"><Flag size={15} strokeWidth={1.75}/>{formatPlannerPriority(record.priority??"")}</span>}
    {!!indicators.checklist&&<span data-testid="card-checklist" title="Checklist" className="flex gap-1"><ClipboardCheck size={15}/>{indicators.checklist}</span>}
@@ -91,10 +94,14 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
   </div>}
   {confirmDelete&&<CollectionModalDialog label={"Delete "+title+" task?"} onClose={()=>setConfirmDelete(false)} trigger={titleRef.current}>
     <h3 className="font-semibold">Delete “{title}”?</h3>
-    <p className="mt-2 text-xs text-[var(--planner-secondary)]">You can undo this change.</p>
+    <p className="mt-2 text-xs text-[var(--planner-secondary)]">{hasChildren?"Keep children or delete all descendants?":"You can undo this change."}</p>
     <div className="mt-4 flex justify-end gap-2">
      <button data-dialog-initial className="min-h-9 rounded px-3 hover:bg-[var(--planner-hover)]" onClick={()=>setConfirmDelete(false)}>Cancel</button>
-     <button className="min-h-9 rounded bg-red-700 px-3 text-white" onClick={()=>{setConfirmDelete(false);onChange(deleteRecord(data,record.id));}}>Delete</button>
+     {hasChildren&&<button className="min-h-9 rounded border px-3" onClick={()=>{
+      setConfirmDelete(false);onChange(deleteRecord(data,record.id,"promote"));}}>Promote children</button>}
+     <button className="min-h-9 rounded bg-red-700 px-3 text-white" onClick={()=>{
+      setConfirmDelete(false);onChange(deleteRecord(data,record.id,hasChildren?"subtree":"promote"));}}>
+      {hasChildren?"Delete branch":"Delete"}</button>
     </div>
    </CollectionModalDialog>}
  </article>;

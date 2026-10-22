@@ -1,5 +1,6 @@
 import { addDays, addMonths, addWeeks, differenceInCalendarDays, eachDayOfInterval,
   endOfMonth, endOfWeek, format, isValid, parseISO, startOfMonth, startOfWeek } from "date-fns";
+import { buildTaskTree, taskBranch } from "./collectionTaskTree";
 import { addRecord, dateField, endDateField, primaryField, setRecordValue,
   type CollectionBlockPayload, type CollectionRecord, type CollectionView } from "./model";
 
@@ -42,6 +43,7 @@ export function rescheduleTask(data: CollectionBlockPayload, view: CollectionVie
   const source = parseScheduleDay(previous)!;
   const offset = differenceInCalendarDays(target, source);
   let result = data;
+  const descendants=taskBranch(buildTaskTree(data.records),recordId);
   // Preserve task duration when both start and due are present, including across DST.
   for (const field of [start, due].filter((field, i, arr) =>
     !!field && arr.findIndex(candidate => candidate?.id === field.id) === i)) {
@@ -50,6 +52,18 @@ export function rescheduleTask(data: CollectionBlockPayload, view: CollectionVie
     const parsed = parseScheduleDay(oldDay ?? "");
     if (parsed) result = setRecordValue(result, recordId, field.id, scheduleIso(addDays(parsed, offset)));
   }
+  const fields=[start,due].filter((field,i,all)=>!!field&&all.findIndex(x=>x?.id===field.id)===i);
+  const moved=new Set(descendants.slice(1).map(row=>row.id));
+  if(moved.size)result={...result,records:result.records.map(row=>{
+   if(!moved.has(row.id))return row;
+   const values={...row.values};
+   for(const field of fields){
+    if(!field)continue;
+    const date=parseScheduleDay(values[field.id]??"");
+    if(date)values[field.id]=scheduleIso(addDays(date,offset));
+   }
+   return {...row,values};
+  })};
   return result;
 }
 export function createScheduledTask(data: CollectionBlockPayload, view: CollectionView,

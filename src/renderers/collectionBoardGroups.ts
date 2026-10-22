@@ -1,3 +1,4 @@
+import { buildTaskTree, taskBranch, reconcileTaskProgress } from "../collections/collectionTaskTree";
 import { completeRecurringTask } from "../collections/collectionRecurrence";
 import { setRecordValue, type CollectionBlockPayload, type CollectionField,
  type CollectionRecord, type CollectionView, type TaskPriority, type TaskProgress } from "../collections/model";
@@ -56,18 +57,26 @@ export function parseCardDragId(id: string): [string,string] | null {
   return Array.isArray(value)&&value.length===2&&value.every(x=>typeof x==="string") ? [value[0],value[1]] : null;
  }catch{return null;}
 }
-export function setTaskProgress(data: CollectionBlockPayload, recordId: string, progress: TaskProgress) {
+export function setTaskProgress(data:CollectionBlockPayload,recordId:string,progress:TaskProgress) {
  if(!PROGRESS.some(p=>p.value===progress))return data;
  const previous=data.records.find(row=>row.id===recordId);
- let next=updateTask(data,recordId,{progress},"Changed progress");
+ if(!previous)return data;
+ const branch=taskBranch(buildTaskTree(data.records),recordId);
+ const ids=new Set(branch.map(row=>row.id));
  const status=data.fields.find(f=>f.type==="select"&&/^(status|progress)$/i.test(f.name.trim()));
- if(status){
-  const value=progress==="completed"?"Done":progress==="in_progress"?"In progress":"To do";
-  if(status.options?.includes(value))next=setRecordValue(next,recordId,status.id,value);
- }
- return progress==="completed" && previous && previous.progress!=="completed"
-  ? completeRecurringTask(next, previous) : next;
+ const nextStatus=progress==="completed"?"Done":progress==="in_progress"?"In progress":"To do";
+ // Explicitly changing a parent applies to its descendants; rolling up then ensures
+ // no parent reports Completed with unfinished children.
+ const records=reconcileTaskProgress(data.records.map(row=>{
+  if(!ids.has(row.id))return row;
+  return {...row,progress,...(status?.options?.includes(nextStatus)
+   ?{values:{...row.values,[status.id]:nextStatus}}:{})};
+ }));
+ const next=records.every((row,i)=>row===data.records[i])?data:{...data,records};
+ return progress==="completed" && previous.progress!=="completed"
+  ? completeRecurringTask(next,previous):next;
 }
+
 export function moveGroupedTask(data: CollectionBlockPayload, id: string, from: string, to: string,
  mode: BoardGroupBy, field?: CollectionField, beforeId?: string, readOnly=false,
  today=localToday()): CollectionBlockPayload {
@@ -75,20 +84,26 @@ export function moveGroupedTask(data: CollectionBlockPayload, id: string, from: 
  const valid=boardGroups(data,data.records,mode,field,today).some(g=>g.key===to);
  if(!valid||!to.startsWith(mode+":"))return data;
  if(mode==="bucket")return moveBoardCard(data,id,field?.id,to.slice(7),beforeId,readOnly);
- const r=data.records.find(row=>row.id===id)!;
+ const branchIds=new Set(taskBranch(buildTaskTree(data.records),id).map(row=>row.id));
+ const patchBranch=(sourceData:CollectionBlockPayload,mapper:(row:CollectionRecord)=>CollectionRecord)=>
+  ({...sourceData,records:sourceData.records.map(row=>branchIds.has(row.id)?mapper(row):row)});
  const target=to.slice(mode.length+1),source=from.startsWith(mode+":")?from.slice(mode.length+1):"";
  let next=data;
  if(mode==="progress")next=setTaskProgress(next,id,target as TaskProgress);
- if(mode==="priority")next=updateTask(next,id,{priority:target as TaskPriority},"Changed priority");
+ if(mode==="priority")next=patchBranch(next,row=>({...row,priority:target as TaskPriority}));
  if(mode==="assignee"||mode==="label"){
   const prop=mode==="assignee"?"assigneeIds":"labelIds";
-  const ids=(r[prop]??[]).filter(value=>value!==source&&value!==target);
-  next=updateTask(next,id,{[prop]:target?[...ids,target]:[]},"Changed "+mode);
+  next=patchBranch(next,row=>{
+   const ids=(row[prop]??[]).filter(value=>value!==source&&value!==target);
+   return {...row,[prop]:target?[...ids,target]:[]};
+  });
  }
  if(mode==="due"){
   const date=target==="none"?"":target==="late"?addDays(today,-1):target==="today"?today:
    target==="soon"?addDays(today,3):addDays(today,14);
-  next=setTaskDate(next,id,"due",date);
+  const dateField=data.fields.find(f=>f.type==="date" && /^(due|deadline|end)/i.test(f.name));
+  if(dateField)next=patchBranch(next,row=>({...row,values:{...row.values,[dateField.id]:date}}));
+  else next=patchBranch(next,row=>({...row,dueDate:date}));
  }
  // Reindex only destination cards. Unrelated records keep their existing order.
  const group=boardGroups(next,next.records,mode,field,today).find(g=>g.key===to);

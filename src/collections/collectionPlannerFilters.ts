@@ -2,7 +2,7 @@ import { newId, primaryField, recordTitle, type CollectionBlockPayload,
   type CollectionRecord, type CollectionView } from "./model";
 import { isLegacyStatusField } from "./collectionPlannerFields";
 import { localToday, taskDate } from "./collectionTasks";
-import {matchesTaskSearch} from "./collectionTaskSearch";
+import {matchesTaskSearch,searchTaskTree} from "./collectionTaskSearch";
 
 export type TaskDueFilter = "all" | "overdue" | "today" | "next7" | "no_due";
 export interface TaskFilterState {
@@ -63,7 +63,12 @@ export function filterPlannerTasks(data: CollectionBlockPayload, rows: Collectio
   filters: TaskFilterState, today = localToday()): CollectionRecord[] {
   const inactive = !filters.keyword.trim() && filters.due === "all" &&
     !filters.bucket && !filters.label && !filters.assignee && !filters.priority && !filters.progress;
-  return inactive ? rows : rows.filter(row => matchesPlannerTask(data, row, filters, today));
+  if(inactive)return rows;
+  const context=filters.keyword.trim()?searchTaskTree(data,filters.keyword):null;
+  return rows.filter(row=>context?.has(row.id) &&
+    row.parentId && !matchesTaskSearch(data,row,filters.keyword)
+    ? matchesPlannerTask(data,row,{...filters,keyword:""},today)
+    : matchesPlannerTask(data,row,filters,today));
 }
 export function saveTaskFilterPreset(data: CollectionBlockPayload,
   name: string, filters: TaskFilterState): CollectionBlockPayload {

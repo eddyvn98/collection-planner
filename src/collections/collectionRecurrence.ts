@@ -1,6 +1,8 @@
 import { addDays, addMonths, addWeeks, format, isValid, parseISO } from "date-fns";
-import { newId, recordTitle, setRecordValue, type CollectionBlockPayload,
+import { recordTitle, type CollectionBlockPayload,
   type CollectionRecord } from "./model";
+import { cloneTaskBranch } from "./collectionTaskCloning";
+import { buildTaskTree, taskBranch } from "./collectionTaskTree";
 import { taskDateFields, updateTask } from "./collectionTasks";
 import { isLegacyStatusField, plannerBucket } from "./collectionPlannerFields";
 export type TaskRecurrence = NonNullable<CollectionRecord["recurrence"]>;
@@ -13,24 +15,21 @@ const nextDay = (day: string, cadence: TaskRecurrence): string => {
     : cadence === "monthly" ? addMonths(source, 1) : source;
   return format(date, "yyyy-MM-dd");
 };
-export function copyTask(data: CollectionBlockPayload, id: string): CollectionBlockPayload {
-  const source = data.records.find(row => row.id === id);
-  if (!source) return data;
-  const titleId = data.fields.find(field => field.type === "text")?.id;
-  const values = { ...source.values };
-  if (titleId) values[titleId] = recordTitle(data, source) + " (copy)";
-  const copy: CollectionRecord = { ...source, id: newId(), values,
-    boardOrder: (source.boardOrder ?? 0) + 0.1,
-    checklist: source.checklist?.map(item => ({ ...item, id: newId() })),
-    attachments: source.attachments?.map(item => ({ ...item, id: newId() })),
-    dependsOn: [], comments: [], activity: [] };
-  const index=data.records.findIndex(row=>row.id===id);
-  return { ...data, records:[...data.records.slice(0,index+1),copy,...data.records.slice(index+1)] };
+export function copyTask(data:CollectionBlockPayload,id:string):CollectionBlockPayload {
+ const source=data.records.find(row=>row.id===id);
+ if(!source)return data;
+ return cloneTaskBranch(data,id,{rootTitle:recordTitle(data,source)+" (copy)"});
 }
+
 export function moveTaskToBucket(data: CollectionBlockPayload, id: string, bucket: string): CollectionBlockPayload {
   const field = plannerBucket(data);
   if (!field || (bucket !== "" && !(field.options ?? []).includes(bucket))) return data;
-  return setRecordValue(data, id, field.id, bucket);
+  const moved=new Set(taskBranch(buildTaskTree(data.records),id).map(row=>row.id));
+  if(!moved.size)return data;
+  return {...data,records:data.records.map(row=>
+   moved.has(row.id)&&row.values[field.id]!==bucket
+    ?{...row,values:{...row.values,[field.id]:bucket}}:row)};
+
 }
 /** Completion creates exactly one fresh occurrence, and never repeats on no-op saves. */
 export function completeRecurringTask(data: CollectionBlockPayload, original: CollectionRecord): CollectionBlockPayload {
@@ -57,11 +56,16 @@ export function completeRecurringTask(data: CollectionBlockPayload, original: Co
   const nextDue = lastDue && !due ? nextDay(lastDue, original.recurrence) : undefined;
   const nextStart = lastStart && !start ? nextDay(lastStart, original.recurrence) : undefined;
   if ((due && lastDue && !values[due.id]) || (start && lastStart && !values[start.id])) return data;
-  const fresh: CollectionRecord = { ...original, id: newId(), values, progress: "not_started",
-    dueDate: nextDue ?? original.dueDate, startDate: nextStart ?? original.startDate,
-    checklist: original.checklist?.map(item => ({ ...item, id: newId(), done: false })),
-    comments: [], activity: [], boardOrder: (original.boardOrder ?? 0) - 0.1 };
-  return { ...data, records: [...data.records, fresh] };
+  const cadence=original.recurrence;
+  const shift=(row:CollectionRecord)=>{
+   const updated={...row.values};
+   if(start&&updated[start.id])updated[start.id]=nextDay(updated[start.id],cadence);
+   if(due&&updated[due.id])updated[due.id]=nextDay(updated[due.id],cadence);
+   return updated;
+  };
+  // All descendants are cloned as new, unfinished tasks, with remapped parents.
+  return cloneTaskBranch(data,original.id,{rootValues:values,resetProgress:true,mapValues:shift});
+
 }
 export function setRecurrence(data: CollectionBlockPayload, id: string, recurrence: TaskRecurrence) {
   if (!["none", "daily", "weekly", "monthly"].includes(recurrence)) return data;

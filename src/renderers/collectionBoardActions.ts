@@ -1,4 +1,5 @@
 import { setRecordValue, updateField, type CollectionBlockPayload } from "../collections/model";
+import { taskBranch, buildTaskTree } from "../collections/collectionTaskTree";
 import { updateTask } from "../collections/collectionTasks";
 export const UNASSIGNED = "";
 export function bucketOptions(data: CollectionBlockPayload, fieldId: string): string[] {
@@ -51,7 +52,9 @@ export function moveBoardCard(data: CollectionBlockPayload, recordId: string, fi
   if ((old.values[fieldId] ?? "") === bucket &&
     orderedCards(data, data.records.filter(r => (r.values[fieldId] ?? "") === bucket))
       .map(r => r.id).join() === destination.map(r => r.id).join()) return data;
-  let next = setRecordValue(data, recordId, fieldId, bucket);
+  const moved=new Set(taskBranch(buildTaskTree(data.records),recordId).map(row=>row.id));
+  let next={...data,records:data.records.map(row=>moved.has(row.id)&&row.values[fieldId]!==bucket
+   ?{...row,values:{...row.values,[fieldId]:bucket}}:row)};
   for (let i = 0; i < destination.length; i++) next = updateTask(next, destination[i].id, { boardOrder: i });
   return next;
 }

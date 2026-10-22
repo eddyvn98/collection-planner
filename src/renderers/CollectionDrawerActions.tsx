@@ -2,17 +2,19 @@ import { useRef, useState } from "react";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { Copy, Ellipsis, Layers3, Trash2 } from "lucide-react";
+import { buildTaskTree } from "../collections/collectionTaskTree";
 import { copyTask, moveTaskToBucket } from "../collections/collectionRecurrence";
 import { plannerBucket } from "../collections/collectionPlannerFields";
 import { type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 export function CollectionDrawerActions({data,record,readOnly,onChange,onDelete}:{
  data:CollectionBlockPayload;record:CollectionRecord;readOnly:boolean;
- onChange:(next:CollectionBlockPayload)=>void;onDelete:()=>void;
+ onChange:(next:CollectionBlockPayload)=>void;onDelete:(mode?:"subtree"|"promote")=>void;
 }){
  const [open,setOpen]=useState(false),[moving,setMoving]=useState(false);
  const [confirmDelete,setConfirmDelete]=useState(false),deleteTrigger=useRef<HTMLButtonElement>(null);
  const trigger=useRef<HTMLButtonElement>(null);
  const bucket=plannerBucket(data);
+ const hasChildren=(buildTaskTree(data.records).children.get(record.id)?.length??0)>0;
  const duplicate=()=>{onChange(copyTask(data,record.id));setOpen(false);};
  return <div className="relative flex items-center gap-1">
    <button ref={trigger} type="button" aria-label="Task actions" title="Copy, duplicate or move task"
@@ -41,12 +43,15 @@ export function CollectionDrawerActions({data,record,readOnly,onChange,onDelete}
    {confirmDelete&&<CollectionModalDialog label="Delete task?" trigger={deleteTrigger.current}
      onClose={()=>setConfirmDelete(false)}>
      <h2 className="font-semibold">Delete this task?</h2>
-     <p className="mt-2 text-sm text-[var(--planner-secondary)]">This removes the task from the plan.</p>
+     <p className="mt-2 text-sm text-[var(--planner-secondary)]">{hasChildren?"Choose whether to keep its sub-tasks.":"This removes the task from the plan."}</p>
      <div className="mt-4 flex justify-end gap-2">
       <button data-dialog-initial type="button" className="min-h-9 rounded px-3 hover:bg-[var(--planner-hover)]"
         onClick={()=>setConfirmDelete(false)}>Cancel</button>
-      <button type="button" className="min-h-9 rounded bg-red-700 px-3 text-white"
-        onClick={()=>{setConfirmDelete(false);onDelete();}}>Delete task</button>
+      {hasChildren&&<button type="button" className="min-h-9 rounded border border-[var(--planner-border)] px-3 text-xs"
+        onClick={()=>{setConfirmDelete(false);onDelete("promote");}}>Keep sub-tasks (promote)</button>}
+      <button type="button" className="min-h-9 rounded bg-red-700 px-3 text-xs text-white"
+        onClick={()=>{setConfirmDelete(false);onDelete(hasChildren?"subtree":"promote");}}>
+         {hasChildren?"Delete entire branch":"Delete task"}</button>
      </div>
    </CollectionModalDialog>}
   </div>;

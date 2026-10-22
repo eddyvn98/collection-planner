@@ -5,11 +5,12 @@ import { Plus, Circle, CheckCircle2, ExternalLink, Trash2 } from "lucide-react";
 import { setTaskProgress } from "./collectionBoardGroups";
 import { flexRender, getCoreRowModel, useReactTable,
   type ColumnDef, type SortingState } from "@tanstack/react-table";
-import { addField, addRecord, deleteRecord, removeField, recordTitle, viewSorts, type CollectionBlockPayload,
+import { addField, addRecord, removeField, recordTitle, viewSorts, type CollectionBlockPayload,
   type CollectionField, type CollectionRecord, type CollectionView, type CollectionSources } from "../collections/model";
 import { CollectionTableColumnHeader } from "./CollectionTableColumnHeader";
 import { btnClass, FieldEditor } from "./CollectionFieldEditor";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
+import { CollectionDeleteBranchDialog } from "./CollectionDeleteBranchDialog";
 import { calculateCollectionAggregate } from "../collections/collectionFormula";
 import { COLLECTION_PAGE_SIZES, collectionTablePage, type CollectionPageSize } from "./collectionTablePaging";
 import { gridFields } from "../collections/collectionPlannerFilters";
@@ -45,6 +46,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   const [requestedPage, setRequestedPage] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [openRecordId, setOpenRecordId] = useState<string | null>(null);
+  const [pendingDeleteTaskId,setPendingDeleteTaskId]=useState<string|null>(null);
   const [pendingDeleteFieldId, setPendingDeleteFieldId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor));
   const [pageSize, setPageSize] = useState<CollectionPageSize>(50);
@@ -151,7 +153,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       onChange={onChange} onClear={() => setSelected([])} />
     <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
       onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
-      onOpen={setOpenRecordId} onChange={onChange}/>
+      onOpen={setOpenRecordId} onChange={onChange} onDeleteRequest={setPendingDeleteTaskId}/>
     {!page.rows.length && <p role="status" className="rounded-lg border border-dashed p-4 text-center text-sm text-[var(--planner-secondary)]">
       No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
@@ -208,7 +210,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         <button className="grid h-8 w-8 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2" title="Open task" aria-label={"Open " + recordTitle(data, row.original)}
           onClick={() => setOpenRecordId(row.original.id)}><ExternalLink size={14}/></button>
         <button aria-label={"Delete " + recordTitle(data, row.original)} title="Delete task" className="grid h-8 w-8 place-items-center rounded text-[var(--planner-secondary)] hover:text-rose-600 focus-visible:ring-2"
-          disabled={readOnly} onClick={() => onChange(deleteRecord(data, row.original.id))}><Trash2 size={14}/></button></div></td>
+          disabled={readOnly} onClick={() => setPendingDeleteTaskId(row.original.id)}><Trash2 size={14}/></button></div></td>
     </tr>)}
     <CollectionGridAddRow data={data} colSpan={table.getAllLeafColumns().length + 3} readOnly={readOnly} onChange={onChange} />
     </tbody>
@@ -241,6 +243,8 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
         disabled={page.pageIndex >= page.pageCount - 1}
         onClick={() => setRequestedPage(page.pageCount - 1)}>»</button>
     </nav>
+    {pendingDeleteTaskId&&<CollectionDeleteBranchDialog data={data} id={pendingDeleteTaskId}
+      onChange={onChange} onClose={()=>setPendingDeleteTaskId(null)}/>}
     {openRecordId && <CollectionRecordDetails data={data} sources={sources} recordId={openRecordId}
       readOnly={readOnly} onChange={onChange} onClose={() => setOpenRecordId(null)} />}
     {pendingDeleteFieldId && (() => {

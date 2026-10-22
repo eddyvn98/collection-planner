@@ -4,6 +4,7 @@ import { Background, Controls, MiniMap, Position, ReactFlow, type Edge, type Nod
 import "@xyflow/react/dist/style.css";
 import type { CollectionBlockPayload, CollectionRecord } from "../collections/model";
 import { recordTitle, setParent } from "../collections/model";
+import { MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
 import { layoutMindMap } from "./collectionMindMapLayout";
 import { visibleMindMapSelection } from "./collectionMindMapSelection";
 import { hintClass, inputClass } from "./CollectionFieldEditor";
@@ -14,7 +15,8 @@ interface Props { rows: CollectionRecord[]; data: CollectionBlockPayload; readOn
 export function MindMapView({ rows, data, readOnly, onChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 200;
+  const [parentWarning,setParentWarning]=useState("");
+  const PAGE_SIZE = MAX_VISIBLE_TREE_NODES;
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
   const graph = useMemo(() => layoutMindMap(rows, PAGE_SIZE, currentPage * PAGE_SIZE), [rows, currentPage]);
@@ -45,7 +47,8 @@ export function MindMapView({ rows, data, readOnly, onChange }: Props) {
     // Reparent only on an intentional near-node drop. The engine prevents cycles.
     if ((targets[0]?.distance ?? Infinity) > 130) return;
     const next = setParent(data, movedId, targets[0].id);
-    if (next !== data) onChange(next);
+    if (next !== data) {setParentWarning("");onChange(next);}
+    else setParentWarning("Cannot move: cycle detected or maximum depth is 6 levels.");
   };
   return <div className="flex h-full min-h-[420px] flex-col gap-2" data-testid="collection-mindmap">
     <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
@@ -65,7 +68,8 @@ export function MindMapView({ rows, data, readOnly, onChange }: Props) {
           value={parentChoice}
           onChange={event => {
             const next = setParent(data, selected.id, event.target.value || null);
-            if (next !== data) onChange(next);
+            if (next !== data) {setParentWarning("");onChange(next);}
+            else setParentWarning("Cannot move: cycle detected or maximum depth is 6 levels.");
           }}>
           <option value="">Root</option>
           {rows.filter(item => item.id !== selected.id).map(item =>
@@ -73,6 +77,7 @@ export function MindMapView({ rows, data, readOnly, onChange }: Props) {
         </select>
       </label>}
     </div>
+    {parentWarning&&<p role="alert" className="text-xs text-amber-700 dark:text-amber-300">{parentWarning}</p>}
     {selected?.parentId && !graph.nodes.some(node => node.id === selected.parentId) && <span className={hintClass}>Parent is outside this page; the saved relationship is unchanged.</span>}
     <div className="min-h-[380px] flex-1 overflow-hidden rounded border" data-testid="collection-mindmap-graph">
       <ReactFlow nodes={nodes} edges={edges} fitView minZoom={0.15} maxZoom={2}

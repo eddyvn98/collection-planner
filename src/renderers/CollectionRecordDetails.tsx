@@ -60,7 +60,7 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--planner-border)] px-4 py-3">
      <h2 className="text-sm font-semibold">Task details</h2>
      <div className="flex items-center gap-1"><CollectionDrawerActions data={data} record={record}
-       readOnly={readOnly} onChange={onChange} onDelete={()=>{onChange(deleteRecord(data,record.id));onClose();}}/>
+       readOnly={readOnly} onChange={onChange} onDelete={mode=>{onChange(deleteRecord(data,record.id,mode));onClose();}}/>
      <button type="button" aria-label="Close task details" title="Close task details" onClick={onClose}
        className="flex min-h-9 min-w-9 items-center justify-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
        <X size={16} strokeWidth={1.75}/></button></div>

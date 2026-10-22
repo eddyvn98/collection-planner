@@ -2,11 +2,13 @@ import { createId } from "../utils/id";
 import type { TaskFilterPreset } from "./collectionPlannerFilters";
 import { normalizeTaskRecord, progressFromStatus } from "./collectionTasks";
 import { matchesViewFilters, type CollectionFilter, type FilterLogic } from "./collectionFilters";
-import { buildCollectionRelationIndex, projectCollectionLookups, removeInboundRelations } from "./collectionRelations";
+import { buildCollectionRelationIndex, projectCollectionLookups } from "./collectionRelations";
+import { searchTaskTree } from "./collectionTaskSearch";
 import { applyCollectionAutomations, sanitizeCollectionAutomations, type CollectionAutomation } from "./collectionAutomations";
 import type { CollectionAuditEntry } from "./collectionAudit";
 import { sanitizeCollectionSchedules, type CollectionScheduledRule } from "./collectionSchedules";
 import { projectCollectionFormulas, type CollectionAggregation, type FormulaOperation } from "./collectionFormula";
+import { reconcileTaskProgress, removeTaskBranch, sanitizeTaskParents, setTaskParent } from "./collectionTaskTree";
 
 export type CollectionFieldType = "text" | "number" | "date" | "select" | "checkbox" | "url" | "image" | "relation" | "lookup" | "rollup" | "formula";
 export type CollectionViewKind = "table" | "kanban" | "calendar" | "timeline" | "gallery" | "mindmap" | "form" | "charts";
@@ -150,7 +152,8 @@ export function normalizeCollection(input: CollectionBlockPayload | null | undef
       ? { ...row, values: { ...row.values, [migrationBucket.id]: row.values[legacyGroup.id] } } : row;
     return normalizeTaskRecord(migrated, fields);
   });
-  const records = normalized.every((row, index) => row === input.records[index]) ? input.records : normalized;
+  const migratedRecords = normalized.every((row, index) => row === input.records[index]) ? input.records : normalized;
+  const records = reconcileTaskProgress(sanitizeTaskParents(migratedRecords));
   return { ...input, version: 1, title: input.title || "Untitled collection", fields, views, records,
     people: Array.isArray(input.people) ? input.people : [],
     labels: Array.isArray(input.labels) ? input.labels.slice(0, 25) : [],
@@ -189,9 +192,10 @@ export function visibleRecords(data: CollectionBlockPayload, view: CollectionVie
   const sorts = viewSorts(view);
   const index = data.fields.some(field => field.type === "lookup" || field.type === "rollup")
     ? buildCollectionRelationIndex(data, sources) : undefined;
+  const treeMatches=search ? searchTaskTree(data,search) : null;
   let rows = data.records.map(record => projectCollectionFormulas(data, projectCollectionLookups(data, record, sources, index)))
     .filter((r) => matchesViewFilters(r, data.fields, filters, view.filterLogic)
-    && (!search || Object.values(r.values).some((v) => String(v).toLowerCase().includes(search.toLowerCase()))));
+    && (!treeMatches || treeMatches.has(r.id)));
   if (sorts.length) rows = [...rows].sort((a, b) => {
     for (const { fieldId, direction } of sorts) {
       const type = data.fields.find((f) => f.id === fieldId)?.type;
@@ -225,10 +229,13 @@ export function updateRecordBody(data: CollectionBlockPayload, recordId: string,
   return { ...data, records: data.records.map(record => record.id === recordId
     ? { ...record, body } : record) };
 }
-export function deleteRecord(data: CollectionBlockPayload, recordId: string): CollectionBlockPayload {
-  return { ...data, records: removeInboundRelations(data, recordId).map(row => row.dependsOn?.includes(recordId)
-    ? { ...row, dependsOn: row.dependsOn.filter(id => id !== recordId) } : row) };
+/** Default promotes children for old one-click delete call sites (never silently
+ * loses a branch). Explicit subtree deletion requires mode="subtree". */
+export function deleteRecord(data:CollectionBlockPayload,recordId:string,
+ mode:"subtree"|"promote"="promote"):CollectionBlockPayload {
+ return removeTaskBranch(data,recordId,mode);
 }
+
 export function addField(data: CollectionBlockPayload, name: string, type: CollectionFieldType): CollectionBlockPayload {
   if (!name.trim()) return data;
   return { ...data, fields: [...data.fields, { id: newId(), name: name.trim(), type, ...(type === "select" ? { options: ["Option 1"] } : {}) }] };
@@ -285,15 +292,7 @@ export function removeView(data: CollectionBlockPayload, viewId: string): Collec
 export function updateView(data: CollectionBlockPayload, viewId: string, patch: Partial<CollectionView>): CollectionBlockPayload {
   return { ...data, views: data.views.map((v) => v.id === viewId ? { ...v, ...patch, id: v.id, kind: v.kind } : v) };
 }
-export function setParent(data: CollectionBlockPayload, recordId: string, parentId: string | null): CollectionBlockPayload {
-  if (parentId === recordId || (parentId && !data.records.some((r) => r.id === parentId))) return data;
-  const parents = new Map(data.records.map((r) => [r.id, r.parentId]));
-  let cursor: string | null | undefined = parentId;
-  const visited = new Set<string>();
-  while (cursor) {
-    if (cursor === recordId || visited.has(cursor)) return data;
-    visited.add(cursor);
-    cursor = parents.get(cursor);
-  }
-  return { ...data, records: data.records.map((r) => r.id === recordId ? { ...r, parentId } : r) };
+export function setParent(data:CollectionBlockPayload,recordId:string,
+ parentId:string|null):CollectionBlockPayload {
+ return setTaskParent(data,recordId,parentId);
 }
