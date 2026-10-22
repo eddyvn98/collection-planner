@@ -80,8 +80,10 @@ try {
   await node(page,created.id).waitFor();
   console.log("PASS node + creates child and renders in graph");
   await graph.getByRole("button",{name:"Collapse Renamed Root"}).click();
+  await node(page,"child").waitFor({state:"detached"});
   assert.equal(await node(page,"child").count(),0);
   await graph.getByRole("button",{name:"Expand Renamed Root"}).click();
+  await node(page,"child").waitFor({state:"visible"});
   assert.equal(await node(page,"child").count(),1);
   await page.getByRole("button",{name:"Tidy up Mind Map"}).click();
   console.log("PASS collapse/expand and Tidy up");
