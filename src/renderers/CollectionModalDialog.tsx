@@ -10,8 +10,8 @@ export function CollectionModalDialog({label,onClose,children,trigger}:{
  useEffect(()=>{
   const previous=trigger??(document.activeElement instanceof HTMLElement?document.activeElement:null);
   const frame=requestAnimationFrame(()=>{
-   panel.current?.querySelector<HTMLElement>("[data-dialog-initial]")?.focus()??
-    panel.current?.focus();
+   const target=panel.current?.querySelector<HTMLElement>("[data-dialog-initial]");
+   (target??panel.current)?.focus();
   });
   const close=(event:KeyboardEvent)=>{
    if(event.key!=="Escape"||document.querySelector("[data-planner-floating]"))return;
