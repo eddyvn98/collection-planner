@@ -3,6 +3,7 @@ import type { TaskFilterPreset } from "./collectionPlannerFilters";
 import { normalizeTaskRecord, progressFromStatus } from "./collectionTasks";
 import { matchesViewFilters, type CollectionFilter, type FilterLogic } from "./collectionFilters";
 import { buildCollectionRelationIndex, projectCollectionLookups } from "./collectionRelations";
+import { searchTaskTree } from "./collectionTaskSearch";
 import { applyCollectionAutomations, sanitizeCollectionAutomations, type CollectionAutomation } from "./collectionAutomations";
 import type { CollectionAuditEntry } from "./collectionAudit";
 import { sanitizeCollectionSchedules, type CollectionScheduledRule } from "./collectionSchedules";
@@ -191,9 +192,10 @@ export function visibleRecords(data: CollectionBlockPayload, view: CollectionVie
   const sorts = viewSorts(view);
   const index = data.fields.some(field => field.type === "lookup" || field.type === "rollup")
     ? buildCollectionRelationIndex(data, sources) : undefined;
+  const treeMatches=search ? searchTaskTree(data,search) : null;
   let rows = data.records.map(record => projectCollectionFormulas(data, projectCollectionLookups(data, record, sources, index)))
     .filter((r) => matchesViewFilters(r, data.fields, filters, view.filterLogic)
-    && (!search || Object.values(r.values).some((v) => String(v).toLowerCase().includes(search.toLowerCase()))));
+    && (!treeMatches || treeMatches.has(r.id)));
   if (sorts.length) rows = [...rows].sort((a, b) => {
     for (const { fieldId, direction } of sorts) {
       const type = data.fields.find((f) => f.id === fieldId)?.type;
