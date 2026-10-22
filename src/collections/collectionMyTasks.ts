@@ -8,7 +8,7 @@ function weekEnd(date:string){
 }
 export function groupAssignedTasks(data:CollectionBlockPayload,personId:string,today=localToday()):
  Record<MyTaskGroup,CollectionRecord[]> {
- const grouped=Object.fromEntries(MY_TASK_GROUPS.map(x=>[x,[]])) as Record<MyTaskGroup,CollectionRecord[]>;
+ const grouped:Record<MyTaskGroup,CollectionRecord[]>={Overdue:[],Today:[],"This week":[],Later:[],"No date":[]};
  for(const record of data.records){
   if(!record.assigneeIds?.includes(personId)||record.progress==="completed")continue;
   const due=taskDate(data,record,"due");
