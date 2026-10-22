@@ -58,8 +58,9 @@ jobs:
           node tests/e2e/phase6d-ui.mjs
           node tests/e2e/phase7a-timeline.mjs
           node tests/e2e/phase7b-mindmap.mjs
+          node tests/e2e/phase7c1-inline.mjs
       - name: Capture before and after Grid screenshots (1280/375, light/dark)
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         run: |
           mkdir -p /tmp/grid-artifacts/before /tmp/grid-artifacts/after
           SCREENSHOT_OUTPUT=/tmp/grid-artifacts/after node tests/e2e/grid-airy.mjs
@@ -73,12 +74,12 @@ jobs:
           done
           SCREENSHOT_BASE_URL=http://127.0.0.1:4174 SCREENSHOT_OUTPUT=/tmp/grid-artifacts/before node tests/e2e/grid-airy.mjs
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         with:
           name: grid-airy-before-after
           path: /tmp/grid-artifacts/
       - name: Capture Phase 6B before and after (1280/375, light/dark)
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         run: |
           mkdir -p /tmp/dependencies-artifacts/before /tmp/dependencies-artifacts/after
           SCREENSHOT_OUTPUT=/tmp/dependencies-artifacts/after node tests/e2e/phase6b-ui.mjs
@@ -92,12 +93,12 @@ jobs:
           done
           SCREENSHOT_BASE_URL=http://127.0.0.1:4175 SCREENSHOT_OUTPUT=/tmp/dependencies-artifacts/before node tests/e2e/phase6b-ui.mjs
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         with:
           name: phase6b-dependencies-before-after
           path: /tmp/dependencies-artifacts/
       - name: Capture Phase 6C hierarchy dialogs 1280/375 Light/Dark
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         run: |
           mkdir -p /tmp/tree-captures/before /tmp/tree-captures/after
           SCREENSHOT_OUTPUT=/tmp/tree-captures/after node tests/e2e/phase6c-ui.mjs
@@ -111,12 +112,12 @@ jobs:
           done
           SCREENSHOT_BASE_URL=http://127.0.0.1:4176 SCREENSHOT_OUTPUT=/tmp/tree-captures/before node tests/e2e/phase6c-ui.mjs
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         with:
           name: phase6c-hierarchy-before-after
           path: /tmp/tree-captures/
       - name: Capture Phase 6D Board and drawer 1280/375 Light/Dark
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         run: |
           mkdir -p /tmp/phase6d-captures/before /tmp/phase6d-captures/after
           SCREENSHOT_OUTPUT=/tmp/phase6d-captures/after node tests/e2e/phase6d-ui.mjs
@@ -130,12 +131,12 @@ jobs:
           done
           SCREENSHOT_BASE_URL=http://127.0.0.1:4177 SCREENSHOT_OUTPUT=/tmp/phase6d-captures/before node tests/e2e/phase6d-ui.mjs
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         with:
           name: phase6d-board-drawer-before-after
           path: /tmp/phase6d-captures/
       - name: Capture Phase 7A Timeline and Grid mobile 1280/375 Light/Dark
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         run: |
           mkdir -p /tmp/phase7a-captures/before /tmp/phase7a-captures/after
           SCREENSHOT_OUTPUT=/tmp/phase7a-captures/after node tests/e2e/phase7a-timeline.mjs
@@ -149,12 +150,12 @@ jobs:
           done
           SCREENSHOT_BASE_URL=http://127.0.0.1:4178 SCREENSHOT_OUTPUT=/tmp/phase7a-captures/before node tests/e2e/phase7a-timeline.mjs
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         with:
           name: phase7a-timeline-before-after
           path: /tmp/phase7a-captures/
       - name: Capture Phase 7B Mind Map and Timeline 1280/375 Light/Dark
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         run: |
           mkdir -p /tmp/phase7b-captures/before /tmp/phase7b-captures/after
           SCREENSHOT_OUTPUT=/tmp/phase7b-captures/after node tests/e2e/phase7b-mindmap.mjs
@@ -168,7 +169,26 @@ jobs:
           done
           SCREENSHOT_BASE_URL=http://127.0.0.1:4179 SCREENSHOT_OUTPUT=/tmp/phase7b-captures/before node tests/e2e/phase7b-mindmap.mjs
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name == 'pull_request'
+        if: success() && github.event_name == 'pull_request'
         with:
           name: phase7b-mindmap-before-after
           path: /tmp/phase7b-captures/
+      - name: Capture 7C-1 before and after 1280/375
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/phase7c1-captures/before /tmp/phase7c1-captures/after
+          SCREENSHOT_OUTPUT=/tmp/phase7c1-captures/after node tests/e2e/phase7c1-inline.mjs
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/phase7c1-before FETCH_HEAD
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/phase7c1-before/node_modules
+          (cd /tmp/phase7c1-before && node_modules/.bin/vite --host 127.0.0.1 --port 4180 > /tmp/phase7c1-before.log 2>&1) &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4180/ > /dev/null; then break; fi
+            sleep 1
+          done
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4180 SCREENSHOT_OUTPUT=/tmp/phase7c1-captures/before node tests/e2e/phase7c1-inline.mjs
+      - uses: actions/upload-artifact@v4
+        if: success() && github.event_name == 'pull_request'
+        with:
+          name: phase7c1-inline-before-after
+          path: /tmp/phase7c1-captures/

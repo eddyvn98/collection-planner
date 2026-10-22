@@ -30,6 +30,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const [warning,setWarning]=useState(""),[layoutEpoch,setLayoutEpoch]=useState(0);
  const [flow,setFlow]=useState<ReactFlowInstance|null>(null);
  const root=useRef<HTMLDivElement>(null),connectionStart=useRef<string|null>(null);
+ const latestData=useRef(data);latestData.current=data;
  const pointerDrag=useRef<{id:string;x:number;y:number}|null>(null);
  const pointerHandled=useRef(false);
  const visible=useMemo(()=>visibleMindMapRecords(data,rows,collapsed),[data,rows,collapsed]);
@@ -56,12 +57,25 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   change(next);
  };
  const save=(id:string,value:string)=>{
-  setEditingId(null);const next=renameMindMapTask(data,id,value);
-  if(next!==data)onChange(next);
+  setEditingId(active=>active===id?null:active);
+  const current=latestData.current;
+  const next=renameMindMapTask(current,id,value);
+  if(next!==current)onChange(next);
  };
- const toggle=(id:string)=>setCollapsed(previous=>{
-  const next=new Set(previous);if(next.has(id))next.delete(id);else next.add(id);return next;
- });
+ const toggle=(id:string)=>{
+  // Commit the focused editor before hiding its branch. React Flow can
+  // remount the clicked control if blur saves synchronously on pointer-down.
+  const editor=root.current?.querySelector<HTMLInputElement>("input[data-mindmap-rename]");
+  const editing=editor?.dataset.mindmapRename;
+  if(editing){
+   const next=renameMindMapTask(data,editing,editor.value);
+   setEditingId(null);
+   if(next!==data)onChange(next);
+  }
+  setCollapsed(previous=>{
+   const next=new Set(previous);if(next.has(id))next.delete(id);else next.add(id);return next;
+  });
+ };
  const nodes=useMemo<MindCardNode[]>(()=>graph.nodes.map(item=>{
   const record=tree.byId.get(item.id),count=counts.get(item.id)??{done:0,total:0};
   const due=data.fields.find(f=>f.type==="date"&&/^(due|end)/i.test(f.name))?.id;
@@ -82,14 +96,34 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   type:"smoothstep",style:{stroke:"var(--planner-accent)",strokeWidth:1.5}
  })),[graph]);
  const structure=graph.nodes.map(n=>n.id+":"+n.parentId).join("|");
+ // React Flow mounts new nodes asynchronously. Keep focus on the rename editor.
  useEffect(()=>{
-  if(!flow||!root.current)return;
+  if(!editingId)return;
+  let frame=0,attempt=0,stopped=false;
+  const focus=()=>{
+   if(stopped)return;
+   const inputs=root.current?.querySelectorAll<HTMLInputElement>("input[data-mindmap-rename]");
+   const input=Array.from(inputs??[]).find(el=>el.dataset.mindmapRename===editingId);
+   if(input&&document.activeElement!==input){input.focus({preventScroll:true});input.select();}
+   // React Flow and the toolbar can restore focus after the node has mounted.
+   // Retry only during the short mount transition; real interaction cancels it.
+   if(++attempt<30)frame=requestAnimationFrame(focus);
+  };
+  const stop=()=>{stopped=true;cancelAnimationFrame(frame);};
+  document.addEventListener("pointerdown",stop,true);
+  document.addEventListener("keydown",stop,true);
+  frame=requestAnimationFrame(focus);
+  return()=>{stop();document.removeEventListener("pointerdown",stop,true);
+   document.removeEventListener("keydown",stop,true);};
+ },[editingId,graph.nodes.length,data.records.length]);
+ useEffect(()=>{
+  if(!flow||!root.current||editingId)return;
   const node=root.current;
   const refresh=()=>requestAnimationFrame(()=>{if(node.clientWidth>0&&node.clientHeight>0)
    void flow.fitView(fit);});
   const observer=new ResizeObserver(refresh);observer.observe(node);refresh();
   return()=>observer.disconnect();
- },[flow,structure,layoutEpoch]);
+ },[flow,structure,layoutEpoch,editingId]);
  const dragTarget=(id:string,x:number,y:number)=>
   candidateMindMapParent(data,id,graph.nodes,x,y);
  const pointerTarget=(id:string,event:DragPointer)=>{
@@ -151,9 +185,9 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   <div className="flex flex-wrap items-center gap-1.5 text-xs">
    <span className={hintClass}>Drag node onto another to reparent · Tab adds child · Enter sibling · F2 rename · Shift selects multiple</span>
    {selected&&<><button type="button" aria-label="Add child node" disabled={readOnly}
-    className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>add(selected.id,"child")}><Plus size={14} className="inline"/> Child</button>
+    className="min-h-11 rounded border border-[var(--planner-border)] px-2" onPointerDown={event=>{if(event.pointerType==="mouse")event.preventDefault();}} onClick={()=>add(selected.id,"child")}><Plus size={14} className="inline"/> Child</button>
     <button type="button" aria-label="Add sibling node" disabled={readOnly}
-     className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>add(selected.id,"sibling")}>Sibling</button>
+     className="min-h-11 rounded border border-[var(--planner-border)] px-2" onPointerDown={event=>{if(event.pointerType==="mouse")event.preventDefault();}} onClick={()=>add(selected.id,"sibling")}>Sibling</button>
     <button type="button" aria-label="Rename selected node" disabled={readOnly}
      className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>setEditingId(selected.id)}><Pencil size={14} className="inline"/> Rename</button>
     <button type="button" aria-label="Delete selected node" disabled={readOnly}

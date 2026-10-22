@@ -29,35 +29,35 @@ export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,
    const due=taskDate(data,record,"due"),progress=record.progress??"not_started";
    return <article key={record.id} data-record-id={record.id}
     className={"rounded-lg border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)] "+(depth>1?"border-l-2 border-l-[var(--planner-accent)]":"")}
-    style={{marginInlineStart:Math.min(depth-1,3)*10}} data-tree-depth={depth}>
+    style={{marginInlineStart:Math.min(depth-1,3)*14}} data-tree-depth={depth}>
     {depth>1&&<div className="mb-1 flex items-center gap-1 text-[10px] text-[var(--planner-secondary)]">
       <CornerDownRight size={12} aria-hidden="true"/><span className="truncate">{path}</span>
     </div>}
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1">
      {hasChildren?<button type="button" aria-label={(collapsed.has(record.id)?"Expand ":"Collapse ")+title}
        aria-expanded={!collapsed.has(record.id)} onClick={()=>toggle(record.id)}
-       className="grid h-10 w-6 shrink-0 place-items-center rounded text-[var(--planner-secondary)] focus-visible:ring-2">
+       className="grid h-11 w-11 shrink-0 place-items-center rounded text-[var(--planner-secondary)] focus-visible:ring-2">
        {collapsed.has(record.id)?<ChevronRight size={15}/>:<ChevronDown size={15}/>}</button>:
-       <span className="w-6 shrink-0" aria-hidden="true"/>}
+       <span className="w-11 shrink-0" aria-hidden="true"/>}
      <button type="button" aria-label={(progress==="completed"?"Reopen ":"Complete ")+title}
       disabled={readOnly} onClick={()=>onChange(setTaskProgress(data,record.id,progress==="completed"?"not_started":"completed"))}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--planner-accent)] focus-visible:ring-2">
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[var(--planner-accent)] focus-visible:ring-2">
       {progress==="completed"?<CheckCircle2 size={19}/>:progress==="in_progress"?<CircleDot size={19}/>:<Circle size={19}/>}
      </button>
-     <button type="button" className="min-w-0 flex-1 truncate text-left text-sm font-medium focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
+     <button type="button" className="min-h-11 min-w-[96px] flex-1 truncate text-left text-sm font-medium focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
       onClick={()=>onOpen(record.id)} aria-label={"Open "+title}>{title}</button>
      <button type="button" aria-label={"Select task "+title} aria-pressed={selected.includes(record.id)}
       disabled={readOnly} onClick={()=>onSelect(record.id,!selected.includes(record.id))}
-      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[var(--planner-secondary)] focus-visible:ring-2">
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[var(--planner-secondary)] focus-visible:ring-2">
       {selected.includes(record.id)?<CheckCircle2 size={16} className="text-[var(--planner-accent)]"/>:<Circle size={16}/>}</button>
      <button type="button" aria-label={"Edit "+title} title="Open task" onClick={()=>onOpen(record.id)}
-      className="grid h-8 w-8 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)]"><Pencil size={15}/></button>
+      className="grid h-11 w-11 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)]"><Pencil size={15}/></button>
      <button type="button" aria-label={"Delete "+title} title="Delete task" disabled={readOnly}
       onClick={()=>onDeleteRequest(record.id)}
-      className="grid h-8 w-8 shrink-0 place-items-center rounded text-[var(--planner-secondary)] hover:text-rose-600"><Trash2 size={14}/></button>
+      className="grid h-11 w-11 shrink-0 place-items-center rounded text-[var(--planner-secondary)] hover:text-rose-600"><Trash2 size={14}/></button>
     </div>
     <button type="button" aria-label={"Edit "+title+" details"}
-     className="ml-11 flex min-h-7 max-w-[calc(100%-2.75rem)] flex-wrap items-center gap-2 text-left text-[11px] text-[var(--planner-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
+     className="ml-11 flex min-h-11 max-w-[calc(100%-2.75rem)] flex-wrap items-center gap-2 text-left text-[11px] text-[var(--planner-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
      onClick={()=>onOpen(record.id)}>
      <CollectionBlockedBadge data={data} record={record}/>
      {due&&<span className={due<localToday()&&progress!=="completed"?"text-rose-600":""}>{formatPlannerCardDate(due,localToday())}</span>}

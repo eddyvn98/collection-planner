@@ -79,22 +79,40 @@ try {
   assert(created&&created.parentId==="root","Node + adds direct child");
   await node(page,created.id).waitFor();
   console.log("PASS node + creates child and renders in graph");
+  const activeEditor=node(page,created.id).locator("input[data-mindmap-rename]");
+  await activeEditor.waitFor();
+  await activeEditor.fill("Draft child title");
   await graph.getByRole("button",{name:"Collapse Renamed Root"}).click();
+  assert.equal((await records(page)).find(r=>r.id===created.id).values.name,"Draft child title",
+   "Collapse should save the in-place rename");
+  await node(page,"child").waitFor({state:"detached"});
   assert.equal(await node(page,"child").count(),0);
   await graph.getByRole("button",{name:"Expand Renamed Root"}).click();
+  await node(page,"child").waitFor({state:"visible"});
   assert.equal(await node(page,"child").count(),1);
   await page.getByRole("button",{name:"Tidy up Mind Map"}).click();
   console.log("PASS collapse/expand and Tidy up");
   const undo=page.getByRole("button",{name:"Undo last change"}).first();
   assert(await undo.isVisible()&&await undo.isEnabled());
   await undo.click();
-  assert.equal((await records(page)).some(r=>r.id===created.id),false);
+  assert.equal((await records(page)).find(r=>r.id===created.id)?.values.name,"New sub-task",
+   "First Undo should revert the in-place rename");
+  await undo.click();
+  assert.equal((await records(page)).some(r=>r.id===created.id),false,
+   "Second Undo should remove the newly created child");
   const redo=page.getByRole("button",{name:"Redo last change"}).first();
   await redo.click();
-  assert.equal((await records(page)).some(r=>r.id===created.id),true);
+  await redo.click();
+  assert.equal((await records(page)).find(r=>r.id===created.id)?.values.name,"Draft child title",
+   "Redo should restore node creation and its name");
   console.log("PASS Mind Map visible Undo/Redo for branch creation");
   const dragSource=node(page,"sibling").locator("strong");
   const parentTarget=node(page,"root");
+  // Redo re-runs layout and fitView; wait for the viewport to settle so drag coordinates stay valid.
+  for(let stable=0,last="";stable<4;){
+   const box=JSON.stringify([await dragSource.boundingBox(),await parentTarget.boundingBox()]);
+   stable=box===last?stable+1:0;last=box;await page.waitForTimeout(150);
+  }
   const from=await dragSource.boundingBox(),to=await parentTarget.boundingBox();
   assert(from&&to,"Mind Map drag endpoints visible");
   await page.mouse.move(from.x+from.width/2,from.y+from.height/2);
@@ -119,7 +137,13 @@ try {
   console.log("PASS drag from handle onto canvas creates sub-task");
   await node(page,"sibling").click();
   await page.getByRole("button",{name:"Delete selected node"}).click();
-  await page.getByRole("alertdialog",{name:"Delete Mind Map branch?"}).getByRole("button",{name:"Delete branch"}).click();
+  const deleteDialog=page.getByRole("alertdialog",{name:"Delete Mind Map branch?"});
+  assert((await deleteDialog.textContent()).includes("Independent"),
+   "Delete confirmation must target the newly selected sibling, not the prior editor");
+  await deleteDialog.getByRole("button",{name:"Delete branch"}).click();
+  await page.waitForFunction(()=>
+   !JSON.parse(localStorage.getItem("collection-planner:v1")).records.some(r=>r.id==="sibling"),
+   null,{timeout:5000});
   assert(!(await records(page)).some(r=>r.id==="sibling"));
   console.log("PASS Mind Map delete confirmation");
   await page.getByRole("button",{name:"Timeline",exact:true}).click();
