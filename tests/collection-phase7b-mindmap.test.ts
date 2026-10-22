@@ -19,7 +19,7 @@ describe("Phase 7B Mind Map tree interactions",()=>{
   expect(child?.parentId).toBe("root");
   expect(child?.values[name]).toBe("New child");
   const sibling=addMindMapRelative(data,"child","sibling","New sibling");
-  expect(sibling.records.at(-1)?.parentId).toBe("root");
+  expect(sibling.records.find(row=>!data.records.some(previous=>previous.id===row.id))?.parentId).toBe("root");
   const newRoot=addMindMapRelative(data,"root","sibling","New root");
   expect(newRoot.records.at(-1)?.parentId).toBeNull();
   expect(newRoot.records).toHaveLength(4);
