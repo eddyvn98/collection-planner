@@ -1,4 +1,4 @@
-import { buildTaskTree, taskBranch } from "./collectionTaskTree";
+import { buildTaskTree, taskBranch, reconcileTaskProgress } from "./collectionTaskTree";
 import type { CollectionBlockPayload, CollectionRecord } from "./model";
 import { newId } from "./model";
 
@@ -31,8 +31,9 @@ export function cloneTaskBranch(data:CollectionBlockPayload,id:string,
    dependsOn:(row.dependsOn??[]).flatMap(dep=>ids.has(dep)?[ids.get(dep)!]:[]),
    comments:[],activity:[],...(options.resetProgress&&index>0?{recurrence:"none" as const}:{})};
  });
- const index=data.records.findIndex(row=>row.id===id);
+ const branchIds=new Set(branch.map(row=>row.id));
+ const index=data.records.reduce((max,row,i)=>branchIds.has(row.id)?i>max?i:max:max,-1);
  // Original and clone trees are adjacent, preserving ordered traversal.
- return {...data,records:[...data.records.slice(0,index+branch.length),...copies,
-  ...data.records.slice(index+branch.length)]};
+ return {...data,records:reconcileTaskProgress([...data.records.slice(0,index+1),...copies,
+  ...data.records.slice(index+1)])};
 }
