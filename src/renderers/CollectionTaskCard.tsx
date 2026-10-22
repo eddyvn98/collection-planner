@@ -125,8 +125,8 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
      <span className="block h-full rounded bg-[var(--planner-accent)]" style={{width:Math.round(100*descendants.done/descendants.total)+"%"}}/></span>
    </span>}
    {(indicators.priority||!readOnly)&&<CollectionBoardQuickEdit kind="priority" data={data}
-     record={record} title={title} testId="card-priority" readOnly={readOnly} onChange={onChange}>
-     <Flag size={15}/>{formatPlannerPriority(record.priority??"medium")}
+     record={record} title={title} testId={indicators.priority?"card-priority":"card-priority-editor"} readOnly={readOnly} onChange={onChange}>
+     {indicators.priority&&<Flag size={15}/>}<span>{indicators.priority?formatPlannerPriority(record.priority??"medium"):"Priority"}</span>
     </CollectionBoardQuickEdit>}
    {!!indicators.checklist&&<span data-testid="card-checklist" title="Checklist" className="flex gap-1"><ClipboardCheck size={15}/>{indicators.checklist}</span>}
    {!!indicators.attachments&&<span data-testid="card-attachments" title="Attachments" className="flex gap-1"><Paperclip size={15}/>{indicators.attachments}</span>}
