@@ -23,6 +23,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const [collapsed,setCollapsed]=useState<Set<string>>(()=>new Set());
  const [editingId,setEditingId]=useState<string|null>(null);
  const [dropTarget,setDropTarget]=useState<string|null>(null);
+ const [dragPositions,setDragPositions]=useState<Record<string,{x:number;y:number}>>({});
  const [selectedIds,setSelectedIds]=useState<string[]>([]);
  const [deleteId,setDeleteId]=useState<string|null>(null);
  const [warning,setWarning]=useState(""),[layoutEpoch,setLayoutEpoch]=useState(0);
@@ -69,10 +70,10 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    done:count.done,total:count.total,isCollapsed:collapsed.has(item.id),
    isDropTarget:dropTarget===item.id,readOnly,isEditing:editingId===item.id,
    onAdd:id=>add(id,"child"),onToggle:toggle,onSave:save,onCancel:()=>setEditingId(null)};
-  return {id:item.id,type:"plannerTask",position:{x:item.x,y:item.y},data:nodeData,
+  return {id:item.id,type:"plannerTask",position:dragPositions[item.id]??{x:item.x,y:item.y},data:nodeData,
    sourcePosition:Position.Right,targetPosition:Position.Left,
    draggable:!readOnly,selectable:true};
- }),[graph,labels,tree,counts,data,collapsed,dropTarget,readOnly,editingId]);
+ }),[graph,labels,tree,counts,data,collapsed,dropTarget,readOnly,editingId,dragPositions]);
  const edges=useMemo<Edge[]>(()=>graph.edges.map(link=>({
   id:link.source+">"+link.target,source:link.source,target:link.target,
   type:"smoothstep",style:{stroke:"var(--planner-accent)",strokeWidth:1.5}
@@ -89,7 +90,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const dragTarget=(id:string,x:number,y:number)=>
   candidateMindMapParent(data,id,graph.nodes,x,y);
  const drop=(id:string,x:number,y:number)=>{
-  const target=dragTarget(id,x,y);setDropTarget(null);
+  const target=dragTarget(id,x,y);setDropTarget(null);setDragPositions({});
   if(!target||readOnly)return;
   const moving=selectedIds.includes(id)?selectedIds:[id];
   let next=data;
@@ -129,7 +130,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    if(next){event.preventDefault();select(next);}
   }
  };
- const tidy=()=>{setLayoutEpoch(n=>n+1);void flow?.fitView(fit);};
+ const tidy=()=>{setDragPositions({});setLayoutEpoch(n=>n+1);void flow?.fitView(fit);};
  return <div className="flex min-h-0 w-full min-w-0 flex-col gap-2" data-testid="collection-mindmap">
   <div className="flex flex-wrap items-center gap-1.5 text-xs">
    <span className={hintClass}>Drag node onto another to reparent · Tab adds child · Enter sibling · F2 rename · Shift selects multiple</span>
@@ -174,7 +175,8 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     multiSelectionKeyCode="Shift" selectionOnDrag
     onInit={setFlow} onNodeClick={(_event,node)=>select(node.id)}
     onNodeDoubleClick={(_event,node)=>{select(node.id);setEditingId(node.id);}}
-    onNodeDrag={(_event,node)=>setDropTarget(dragTarget(node.id,node.position.x,node.position.y))}
+    onNodeDrag={(_event,node)=>{setDragPositions(previous=>({...previous,[node.id]:node.position}));
+     setDropTarget(dragTarget(node.id,node.position.x,node.position.y));}}
     onNodeDragStop={(_event,node)=>drop(node.id,node.position.x,node.position.y)}
     onSelectionChange={({nodes})=>setSelectedIds(nodes.map(n=>n.id))}
     onConnect={connect}
