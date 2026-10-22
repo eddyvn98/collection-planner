@@ -48,10 +48,9 @@ try {
   for(const width of [1280,375])for(const theme of ["light","dark"]){
    const page=await launch(width,theme);
    await page.screenshot({path:`${out}/${width}-${theme}-mindmap.png`,fullPage:true});
-   await page.getByRole("button",{name:"Timeline",exact:true}).first().click().catch(async()=>{
-    await page.getByRole("button",{name:"Choose view"}).click();
-    await page.getByRole("menuitemradio",{name:"Timeline"}).click();
-   });
+   if(width<640){await page.getByRole("button",{name:"Choose view"}).click();
+    await page.getByRole("menuitemradio",{name:"Timeline"}).click();}
+   else await page.getByRole("button",{name:"Timeline",exact:true}).click();
    await page.screenshot({path:`${out}/${width}-${theme}-timeline-undo.png`,fullPage:true});
    await page.close();
   }
@@ -76,7 +75,7 @@ try {
   await node(page,"root").getByRole("button",{name:"Add child to Renamed Root"}).click();
   const after=await records(page),created=after.find(r=>!data.records.some(orig=>orig.id===r.id));
   assert(created&&created.parentId==="root","Node + adds direct child");
-  assert(await node(page,created.id).count()===1);
+  await node(page,created.id).waitFor();
   console.log("PASS node + creates child and renders in graph");
   await graph.getByRole("button",{name:"Collapse Renamed Root"}).click();
   assert.equal(await node(page,"child").count(),0);
@@ -94,7 +93,7 @@ try {
   console.log("PASS Mind Map visible Undo/Redo for branch creation");
   await node(page,"sibling").click();
   await page.getByRole("button",{name:"Delete selected node"}).click();
-  await page.getByRole("dialog",{name:"Delete Mind Map branch?"}).getByRole("button",{name:"Delete branch"}).click();
+  await page.getByRole("alertdialog",{name:"Delete Mind Map branch?"}).getByRole("button",{name:"Delete branch"}).click();
   assert(!(await records(page)).some(r=>r.id==="sibling"));
   console.log("PASS Mind Map delete confirmation");
   await page.getByRole("button",{name:"Timeline",exact:true}).click();
