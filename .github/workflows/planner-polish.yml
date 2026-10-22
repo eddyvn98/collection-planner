@@ -1,7 +1,7 @@
 name: Planner polish and browser pointer tests
 on:
   push:
-    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f, feat/planner-phase-5g, feat/planner-phase-6a]
+    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f, feat/planner-phase-5g, feat/planner-phase-6a, feat/phase-7d-input-flow]
   pull_request:
     branches: [main]
 permissions:
@@ -63,6 +63,7 @@ jobs:
           node tests/e2e/phase7c2a-grid.mjs
           node tests/e2e/phase7c2b-board.mjs
           node tests/e2e/phase7c2c-views.mjs
+          node tests/e2e/phase7d-input.mjs
       - name: Capture before and after Grid screenshots (1280/375, light/dark)
         if: success() && github.event_name == 'pull_request'
         run: |
@@ -255,3 +256,22 @@ jobs:
         with:
           name: phase7c2c-schedule-gallery-form-before-after
           path: /tmp/phase7c2c/
+      - name: Capture Phase 7D input flow at 1280/375
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/phase7d/before /tmp/phase7d/after
+          SCREENSHOT_OUTPUT=/tmp/phase7d/after node tests/e2e/phase7d-input.mjs
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/phase7d-main FETCH_HEAD
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/phase7d-main/node_modules
+          (cd /tmp/phase7d-main && node_modules/.bin/vite --host 127.0.0.1 --port 4184 > /tmp/phase7d-before.log 2>&1) &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4184/ > /dev/null; then break; fi
+            sleep 1
+          done
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4184 SCREENSHOT_OUTPUT=/tmp/phase7d/before node tests/e2e/phase7d-input.mjs
+      - uses: actions/upload-artifact@v4
+        if: success() && github.event_name == 'pull_request'
+        with:
+          name: phase7d-input-before-after-1280-375
+          path: /tmp/phase7d/
