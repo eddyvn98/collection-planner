@@ -35,18 +35,33 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   const nested=pointerWithin(args).filter(hit=>String(hit.id).startsWith("subtask:"));
   return nested.length?nested:rectIntersection(args);
  };
- const onDragEnd=({active,over}:DragEndEvent)=>{
-  if(readOnly||!over)return;
-  const activeId=String(active.id),targetId=String(over.id);
+ const onDragEnd=(event:DragEndEvent)=>{
+  const {active,over}=event;
+  if(readOnly)return;
+  const activeId=String(active.id),targetId=String(over?.id??"");
   if(activeId.startsWith("bucket-order:")){
    if(mode!=="bucket"||!group)return;
    const source=activeId.slice("bucket-order:bucket:".length);
-   const target=targetId.startsWith("bucket:bucket:")?targetId.slice("bucket:bucket:".length):
-    parseCardDragId(targetId)?.[1]?.slice(7);
+   // The 44px drag handle overlaps card and bucket droppables. Use the
+   // translated pointer position to identify the destination column.
+   const rect=active.rect.current.initial;
+   const x=rect?rect.left+rect.width/2+event.delta.x:null;
+   const y=rect?rect.top+rect.height/2+event.delta.y:null;
+   const hit=x===null?null:[...document.querySelectorAll<HTMLElement>(
+    '[data-testid="collection-kanban-column"][data-status]')].find(node=>{
+     const box=node.getBoundingClientRect();
+     return x>=box.left&&x<=box.right&&y!==null&&y>=box.top&&y<=box.bottom;
+    });
+   const target=hit?.dataset.status?.slice(7)||
+    (targetId.startsWith("bucket:bucket:")?targetId.slice("bucket:bucket:".length):
+     parseCardDragId(targetId)?.[1]?.slice(7));
    if(target){const next=reorderBucket(data,group.id,source,target);
-    if(next!==data)onChange(next);}
+    if(next!==data){setDragWarning("");onChange(next);}
+    else if(source!==target)setDragWarning("Could not reorder bucket.");}
+   else setDragWarning("Drop a bucket over another bucket.");
    return;
   }
+  if(!over)return;
   const moving=parseCardDragId(activeId);
   if(!moving)return;
   const target=String(over.id);
