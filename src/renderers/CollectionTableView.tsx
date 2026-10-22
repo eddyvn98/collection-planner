@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { Plus, Circle, CheckCircle2, ExternalLink, Trash2 } from "lucide-react";
-import { setTaskProgress } from "./collectionBoardGroups";
+import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { Plus } from "lucide-react";
+import { CollectionGridRows } from "./CollectionGridRows";
+import { visibleTaskTree,moveTaskTree,type TreeDropMode } from "../collections/collectionTreeActions";
 import { flexRender, getCoreRowModel, useReactTable,
   type ColumnDef, type SortingState } from "@tanstack/react-table";
 import { addField, addRecord, removeField, recordTitle, viewSorts, type CollectionBlockPayload,
@@ -15,7 +16,7 @@ import { calculateCollectionAggregate } from "../collections/collectionFormula";
 import { COLLECTION_PAGE_SIZES, collectionTablePage, type CollectionPageSize } from "./collectionTablePaging";
 import { gridFields } from "../collections/collectionPlannerFilters";
 import { CollectionGridToolbar } from "./CollectionGridToolbar";
-import { CollectionGridAddRow } from "./CollectionGridAddRow";
+
 import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
 import { CollectionGridAddQuick } from "./CollectionGridAddRow";
 import { CollectionGridEditable } from "./CollectionGridEditable";
@@ -48,7 +49,17 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   const [openRecordId, setOpenRecordId] = useState<string | null>(null);
   const [pendingDeleteTaskId,setPendingDeleteTaskId]=useState<string|null>(null);
   const [pendingDeleteFieldId, setPendingDeleteFieldId] = useState<string | null>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor));
+  const [collapsed,setCollapsed]=useState<Set<string>>(()=>{
+    try {return new Set(JSON.parse(localStorage.getItem("planner:tree:collapsed:"+view.id)??"[]") as string[]);}
+    catch{return new Set<string>();}
+  });
+  const toggleTree=(id:string)=>setCollapsed(current=>{
+    const next=new Set(current);if(next.has(id))next.delete(id);else next.add(id);
+    try{localStorage.setItem("planner:tree:collapsed:"+view.id,JSON.stringify([...next]));}catch{/* storage unavailable */}
+    return next;
+  });
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor,{activationConstraint:{delay:600,tolerance:6}}),useSensor(KeyboardSensor));
   const [pageSize, setPageSize] = useState<CollectionPageSize>(50);
   const tableScroll = useRef<HTMLDivElement>(null);
   const previousFieldCount = useRef(data.fields.length);
@@ -67,8 +78,9 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       return next.length === ids.length ? ids : next;
     });
   }, [rows]);
-  const page = useMemo(() => collectionTablePage(rows, requestedPage, pageSize),
-    [rows, requestedPage, pageSize]);
+  const projected=useMemo(()=>visibleTaskTree(data,rows,collapsed),[data,rows,collapsed]);
+  const page = useMemo(() => collectionTablePage(projected.rows, requestedPage, pageSize),
+    [projected, requestedPage, pageSize]);
   // Stable controlled state: one sorting array per saved View configuration.
   const sorting = useMemo<SortingState>(() => viewSorts(view).map(s =>
     ({ id: s.fieldId, desc: s.direction === "desc" })), [view]);
@@ -148,15 +160,28 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     fields.splice(to, 0, fields.splice(from, 1)[0]);
     onChange({ ...data, fields });
   };
+  const finishDrag=(event:DragEndEvent)=>{
+    const active=String(event.active.id),target=String(event.over?.id??"");
+    if(active.startsWith("tree:")){
+      const match=/^tree-target:(before|after|child):(.+)$/.exec(target);
+      if(match&&!readOnly){
+        const next=moveTaskTree(data,active.slice(5),match[2],match[1] as TreeDropMode);
+        if(next!==data)onChange(next);
+      }
+      return;
+    }
+    reorderColumn(event);
+  };
   return <div className="min-w-0 space-y-2" data-testid="collection-paged-table">
     <CollectionGridToolbar data={data} view={view} visibleCount={rows.length} selectedIds={selectedIds} readOnly={readOnly}
       onChange={onChange} onClear={() => setSelected([])} />
     <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
       onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
       onOpen={setOpenRecordId} onChange={onChange} onDeleteRequest={setPendingDeleteTaskId}/>
+    {projected.truncated&&<p role="status" className="text-xs text-[var(--planner-secondary)]">Showing a limited tree view. Narrow the search or expand fewer branches (max 500 rows).</p>}
     {!page.rows.length && <p role="status" className="rounded-lg border border-dashed p-4 text-center text-sm text-[var(--planner-secondary)]">
       No matching tasks. Change filters or add a task.</p>}
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderColumn}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={finishDrag}>
     <div ref={tableScroll} className="hidden max-w-full overflow-x-auto rounded-md bg-[var(--planner-surface)] sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
     <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-sm text-[var(--planner-text)]" data-testid="collection-tanstack-table">
     <colgroup>
@@ -192,28 +217,11 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       </th>
       <th style={{ width: 108 }} className="border-b border-[var(--planner-border)]"> </th>
     </tr>)}</thead>
-    <tbody>{table.getRowModel().rows.map(row => <tr key={row.original.id} data-record-id={row.original.id} className="group h-10 border-b border-[var(--planner-border)] hover:bg-[var(--planner-hover)]">
-      <td className="p-0.5">
-        <div className="flex items-center gap-1">
-        <button type="button" aria-label={(row.original.progress==="completed"?"Reopen ":"Complete ")+recordTitle(data,row.original)}
-          disabled={readOnly} className="grid h-8 w-8 place-items-center rounded-full text-[var(--planner-accent)] hover:bg-[var(--planner-hover)]"
-          onClick={()=>onChange(setTaskProgress(data,row.original.id,row.original.progress==="completed"?"not_started":"completed"))}>
-          {row.original.progress==="completed"?<CheckCircle2 size={18}/>:<Circle size={18}/>}
-        </button><input type="checkbox" disabled={readOnly} checked={selectedIds.includes(row.original.id)}
-        aria-label={"Select task " + recordTitle(data, row.original)} onChange={e => setSelected(current => e.target.checked
-          ? [...new Set([...current, row.original.id])] : current.filter(id => id !== row.original.id))} /></div></td>
-      {row.getVisibleCells().map(cell => <td style={{ width: cell.column.getSize() }} className={`p-0.5 ${numericFieldIds.has(cell.column.id) ? "text-right" : "text-left"}`} key={cell.id}>
-        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-      </td>)}
-      <td aria-hidden="true" />
-      <td><div className="flex items-center opacity-0 pointer-events-none transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-        <button className="grid h-8 w-8 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2" title="Open task" aria-label={"Open " + recordTitle(data, row.original)}
-          onClick={() => setOpenRecordId(row.original.id)}><ExternalLink size={14}/></button>
-        <button aria-label={"Delete " + recordTitle(data, row.original)} title="Delete task" className="grid h-8 w-8 place-items-center rounded text-[var(--planner-secondary)] hover:text-rose-600 focus-visible:ring-2"
-          disabled={readOnly} onClick={() => setPendingDeleteTaskId(row.original.id)}><Trash2 size={14}/></button></div></td>
-    </tr>)}
-    <CollectionGridAddRow data={data} colSpan={table.getAllLeafColumns().length + 3} readOnly={readOnly} onChange={onChange} />
-    </tbody>
+    <CollectionGridRows table={table} data={data} readOnly={readOnly}
+      selected={selectedIds} setSelected={setSelected} collapsed={collapsed} toggle={toggleTree}
+      onChange={onChange} onOpen={setOpenRecordId} onDelete={setPendingDeleteTaskId}
+      numbers={numericFieldIds}/>
+
     {!!view.aggregations?.length && <tfoot><tr><td className="border-t" />{table.getAllLeafColumns().map(column => {
       const aggregate = view.aggregations?.find(item => item.fieldId === column.id);
       return <td key={column.id} className="border-t bg-[var(--planner-hover)] p-2 text-xs font-semibold dark:bg-[var(--planner-surface)]">
