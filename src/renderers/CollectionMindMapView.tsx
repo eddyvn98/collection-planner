@@ -161,19 +161,19 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    <button type="button" aria-label="Fit Mind Map" className="min-h-11 rounded border border-[var(--planner-border)] px-2"
     onClick={()=>void flow?.fitView(fit)}><Maximize size={14}/></button>
    {history&&<CollectionInlineHistory {...history}/>}
-   <select aria-label="Mind Map selected record" className={inputClass} value={selected?.id??""}
+   <select aria-label="Mind Map selected record" className={inputClass+" min-h-11"} value={selected?.id??""}
     onChange={event=>select(event.target.value)}>
     {rows.map(row=><option key={row.id} value={row.id}>{labels.get(row.id)??"Untitled"}</option>)}
    </select>
   </div>
   {pageCount>1&&<div aria-label="Mind Map pages" className="flex items-center gap-2 text-xs">
-   <button disabled={currentPage===0} onClick={()=>setPage(currentPage-1)}>Previous</button>
+   <button className="min-h-11 rounded px-3" disabled={currentPage===0} onClick={()=>setPage(currentPage-1)}>Previous</button>
    <span>Page {currentPage+1} of {pageCount} ({visible.length} visible)</span>
-   <button disabled={currentPage>=pageCount-1} onClick={()=>setPage(currentPage+1)}>Next</button>
+   <button className="min-h-11 rounded px-3" disabled={currentPage>=pageCount-1} onClick={()=>setPage(currentPage+1)}>Next</button>
   </div>}
   {selected&&<label className="text-xs">Parent of {recordTitle(data,selected)}
    <select aria-label={"Parent of "+recordTitle(data,selected)} disabled={readOnly}
-    className={inputClass+" ml-2"} value={selected.parentId??""}
+    className={inputClass+" ml-2 min-h-11"} value={selected.parentId??""}
     onChange={event=>change(setParent(data,selected.id,event.target.value||null))}>
     <option value="">Root</option>
     {rows.filter(row=>row.id!==selected.id).map(row=>
@@ -198,7 +198,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     onConnectStart={(_event,params)=>{connectionStart.current=params.nodeId??null;}}
     onConnectEnd={endConnection} proOptions={{hideAttribution:true}}>
     <Background color="var(--planner-border)" gap={18}/>
-    <Controls showInteractive={false} className="!rounded-lg !border !border-[var(--planner-border)] !bg-[var(--planner-surface)] [&>button]:!bg-[var(--planner-surface)] [&>button]:!fill-[var(--planner-text)]"/>
+    <Controls showInteractive={false} className="!rounded-lg !border !border-[var(--planner-border)] !bg-[var(--planner-surface)] [&>button]:!h-11 [&>button]:!w-11 [&>button]:!bg-[var(--planner-surface)] [&>button]:!fill-[var(--planner-text)]"/>
     <MiniMap pannable zoomable nodeColor="var(--planner-accent)" maskColor="var(--planner-hover)" style={{background:"var(--planner-surface)"}}/>
    </ReactFlow>
   </div>
@@ -206,9 +206,9 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    <h2 className="text-sm font-semibold">Delete “{labels.get(deleteId)}”?</h2>
    <p className="mt-2 text-xs">Keep its children by promoting them, or delete the whole branch.</p>
    <div className="mt-3 flex flex-wrap justify-end gap-2">
-    <button data-dialog-initial type="button" onClick={()=>setDeleteId(null)}>Cancel</button>
-    <button type="button" onClick={()=>{change(deleteRecord(data,deleteId,"promote"));setDeleteId(null);}}>Promote children</button>
-    <button type="button" className="rounded bg-rose-700 px-2 py-2 text-white" onClick={()=>{
+    <button data-dialog-initial type="button" className="min-h-11 rounded border px-3" onClick={()=>setDeleteId(null)}>Cancel</button>
+    <button type="button" className="min-h-11 rounded border px-3" onClick={()=>{change(deleteRecord(data,deleteId,"promote"));setDeleteId(null);}}>Promote children</button>
+    <button type="button" className="min-h-11 rounded bg-rose-700 px-3 py-2 text-white" onClick={()=>{
      change(deleteRecord(data,deleteId,"subtree"));setDeleteId(null);}}>Delete branch</button>
    </div>
   </CollectionModalDialog>}
