@@ -30,6 +30,8 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const [warning,setWarning]=useState(""),[layoutEpoch,setLayoutEpoch]=useState(0);
  const [flow,setFlow]=useState<ReactFlowInstance|null>(null);
  const root=useRef<HTMLDivElement>(null),connectionStart=useRef<string|null>(null);
+ const pointerDrag=useRef<{id:string;x:number;y:number}|null>(null);
+ const pointerHandled=useRef(false);
  const visible=useMemo(()=>visibleMindMapRecords(data,rows,collapsed),[data,rows,collapsed]);
  const PAGE_SIZE=MAX_VISIBLE_TREE_NODES,pageCount=Math.max(1,Math.ceil(visible.length/PAGE_SIZE));
  const currentPage=Math.min(page,pageCount-1);
@@ -181,6 +183,21 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   </label>}
   {warning&&<p role="alert" className="text-xs text-amber-600">{warning}</p>}
   <div ref={root} tabIndex={0} onKeyDownCapture={keyboard}
+   onPointerDownCapture={event=>{
+    pointerHandled.current=false;
+    const element=event.target as HTMLElement;
+    if(element.closest("button,input,select,.react-flow__handle,.nodrag"))return;
+    const dragged=element.closest<HTMLElement>(".react-flow__node[data-id]");
+    pointerDrag.current=dragged?.dataset.id?{id:dragged.dataset.id,x:event.clientX,y:event.clientY}:null;
+   }}
+   onPointerUpCapture={event=>{
+    const dragged=pointerDrag.current;pointerDrag.current=null;
+    if(!dragged||readOnly||Math.hypot(event.clientX-dragged.x,event.clientY-dragged.y)<16)return;
+    if(!pointerTarget(dragged.id,event))return;
+    pointerHandled.current=true;
+    drop(dragged.id,NaN,NaN,event);
+   }}
+   onPointerCancelCapture={()=>{pointerDrag.current=null;pointerHandled.current=false;}}
    className="relative h-[520px] min-h-[420px] w-full shrink-0 overflow-hidden rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
    data-testid="collection-mindmap-graph">
    <ReactFlow style={{width:"100%",height:"100%"}} nodes={nodes} edges={edges}
@@ -191,7 +208,10 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     onNodeDoubleClick={(_event,node)=>{select(node.id);setEditingId(node.id);}}
     onNodeDrag={(event,node)=>{setDragPositions(previous=>({...previous,[node.id]:node.position}));
      setDropTarget(pointerTarget(node.id,event)??dragTarget(node.id,node.position.x,node.position.y));}}
-    onNodeDragStop={(event,node)=>drop(node.id,node.position.x,node.position.y,event)}
+    onNodeDragStop={(event,node)=>{
+     if(pointerHandled.current){pointerHandled.current=false;setDragPositions({});setDropTarget(null);}
+     else drop(node.id,node.position.x,node.position.y,event);
+    }}
     onSelectionChange={({nodes})=>setSelectedIds(nodes.map(n=>n.id))}
     onConnect={connect}
     onConnectStart={(_event,params)=>{connectionStart.current=params.nodeId??null;}}
