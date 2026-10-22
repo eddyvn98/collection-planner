@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { createQuickTask } from "../collections/collectionInputParser";
-import { CollectionQuickAddInput,parsedQuickTitle } from "./CollectionQuickAddInput";
+import { CollectionQuickAddInput } from "./CollectionQuickAddInput";
 import type { CollectionBlockPayload } from "../collections/model";
 export function CollectionGridAddRow({ data, colSpan, readOnly, onChange }: {
   data: CollectionBlockPayload; colSpan: number; readOnly: boolean;
@@ -10,8 +10,7 @@ export function CollectionGridAddRow({ data, colSpan, readOnly, onChange }: {
   const [title, setTitle] = useState("");
   const add = () => {
     if (!title.trim() || readOnly) return;
-    const raw=parsedQuickTitle(data,title);
-    onChange(createQuickTask(data,raw.title===title.trim()?title:title));
+    onChange(createQuickTask(data,title,undefined,"",undefined,localStorage.getItem("planner:input:tokens")!=="off"));
     setTitle("");
   };
   return <tr data-testid="collection-add-row">
@@ -36,7 +35,7 @@ export function CollectionGridAddQuick({ data, readOnly, onChange }: {
   const [name, setName] = useState("");
   return <form className="flex items-center gap-2 p-2" onSubmit={event => {
     event.preventDefault();if (!name.trim() || readOnly) return;
-    onChange(createQuickTask(data,name));setName("");
+    onChange(createQuickTask(data,name,undefined,"",undefined,localStorage.getItem("planner:input:tokens")!=="off"));setName("");
   }}>
     <CollectionQuickAddInput data={data} label="New task title" value={name} onChange={setName}
      disabled={readOnly} className="h-[44px] min-h-[44px] w-full rounded border bg-[var(--planner-surface)] px-2 text-sm"
