@@ -1,4 +1,5 @@
 import type { CollectionBlockPayload, CollectionRecord } from "./model";
+import { buildTaskTree, isTreeAncestor } from "./collectionTaskTree";
 
 /** A completed predecessor never blocks its successor. Broken historical IDs
  * are ignored here; integrity diagnostics handle missing references. */
@@ -35,8 +36,10 @@ export function validCollectionDependencies(data: CollectionBlockPayload, record
   if (!data.records.some(row => row.id === recordId) || dependencies.length > 20 ||
     new Set(dependencies).size !== dependencies.length) return false;
   const index = new Map(data.records.map(row => [row.id, row]));
+  const tree=buildTaskTree(data.records);
   for (const dependency of dependencies) {
-    if (!index.has(dependency) || dependency === recordId) return false;
+    if (!index.has(dependency) || dependency === recordId ||
+      isTreeAncestor(tree,recordId,dependency) || isTreeAncestor(tree,dependency,recordId)) return false;
     const visited = new Set<string>();
     const stack = [dependency];
     while (stack.length) {
