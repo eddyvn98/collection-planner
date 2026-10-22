@@ -18,6 +18,7 @@ interface Props {
  filters:TaskFilterState; onFilters:(next:TaskFilterState)=>void; filterControl:ReactNode;
  onTitle:(text:string)=>void; onSelect:(id:string)=>void; onDelete:(id:string)=>void;
  onDataChange:(next:CollectionBlockPayload)=>void;
+ assignedMode:boolean;onAssignedMode:(mode:boolean)=>void;
  onAddView:(kind:CollectionView["kind"])=>void; onGroup:(mode:NonNullable<CollectionView["boardGroupBy"]>)=>void;
  onSettings:()=>void; onHistory:()=>void; settings:boolean; showHistory:boolean; importExport:ReactNode;
  canUndo:boolean; canRedo:boolean; undo:()=>void; redo:()=>void; darkMode:boolean; setDarkMode:(x:boolean)=>void;
@@ -38,7 +39,7 @@ export function CollectionPlannerHeader(p:Props){
  const currentMe=resolveMyTasksId(p.data,me);
  const mine=!!currentMe && p.filters.assignee===currentMe;
  const toggleMe=()=>{if(!currentMe){setChooseMe(true);return;}
-   p.onFilters({...p.filters,assignee:mine?"":currentMe});};
+   p.onFilters({...p.filters,assignee:mine?"":currentMe});p.onAssignedMode(!mine);};
  const menuButton="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1 rounded px-1 text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]";
  return <header data-testid="planner-header" className="relative z-50 flex h-12 w-full min-w-0 shrink-0 items-center gap-0.5 sm:gap-2 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[var(--planner-text)] sm:px-3">
   {p.full&&<button ref={p.backRef} aria-label="Back" className={menuButton} onClick={p.onClose}><ArrowLeft size={16}/></button>}
@@ -54,10 +55,10 @@ export function CollectionPlannerHeader(p:Props){
     <CollectionToolbarSearch value={p.filters.keyword} onChange={keyword=>p.onFilters({...p.filters,keyword})}/>
     {p.filterControl}
     <button aria-pressed={mine} className={menuButton+" xl:w-auto xl:px-2 xl:gap-1.5 "+(mine?" bg-[var(--planner-hover)] text-[var(--planner-accent)]":"")}
-      onClick={toggleMe} title="My tasks" aria-label="My tasks"><UserRound size={16}/><span className="hidden whitespace-nowrap xl:inline text-sm">My tasks</span></button>
+      onClick={toggleMe} title="My tasks — assigned to me" aria-label="My tasks"><UserRound size={16}/><span className="hidden whitespace-nowrap xl:inline text-sm">My tasks</span></button>
     {chooseMe&&<select autoFocus aria-label="Select my identity" className="max-w-28 rounded border bg-[var(--planner-surface)] p-1 text-xs"
       defaultValue="" onChange={e=>{setMe(e.target.value);try{localStorage.setItem("planner:my-person",e.target.value);}catch{}
-        p.onFilters({...p.filters,assignee:e.target.value});setChooseMe(false);}}>
+        p.onFilters({...p.filters,assignee:e.target.value});p.onAssignedMode(!!e.target.value);setChooseMe(false);}}>
       <option value="">Who am I?</option>{(p.data.people??[]).map(person=><option value={person.id} key={person.id}>{person.name}</option>)}
     </select>}
     <CollectionReminderCenter data={p.data} readOnly={p.readOnly} onChange={p.onDataChange}/>
