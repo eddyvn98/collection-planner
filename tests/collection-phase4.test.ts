@@ -29,14 +29,14 @@ describe("Phase 4 — history and task actions", () => {
   expect(historyRedo(diverged)).toBe(diverged);
   expect(historyCommit(first,first.current)).toBe(first);
  });
- it("copy resets completed state and isolates mutable collections",()=>{
+ it("duplicate preserves checklist and state with new IDs, isolates mutable collections",()=>{
   const {data}=fixture();
   const result=copyTask(data,"a");
   const original=data.records[0],copy=result.records[1];
   expect(copy.id).not.toBe(original.id);
-  expect(copy.values[data.fields[0].id]).toBe("Copy of Plan sprint");
-  expect(copy.progress).toBe("not_started");
-  expect(copy.checklist?.[0].done).toBe(false);
+  expect(copy.values[data.fields[0].id]).toBe("Plan sprint (copy)");
+  expect(copy.progress).toBe("in_progress");
+  expect(copy.checklist?.[0].done).toBe(true);
   expect(copy.checklist?.[0].id).not.toBe("check");
   expect(copyTask(data,"missing")).toBe(data);
   expect(data.records).toHaveLength(1);
