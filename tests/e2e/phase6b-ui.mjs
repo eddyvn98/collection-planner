@@ -80,6 +80,10 @@ try{
   console.log("PASS blocked tooltip, searchable bucket/due, cycle and completed exclusions, removal");
   await drawer.getByRole("button",{name:"Close task details"}).click();
   await page.getByRole("button",{name:"Grid",exact:true}).click();
+  const gridRow=page.getByTestId("collection-tanstack-table").locator('tr[data-record-id="ship"]');
+  const gridBlocker=gridRow.getByTestId("blocked-badge");
+  assert.equal(await gridBlocker.count(),1);
+  assert.equal(await gridBlocker.getAttribute("title"),"Blocked by API ready");
   const priority=page.getByRole("button",{name:"Priority for Ship release"});
   assert.equal((await priority.textContent()).trim(),"");
   const headers=await page.getByTestId("collection-tanstack-table").locator("thead th").evaluateAll(ths=>
@@ -101,6 +105,8 @@ try{
   await mobile.getByRole("button",{name:"Choose view"}).click();
   await mobile.getByRole("menuitemradio",{name:"Grid"}).click();
   await mobile.getByTestId("collection-mobile-grid").waitFor();
+  const newTask=mobile.getByRole("textbox",{name:"New task title"});
+  assert((await newTask.boundingBox()).height>=44,"Mobile new task title touch target <44px");
   const card=mobile.locator('[data-testid="collection-mobile-grid"] [data-record-id="ship"]');
   assert.equal(await card.locator('input[type="checkbox"]').count(),0);
   await card.getByRole("button",{name:"Select task Ship release"}).click();
