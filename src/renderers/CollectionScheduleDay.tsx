@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus } from "lucide-react";
 import { recordTitle, type CollectionBlockPayload, type CollectionRecord, type CollectionView } from "../collections/model";
 import { scheduledTaskOverdue } from "../collections/collectionSchedule";
+import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 
 function ScheduleTask({ data, view, record, today, readOnly, onOpen }: {
   data: CollectionBlockPayload; view: CollectionView; record: CollectionRecord;
@@ -22,6 +23,7 @@ function ScheduleTask({ data, view, record, today, readOnly, onOpen }: {
       <GripVertical size={12} /></button>
     <button type="button" onClick={() => onOpen(record.id)} className="min-w-0 flex-1 truncate text-left font-medium"
       title={recordTitle(data, record)}>{recordTitle(data, record)}</button>
+    <CollectionBlockedBadge data={data} record={record}/>
     {late && <span className="shrink-0 text-[10px] font-bold">Late</span>}
   </article>;
 }
