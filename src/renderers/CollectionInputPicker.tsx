@@ -1,12 +1,13 @@
-import {useRef,useState} from "react";
+import {useRef,useState,type ReactNode} from "react";
 import {addDays,addMonths,endOfMonth,format,parseISO,startOfMonth} from "date-fns";
 import {ChevronDown,ChevronLeft,ChevronRight,CalendarDays} from "lucide-react";
 import {parseNaturalDate} from "../collections/collectionInputParser";
 import {CollectionFloatingPanel} from "./CollectionFloatingPanel";
 interface Props{label:string;value:string;onChange:(value:string)=>void;disabled:boolean;
- kind:"date"|"select";options?:{value:string;label:string}[];placeholder?:string;}
+ kind:"date"|"select";options?:{value:string;label:string}[];placeholder?:string;
+ children?:ReactNode;testId?:string;warning?:boolean;panelLabel?:string;}
 export function CollectionInputPicker({label,value,onChange,disabled,kind,options=[],
- placeholder}:Props){
+ placeholder,children,testId,warning,panelLabel}:Props){
  const [open,setOpen]=useState(false),[draft,setDraft]=useState("");
  const [error,setError]=useState("");
  const [month,setMonth]=useState(()=>value||format(new Date(),"yyyy-MM-dd"));
@@ -22,15 +23,16 @@ export function CollectionInputPicker({label,value,onChange,disabled,kind,option
  const days=Array.from({length:Math.ceil((pad+last.getDate())/7)*7},(_,i)=>
   format(addDays(first,i-pad),"yyyy-MM-dd"));
  return <span className="inline-flex min-w-0 max-w-full">
-  <button ref={trigger} type="button" disabled={disabled} aria-label={label}
+  <button ref={trigger} type="button" disabled={disabled} aria-label={label} data-testid={testId}
    aria-haspopup="dialog" aria-expanded={open} onClick={()=>{setOpen(x=>!x);setError("");}}
-   className="flex min-h-11 min-w-11 max-w-full items-center gap-2 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] px-3 text-sm hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+   className={"flex min-h-11 min-w-11 max-w-full items-center gap-2 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] px-3 text-sm hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+(warning?"font-semibold text-red-600":"")}>
+   {children??<>
    {kind==="date"?<CalendarDays size={16}/>:null}
    <span className="min-w-0 truncate">{value||placeholder||"Choose..."}</span>
-   <ChevronDown size={14}/>
+   <ChevronDown size={14}/></>}
   </button>
   <CollectionFloatingPanel open={open} anchorRef={trigger} onClose={()=>setOpen(false)}
-   role="dialog" label={label+" picker"} align="start"
+   role="dialog" label={panelLabel??(label+" picker")} align="start"
    className="w-[min(320px,calc(100vw-16px))] rounded-lg p-3">
    {kind==="select"?<div className="grid max-h-72 gap-1 overflow-auto">
     <strong className="mb-1 text-sm">{label}</strong>
