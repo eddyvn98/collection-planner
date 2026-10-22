@@ -57,6 +57,7 @@ jobs:
           node tests/e2e/phase6c-ui.mjs
           node tests/e2e/phase6d-ui.mjs
           node tests/e2e/phase7a-timeline.mjs
+          node tests/e2e/phase7b-mindmap.mjs
       - name: Capture before and after Grid screenshots (1280/375, light/dark)
         if: always() && github.event_name == 'pull_request'
         run: |
@@ -152,3 +153,22 @@ jobs:
         with:
           name: phase7a-timeline-before-after
           path: /tmp/phase7a-captures/
+      - name: Capture Phase 7B Mind Map and Timeline 1280/375 Light/Dark
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/phase7b-captures/before /tmp/phase7b-captures/after
+          SCREENSHOT_OUTPUT=/tmp/phase7b-captures/after node tests/e2e/phase7b-mindmap.mjs
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/phase7b-before FETCH_HEAD
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/phase7b-before/node_modules
+          (cd /tmp/phase7b-before && node_modules/.bin/vite --host 127.0.0.1 --port 4179 > /tmp/phase7b-before.log 2>&1) &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4179/ > /dev/null; then break; fi
+            sleep 1
+          done
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4179 SCREENSHOT_OUTPUT=/tmp/phase7b-captures/before node tests/e2e/phase7b-mindmap.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && github.event_name == 'pull_request'
+        with:
+          name: phase7b-mindmap-before-after
+          path: /tmp/phase7b-captures/
