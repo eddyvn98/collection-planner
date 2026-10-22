@@ -1,4 +1,5 @@
 import { CollectionDrawerPicker } from "./CollectionDrawerPicker";
+import { CollectionInputPicker } from "./CollectionInputPicker";
 import { displayPlannerDate } from "../collections/collectionDateDisplay";
 import { CalendarDays, Circle, CircleDot, CheckCircle2, Flag, Repeat, Tag, UserRound, Layers3 } from "lucide-react";
 import { newId, setRecordValue, type CollectionBlockPayload, type CollectionRecord,
@@ -31,30 +32,39 @@ export function CollectionPlannerTaskFields({data,record,readOnly,onChange}:Prop
   onChange(updateTask(next,record.id,{labelIds:[...new Set([...(record.labelIds??[]),label.id])]}));
  };
  return <section aria-label="Task properties" className="divide-y divide-[var(--planner-border)]">
-  {bucket&&<label className={row}><Layers3 size={16} strokeWidth={1.75}/><span>Bucket</span>
-   <select className={input} value={record.values[bucket.id]??""} disabled={readOnly}
-    aria-label="Task bucket" onChange={e=>onChange(setRecordValue(data,record.id,bucket.id,e.target.value))}>
-    <option value="">Choose bucket</option>{(bucket.options??[]).map(p=><option key={p} value={p}>{p}</option>)}</select></label>}
-  <label className={row}>
+  {bucket&&<div className={row}><Layers3 size={16}/><span>Bucket</span>
+   <CollectionInputPicker kind="select" label="Task bucket" disabled={readOnly}
+    value={record.values[bucket.id]??""}
+    options={(bucket.options??[]).map(value=>({value,label:value}))}
+    onChange={value=>onChange(setRecordValue(data,record.id,bucket.id,value))}/></div>}
+  <div className={row}>
    {record.progress==="completed"?<CheckCircle2 size={16}/>:record.progress==="in_progress"?<CircleDot size={16}/>:<Circle size={16}/>}
    <span>Progress</span>
-   <select aria-label="Task progress" className={input} value={record.progress??"not_started"} disabled={readOnly}
-    onChange={e=>onChange(setTaskProgress(data,record.id,e.target.value as TaskProgress))}>
-    {PROGRESS.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
-  <label className={row}><Flag size={16} strokeWidth={1.75}/><span>Priority</span>
-   <select aria-label="Task priority" className={input} disabled={readOnly} value={record.priority??"medium"}
-    onChange={e=>patch({priority:e.target.value as TaskPriority})}>
-    {PRIORITIES.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
-  {(["start","due"] as const).map(kind=><label key={kind} className={row}>
-   <CalendarDays size={16} strokeWidth={1.75}/><span>{kind==="start"?"Start date":"Due date"}</span>
-   <div className="min-w-0"><input className={input} type="date" disabled={readOnly} aria-label={"Task "+kind+" date"}
-    value={taskDate(data,record,kind)}
-    onChange={e=>onChange(setTaskDate(data,record.id,kind,e.target.value))}/>
-    <span className="block text-xs text-[var(--planner-secondary)]" aria-label={kind+" formatted date"}>{displayPlannerDate(taskDate(data,record,kind))}</span></div></label>)}
-  <label className={row}><Repeat size={16} strokeWidth={1.75}/><span>Repeat</span>
-   <select aria-label="Task recurrence" className={input} disabled={readOnly} value={record.recurrence??"none"}
-    onChange={e=>onChange(setRecurrence(data,record.id,e.target.value as TaskRecurrence))}>
-    {["none","daily","weekly","monthly"].map(x=><option key={x} value={x}>{x==="none"?"Never":x}</option>)}</select></label>
+   <CollectionInputPicker kind="select" label="Task progress" disabled={readOnly}
+    value={record.progress??"not_started"} options={PROGRESS}
+    onChange={value=>onChange(setTaskProgress(data,record.id,value as TaskProgress))}/>
+  </div>
+  <div className={row}><Flag size={16}/><span>Priority</span>
+   <CollectionInputPicker kind="select" label="Task priority" disabled={readOnly}
+    value={record.priority??"medium"} options={PRIORITIES}
+    onChange={value=>patch({priority:value as TaskPriority})}/>
+  </div>
+  {(["start","due"] as const).map(kind=><div key={kind} className={row}>
+   <CalendarDays size={16}/><span>{kind==="start"?"Start date":"Due date"}</span>
+   <div className="min-w-0">
+    <CollectionInputPicker kind="date" label={"Task "+kind+" date"} disabled={readOnly}
+     value={taskDate(data,record,kind)} placeholder="Choose date"
+     onChange={value=>onChange(setTaskDate(data,record.id,kind,value))}/>
+    <span className="block text-xs text-[var(--planner-secondary)]" aria-label={kind+" formatted date"}>
+     {displayPlannerDate(taskDate(data,record,kind))}</span>
+   </div>
+  </div>)}
+  <div className={row}><Repeat size={16}/><span>Repeat</span>
+   <CollectionInputPicker kind="select" label="Task recurrence" disabled={readOnly}
+    value={record.recurrence??"none"}
+    options={["none","daily","weekly","monthly"].map(value=>({value,label:value==="none"?"Never":value}))}
+    onChange={value=>onChange(setRecurrence(data,record.id,value as TaskRecurrence))}/>
+  </div>
   <div className={row}><UserRound size={16} strokeWidth={1.75}/><span>Assignees</span>
    <CollectionDrawerPicker label="Assignees" value={
     people.filter(p=>record.assigneeIds?.includes(p.id)).map(p=>p.name).join(", ")||"Assign people"}>
