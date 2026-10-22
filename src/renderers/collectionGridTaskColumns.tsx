@@ -31,7 +31,7 @@ export function gridTaskColumns(data: () => CollectionBlockPayload,
         return <CollectionGridEditable label={"Priority for "+title} value={value}
           type="priority" options={PRIORITIES} readOnly={readOnly}
           onSave={next=>save(updateTask(data(),record.id,{priority:next as TaskPriority},"Changed priority"))}>
-          {value==="medium"?null:<span className="inline-flex items-center gap-1.5">
+          {value==="medium"?<span aria-hidden="true" />:<span className="inline-flex items-center gap-1.5">
             <Flag size={14} className={value==="urgent"?"text-rose-600":value==="important"?"text-amber-600":"text-[var(--planner-secondary)]"}/>
             {PRIORITIES.find(p=>p.value===value)?.label}
           </span>}

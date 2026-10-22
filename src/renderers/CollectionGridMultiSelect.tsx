@@ -20,7 +20,7 @@ export function CollectionGridMultiSelect({data,record,kind,readOnly,save}:{
    {isPerson?<span className="flex -space-x-1">{options.filter(p=>ids.includes(p.id)).map(p=><span key={p.id} title={p.name} className="grid h-6 w-6 place-items-center rounded-full border border-[var(--planner-surface)] bg-[var(--planner-accent)] text-[10px] font-semibold text-white">{p.name.slice(0,2).toUpperCase()}</span>)}</span>:
     <span className="flex gap-1">{options.filter(p=>ids.includes(p.id)).map(p=><span key={p.id} className="max-w-24 truncate rounded px-1.5 py-0.5 text-white" style={{backgroundColor:/^#[0-9a-f]{6}$/i.test("color" in p?String(p.color):"")?String("color" in p?p.color:""):"#5B5FC7"}}>{p.name}</span>)}</span>}
   </button>
-  <CollectionFloatingPanel open={open} anchorRef={trigger} onClose={()=>setOpen(false)}
+  <CollectionFloatingPanel open={open} anchorRef={trigger} onClose={()=>{setOpen(false);requestAnimationFrame(()=>{if(trigger.current&&document.activeElement===document.body)trigger.current.focus();});}}
    role="dialog" label={caption} className="w-56 rounded-lg p-2">
    {!options.length&&!isPerson&&<p className="text-xs text-[var(--planner-secondary)]">Add labels in task details.</p>}
    {options.map(p=><label className="flex min-h-9 items-center gap-2 px-1 text-xs" key={p.id}>

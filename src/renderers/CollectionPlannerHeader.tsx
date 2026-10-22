@@ -44,7 +44,7 @@ export function CollectionPlannerHeader(p:Props){
  return <header data-testid="planner-header" className="relative z-50 flex h-12 w-full min-w-0 shrink-0 items-center gap-0.5 sm:gap-2 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[var(--planner-text)] sm:px-3">
   {p.full&&<button ref={p.backRef} aria-label="Back" className={menuButton} onClick={p.onClose}><ArrowLeft size={16}/></button>}
   <input aria-label="Collection title" value={p.data.title} disabled={p.readOnly} onChange={e=>p.onTitle(e.target.value)}
-    title={p.data.title} className="min-w-0 w-[min(24vw,88px)] shrink bg-transparent text-ellipsis text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:shrink-0 sm:text-xl"/>
+    title={p.data.title} className="min-h-11 min-w-0 w-[min(24vw,88px)] shrink bg-transparent text-ellipsis text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:shrink-0 sm:text-xl"/>
   <button type="button" title={star?"Unstar plan":"Star plan"} aria-label="Star plan" aria-pressed={star} className={menuButton+" hidden sm:inline-flex"}
     onClick={()=>{const next=!star;setStar(next);try{localStorage.setItem("planner:star:"+p.data.title,next?"1":"0");}catch{}}}>
     <Star size={16} strokeWidth={1.75} fill={star?"#5B5FC7":"none"}/></button>
