@@ -75,7 +75,7 @@ try{
   assert((await page.evaluate(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).fields))
    .find(f=>f.id==="bucket").options.includes("Ready"));
   await card.getByRole("button",{name:"Board renamed",exact:true}).click();
-  assert(await page.getByTestId("task-save-status").isVisible());
+  await page.getByTestId("task-save-status").waitFor({state:"visible"});
   await page.getByRole("button",{name:"Close task details"}).click();
   await page.getByRole("button",{name:"Timeline",exact:true}).click();
   assert(await page.getByTestId("collection-timeline").getByRole("button",{name:"Undo last change"}).isVisible());
