@@ -6,6 +6,8 @@ import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { CollectionTaskCard } from "./CollectionTaskCard";
+import { CollectionQuickAddInput,parsedQuickTitle } from "./CollectionQuickAddInput";
+import {applyQuickTokens} from "../collections/collectionInputParser";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
 interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;field?:CollectionField;
  readOnly:boolean;showSubtasks:boolean;counts:Map<string,{done:number;total:number}>;
@@ -39,8 +41,11 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
  const [collapsed,setCollapsed]=useState(false),regionId=useId();
  const bucket=group.key.slice(7),editable=mode==="bucket"&&!!field&&!!bucket;
  const {active:pending,completed}=splitBucketCompletion(group.rows);
- const save=()=>{const next=createGroupedTask(data,title,group.key,mode,field);
-   if(next!==data){onChange(next);setTitle("");}};
+ const save=()=>{
+  const parsed=parsedQuickTitle(data,title);
+  const next=createGroupedTask(data,parsed.title,group.key,mode,field);
+  if(next!==data){onChange(applyQuickTokens(next,parsed));setTitle("");}
+ };
  const action=(operation:"rename"|"left"|"right"|"delete")=>{
    setMenu(false);if(!field)return;
    if(operation==="rename"){setName(bucket);setRenaming(true);}
@@ -109,15 +114,10 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
     aria-hidden={collapsed}>
    <div id={regionId} className="min-h-0 overflow-hidden">
   {!readOnly&&(adding?<form className="mb-2 space-y-1" onSubmit={e=>{e.preventDefault();save();}}>
-    <input autoFocus aria-label={"New task in "+group.title} value={title} maxLength={300}
-      placeholder="Task name" onChange={e=>setTitle(e.target.value)}
-      onKeyDown={e=>{
-       if(e.key==="Escape"){e.preventDefault();e.stopPropagation();setAdding(false);requestAnimationFrame(()=>addTriggerRef.current?.focus());}
-       if(e.key==="Enter"&&!e.nativeEvent.isComposing&&!e.repeat){
-        e.preventDefault();e.currentTarget.form?.requestSubmit();
-       }
-      }}
-      className="w-full rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm"/>
+    <CollectionQuickAddInput data={data} autoFocus label={"New task in "+group.title}
+     value={title} onChange={setTitle} disabled={readOnly} placeholder="Task name · mai @người #nhãn !urgent"
+     onEscape={()=>{setAdding(false);requestAnimationFrame(()=>addTriggerRef.current?.focus());}}
+     className="min-h-11 w-full rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm"/>
     <div className="flex gap-2">
       <button type="submit" disabled={!title.trim()} className="min-h-8 rounded bg-[var(--planner-accent)] px-3 text-xs text-white disabled:opacity-50">Add task</button>
       <button type="button" className="min-h-8 rounded px-2 text-xs hover:bg-[var(--planner-hover)]" onClick={()=>setAdding(false)}>Cancel</button>
