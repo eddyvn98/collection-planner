@@ -1,5 +1,6 @@
 import {useRef,useState,type ReactNode} from "react";
 import {CollectionFloatingPanel} from "./CollectionFloatingPanel";
+import {CollectionInputPicker} from "./CollectionInputPicker";
 import {PRIORITIES,setTaskDate,taskDate,updateTask} from "../collections/collectionTasks";
 import type {CollectionBlockPayload,CollectionRecord} from "../collections/model";
 type Kind="due"|"priority"|"labels"|"assignees";
@@ -19,6 +20,11 @@ export function CollectionBoardQuickEdit({kind,data,record,readOnly,onChange,chi
  };
  const label="Edit "+kindName[kind]+" for "+title;
  const items=kind==="labels"?(data.labels??[]):(data.people??[]);
+ if(kind==="due")return <CollectionInputPicker kind="date" label={label} panelLabel={label}
+  value={taskDate(data,record,"due")} disabled={readOnly}
+  testId={testId} warning={warning} placeholder="+ Due date"
+  onChange={value=>{const next=setTaskDate(data,record.id,"due",value);
+   if(next!==data)onChange(next);}}>{children}</CollectionInputPicker>;
  return <div className="inline-flex min-w-0 max-w-full">
   <button ref={anchor} type="button" data-testid={testId} aria-label={label}
    title={label} aria-haspopup="dialog" aria-expanded={open} disabled={readOnly}
