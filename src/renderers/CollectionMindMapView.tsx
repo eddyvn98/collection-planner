@@ -1,95 +1,199 @@
 "use client";
-import React, { useMemo, useState } from "react";
-import { Background, Controls, MiniMap, Position, ReactFlow, type Edge, type Node } from "@xyflow/react";
+import {useEffect,useMemo,useRef,useState,type KeyboardEvent} from "react";
+import {Background,Controls,MiniMap,Position,ReactFlow,type ReactFlowInstance,
+ type Node, type Edge, type Connection} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type { CollectionBlockPayload, CollectionRecord } from "../collections/model";
-import { recordTitle, setParent } from "../collections/model";
-import { MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
-import { layoutMindMap } from "./collectionMindMapLayout";
-import { visibleMindMapSelection } from "./collectionMindMapSelection";
-import { hintClass, inputClass } from "./CollectionFieldEditor";
-
-interface Props { rows: CollectionRecord[]; data: CollectionBlockPayload; readOnly: boolean;
-  onChange: (next: CollectionBlockPayload) => void; }
-
-export function MindMapView({ rows, data, readOnly, onChange }: Props) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
-  const [parentWarning,setParentWarning]=useState("");
-  const PAGE_SIZE = MAX_VISIBLE_TREE_NODES;
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount - 1);
-  const graph = useMemo(() => layoutMindMap(rows, PAGE_SIZE, currentPage * PAGE_SIZE), [rows, currentPage]);
-  const labels = useMemo(() => new Map(rows.map(record => [record.id, recordTitle(data, record)])), [rows, data]);
-  const nodes = useMemo<Node[]>(() => graph.nodes.map(item => ({
-    id: item.id, position: { x: item.x, y: item.y },
-    data: { label: labels.get(item.id) ?? "Untitled" },
-    sourcePosition: Position.Right, targetPosition: Position.Left,
-    draggable: !readOnly, selectable: true,
-  })), [graph, labels, readOnly]);
-  const edges = useMemo<Edge[]>(() => graph.edges.map(link => ({
-    id: link.source + ">" + link.target, source: link.source, target: link.target,
-    type: "smoothstep", animated: false,
-  })), [graph]);
-  const selected = visibleMindMapSelection(rows, selectedId, currentPage, PAGE_SIZE);
-  const selectRecord = (id: string) => {
-    setSelectedId(id);
-    const index = rows.findIndex(row => row.id === id);
-    if (index >= 0) setPage(Math.floor(index / PAGE_SIZE));
-  };
-  const parentChoice = selected?.parentId && rows.some(item => item.id === selected.parentId)
-    ? selected.parentId : "";
-  const dropParent = (movedId: string, x: number, y: number) => {
-    if (readOnly) return;
-    const targets = graph.nodes.filter(item => item.id !== movedId).map(item => ({
-      id: item.id, distance: Math.hypot(item.x - x, item.y - y),
-    })).sort((a, b) => a.distance - b.distance);
-    // Reparent only on an intentional near-node drop. The engine prevents cycles.
-    if ((targets[0]?.distance ?? Infinity) > 130) return;
-    const next = setParent(data, movedId, targets[0].id);
-    if (next !== data) {setParentWarning("");onChange(next);}
-    else setParentWarning("Cannot move: cycle detected or maximum depth is 6 levels.");
-  };
-  return <div className="flex h-full min-h-[420px] flex-col gap-2" data-testid="collection-mindmap">
-    <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
-      <span className={hintClass}>Drag background to pan, scroll to zoom, or drop a node near another node to change its parent.</span>
-      <select aria-label="Mind Map selected record" className={inputClass} value={selected?.id ?? ""}
-        onChange={event => selectRecord(event.target.value)}>
-        {rows.map(row => <option key={row.id} value={row.id}>{labels.get(row.id) ?? "Untitled"}</option>)}
-      </select>
-      {pageCount > 1 && <span className="flex items-center gap-1" aria-label="Mind Map pages">
-        <button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Previous</button>
-        <span>Page {currentPage + 1} of {pageCount} ({rows.length} records)</span>
-        <button type="button" disabled={currentPage >= pageCount - 1} onClick={() => setPage(currentPage + 1)}>Next</button>
-      </span>}
-      {selected && <label>Parent of {recordTitle(data, selected)}
-        <select aria-label={"Parent of " + recordTitle(data, selected)}
-          className={inputClass + " ml-2"} disabled={readOnly}
-          value={parentChoice}
-          onChange={event => {
-            const next = setParent(data, selected.id, event.target.value || null);
-            if (next !== data) {setParentWarning("");onChange(next);}
-            else setParentWarning("Cannot move: cycle detected or maximum depth is 6 levels.");
-          }}>
-          <option value="">Root</option>
-          {rows.filter(item => item.id !== selected.id).map(item =>
-            <option key={item.id} value={item.id}>{labels.get(item.id) ?? "Untitled"}</option>)}
-        </select>
-      </label>}
-    </div>
-    {parentWarning&&<p role="alert" className="text-xs text-amber-700 dark:text-amber-300">{parentWarning}</p>}
-    {selected?.parentId && !graph.nodes.some(node => node.id === selected.parentId) && <span className={hintClass}>Parent is outside this page; the saved relationship is unchanged.</span>}
-    <div className="relative h-[520px] min-h-[420px] w-full shrink-0 overflow-hidden rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)]" data-testid="collection-mindmap-graph">
-      <ReactFlow nodes={nodes} edges={edges} fitView minZoom={0.15} maxZoom={2}
-        style={{height:"100%",width:"100%"}}
-        nodesDraggable={!readOnly} nodesConnectable={false} selectNodesOnDrag={false}
-        onNodeDragStop={(_event, node) => dropParent(node.id, node.position.x, node.position.y)}
-        onNodeClick={(_event, node) => selectRecord(node.id)}
-        proOptions={{ hideAttribution: true }}>
-        <Background />
-        <Controls showInteractive={false} />
-        <MiniMap pannable zoomable />
-      </ReactFlow>
-    </div>
-  </div>;
+import {Maximize,Plus,Trash2,WandSparkles,Pencil,ArrowRight} from "lucide-react";
+import type {CollectionBlockPayload,CollectionRecord} from "../collections/model";
+import {deleteRecord,recordTitle,setParent} from "../collections/model";
+import {buildTaskTree,descendantCounts,MAX_VISIBLE_TREE_NODES} from "../collections/collectionTaskTree";
+import {layoutMindMap} from "./collectionMindMapLayout";
+import {visibleMindMapSelection} from "./collectionMindMapSelection";
+import {addMindMapRelative,renameMindMapTask,visibleMindMapRecords,candidateMindMapParent} from "./collectionMindMapActions";
+import {MindMapTaskNode,type MindCardNode,type MindCardData} from "./CollectionMindMapTaskNode";
+import {CollectionModalDialog} from "./CollectionModalDialog";
+import {CollectionInlineHistory,type CollectionInlineHistoryProps} from "./CollectionInlineHistory";
+import {hintClass,inputClass} from "./CollectionFieldEditor";
+interface Props{rows:CollectionRecord[];data:CollectionBlockPayload;readOnly:boolean;
+ onChange:(next:CollectionBlockPayload)=>void;history?:CollectionInlineHistoryProps}
+const nodeTypes={plannerTask:MindMapTaskNode};
+const fit={padding:0.18,duration:200};
+export function MindMapView({rows,data,readOnly,onChange,history}:Props){
+ const [selectedId,setSelectedId]=useState<string|null>(null),[page,setPage]=useState(0);
+ const [collapsed,setCollapsed]=useState<Set<string>>(()=>new Set());
+ const [editingId,setEditingId]=useState<string|null>(null);
+ const [dropTarget,setDropTarget]=useState<string|null>(null);
+ const [selectedIds,setSelectedIds]=useState<string[]>([]);
+ const [deleteId,setDeleteId]=useState<string|null>(null);
+ const [warning,setWarning]=useState(""),[layoutEpoch,setLayoutEpoch]=useState(0);
+ const [flow,setFlow]=useState<ReactFlowInstance|null>(null);
+ const root=useRef<HTMLDivElement>(null),connectionStart=useRef<string|null>(null);
+ const visible=useMemo(()=>visibleMindMapRecords(data,rows,collapsed),[data,rows,collapsed]);
+ const PAGE_SIZE=MAX_VISIBLE_TREE_NODES,pageCount=Math.max(1,Math.ceil(visible.length/PAGE_SIZE));
+ const currentPage=Math.min(page,pageCount-1);
+ const graph=useMemo(()=>layoutMindMap(visible,PAGE_SIZE,currentPage*PAGE_SIZE),
+  [visible,currentPage,layoutEpoch]);
+ const selected=visibleMindMapSelection(visible,selectedId,currentPage,PAGE_SIZE);
+ const tree=useMemo(()=>buildTaskTree(data.records),[data.records]);
+ const counts=useMemo(()=>descendantCounts(data.records),[data.records]);
+ const labels=useMemo(()=>new Map(data.records.map(row=>[row.id,recordTitle(data,row)])),[data]);
+ const select=(id:string)=>{setSelectedId(id);
+  const index=visible.findIndex(row=>row.id===id);if(index>=0)setPage(Math.floor(index/PAGE_SIZE));};
+ const change=(next:CollectionBlockPayload)=>{
+  if(next===data){setWarning("Cannot change hierarchy: cycle, dependency or maximum depth of 6.");return;}
+  setWarning("");onChange(next);
+ };
+ const add=(id:string,mode:"child"|"sibling")=>{
+  const next=addMindMapRelative(data,id,mode);
+  if(next===data){setWarning("Cannot add: maximum depth is 6.");return;}
+  const added=next.records.find(row=>!data.records.some(old=>old.id===row.id));
+  if(added){const hidden=new Set(collapsed);hidden.delete(mode==="child"?id:added.parentId??"");
+    setCollapsed(hidden);setSelectedId(added.id);setEditingId(added.id);}
+  change(next);
+ };
+ const save=(id:string,value:string)=>{
+  setEditingId(null);const next=renameMindMapTask(data,id,value);
+  if(next!==data)onChange(next);
+ };
+ const toggle=(id:string)=>setCollapsed(previous=>{
+  const next=new Set(previous);if(next.has(id))next.delete(id);else next.add(id);return next;
+ });
+ const nodes=useMemo<MindCardNode[]>(()=>graph.nodes.map(item=>{
+  const record=tree.byId.get(item.id),count=counts.get(item.id)??{done:0,total:0};
+  const due=data.fields.find(f=>f.type==="date"&&/^(due|end)/i.test(f.name))?.id;
+  const bucket=data.fields.find(f=>f.type==="select"&&/bucket/i.test(f.name))?.id;
+  const nodeData:MindCardData={id:item.id,label:labels.get(item.id)??"Untitled",
+   bucket:record?.values[bucket??""]??"",priority:record?.priority??"medium",
+   progress:record?.progress??"not_started",due:record?.values[due??""]??"",
+   assignees:(record?.assigneeIds??[]).flatMap(id=>data.people?.filter(p=>p.id===id).map(p=>p.name)??[]),
+   done:count.done,total:count.total,isCollapsed:collapsed.has(item.id),
+   isDropTarget:dropTarget===item.id,readOnly,isEditing:editingId===item.id,
+   onAdd:id=>add(id,"child"),onToggle:toggle,onSave:save,onCancel:()=>setEditingId(null)};
+  return {id:item.id,type:"plannerTask",position:{x:item.x,y:item.y},data:nodeData,
+   sourcePosition:Position.Right,targetPosition:Position.Left,
+   draggable:!readOnly,selectable:true};
+ }),[graph,labels,tree,counts,data,collapsed,dropTarget,readOnly,editingId]);
+ const edges=useMemo<Edge[]>(()=>graph.edges.map(link=>({
+  id:link.source+">"+link.target,source:link.source,target:link.target,
+  type:"smoothstep",style:{stroke:"var(--planner-accent)",strokeWidth:1.5}
+ })),[graph]);
+ const structure=graph.nodes.map(n=>n.id+":"+n.parentId).join("|");
+ useEffect(()=>{
+  if(!flow||!root.current)return;
+  const node=root.current;
+  const refresh=()=>requestAnimationFrame(()=>{if(node.clientWidth>0&&node.clientHeight>0)
+   void flow.fitView(fit);});
+  const observer=new ResizeObserver(refresh);observer.observe(node);refresh();
+  return()=>observer.disconnect();
+ },[flow,structure,layoutEpoch]);
+ const dragTarget=(id:string,x:number,y:number)=>
+  candidateMindMapParent(data,id,graph.nodes,x,y);
+ const drop=(id:string,x:number,y:number)=>{
+  const target=dragTarget(id,x,y);setDropTarget(null);
+  if(!target||readOnly)return;
+  const moving=selectedIds.includes(id)?selectedIds:[id];
+  let next=data;
+  for(const current of moving){
+   if(current===target)continue;
+   const updated=setParent(next,current,target);
+   if(updated===next){setWarning("Cannot reparent: cycle, dependency or maximum depth of 6.");return;}
+   next=updated;
+  }
+  change(next);
+ };
+ const connect=(connection:Connection)=>{
+  if(!connection.source||!connection.target||readOnly)return;
+  change(setParent(data,connection.target,connection.source));
+ };
+ const endConnection=(event:MouseEvent|TouchEvent)=>{
+  const from=connectionStart.current;connectionStart.current=null;
+  if(!from||readOnly)return;
+  const pointer="changedTouches" in event?event.changedTouches[0]:event;
+  const el=document.elementFromPoint(pointer.clientX,pointer.clientY);
+  if(el?.closest(".react-flow__node"))return;
+  add(from,"child");
+ };
+ const keyboard=(event:KeyboardEvent<HTMLDivElement>)=>{
+  if(readOnly||event.target instanceof HTMLInputElement||event.target instanceof HTMLSelectElement)return;
+  const id=selected?.id;if(!id)return;
+  if(event.key==="F2"){event.preventDefault();setEditingId(id);}
+  else if(event.key==="Tab"&&!(event.target instanceof HTMLButtonElement)){
+   event.preventDefault();add(id,"child");
+  }else if(event.key==="Enter"&&!(event.target instanceof HTMLButtonElement)){
+   event.preventDefault();add(id,"sibling");
+  }else if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(event.key)){
+   const siblings=graph.nodes.map(node=>node.id),index=siblings.indexOf(id);
+   const next=event.key==="ArrowLeft"?tree.byId.get(id)?.parentId:
+    event.key==="ArrowRight"?tree.children.get(id)?.[0]?.id:
+    siblings[index+(event.key==="ArrowDown"?1:-1)];
+   if(next){event.preventDefault();select(next);}
+  }
+ };
+ const tidy=()=>{setLayoutEpoch(n=>n+1);void flow?.fitView(fit);};
+ return <div className="flex min-h-0 w-full min-w-0 flex-col gap-2" data-testid="collection-mindmap">
+  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+   <span className={hintClass}>Drag node onto another to reparent · Tab adds child · Enter sibling · F2 rename · Shift selects multiple</span>
+   {selected&&<><button type="button" aria-label="Add child node" disabled={readOnly}
+    className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>add(selected.id,"child")}><Plus size={14} className="inline"/> Child</button>
+    <button type="button" aria-label="Add sibling node" disabled={readOnly}
+     className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>add(selected.id,"sibling")}>Sibling</button>
+    <button type="button" aria-label="Rename selected node" disabled={readOnly}
+     className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={()=>setEditingId(selected.id)}><Pencil size={14} className="inline"/> Rename</button>
+    <button type="button" aria-label="Delete selected node" disabled={readOnly}
+     className="min-h-11 rounded border border-[var(--planner-border)] px-2 text-rose-600" onClick={()=>setDeleteId(selected.id)}><Trash2 size={14}/></button></>}
+   <button type="button" aria-label="Tidy up Mind Map" className="min-h-11 rounded border border-[var(--planner-border)] px-2" onClick={tidy}><WandSparkles size={14} className="inline"/> Tidy up</button>
+   <button type="button" aria-label="Fit Mind Map" className="min-h-11 rounded border border-[var(--planner-border)] px-2"
+    onClick={()=>void flow?.fitView(fit)}><Maximize size={14}/></button>
+   {history&&<CollectionInlineHistory {...history}/>}
+   <select aria-label="Mind Map selected record" className={inputClass} value={selected?.id??""}
+    onChange={event=>select(event.target.value)}>
+    {rows.map(row=><option key={row.id} value={row.id}>{labels.get(row.id)??"Untitled"}</option>)}
+   </select>
+  </div>
+  {pageCount>1&&<div aria-label="Mind Map pages" className="flex items-center gap-2 text-xs">
+   <button disabled={currentPage===0} onClick={()=>setPage(currentPage-1)}>Previous</button>
+   <span>Page {currentPage+1} of {pageCount} ({visible.length} visible)</span>
+   <button disabled={currentPage>=pageCount-1} onClick={()=>setPage(currentPage+1)}>Next</button>
+  </div>}
+  {selected&&<label className="text-xs">Parent of {recordTitle(data,selected)}
+   <select aria-label={"Parent of "+recordTitle(data,selected)} disabled={readOnly}
+    className={inputClass+" ml-2"} value={selected.parentId??""}
+    onChange={event=>change(setParent(data,selected.id,event.target.value||null))}>
+    <option value="">Root</option>
+    {rows.filter(row=>row.id!==selected.id).map(row=>
+     <option key={row.id} value={row.id}>{labels.get(row.id)??"Untitled"}</option>)}
+   </select>
+  </label>}
+  {warning&&<p role="alert" className="text-xs text-amber-600">{warning}</p>}
+  <div ref={root} tabIndex={0} onKeyDownCapture={keyboard}
+   className="relative h-[520px] min-h-[420px] w-full shrink-0 overflow-hidden rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]"
+   data-testid="collection-mindmap-graph">
+   <ReactFlow style={{width:"100%",height:"100%"}} nodes={nodes} edges={edges}
+    nodeTypes={nodeTypes} fitView fitViewOptions={fit} minZoom={0.15} maxZoom={2}
+    nodesDraggable={!readOnly} nodesConnectable={!readOnly} selectNodesOnDrag={false}
+    multiSelectionKeyCode="Shift" selectionOnDrag
+    onInit={setFlow} onNodeClick={(_event,node)=>select(node.id)}
+    onNodeDoubleClick={(_event,node)=>{select(node.id);setEditingId(node.id);}}
+    onNodeDrag={(_event,node)=>setDropTarget(dragTarget(node.id,node.position.x,node.position.y))}
+    onNodeDragStop={(_event,node)=>drop(node.id,node.position.x,node.position.y)}
+    onSelectionChange={({nodes})=>setSelectedIds(nodes.map(n=>n.id))}
+    onConnect={connect}
+    onConnectStart={(_event,params)=>{connectionStart.current=params.nodeId??null;}}
+    onConnectEnd={endConnection} proOptions={{hideAttribution:true}}>
+    <Background color="var(--planner-border)" gap={18}/>
+    <Controls showInteractive={false}/>
+    <MiniMap pannable zoomable style={{background:"var(--planner-surface)"}}/>
+   </ReactFlow>
+  </div>
+  {deleteId&&<CollectionModalDialog label="Delete Mind Map branch?" onClose={()=>setDeleteId(null)}>
+   <h2 className="text-sm font-semibold">Delete “{labels.get(deleteId)}”?</h2>
+   <p className="mt-2 text-xs">Keep its children by promoting them, or delete the whole branch.</p>
+   <div className="mt-3 flex flex-wrap justify-end gap-2">
+    <button data-dialog-initial type="button" onClick={()=>setDeleteId(null)}>Cancel</button>
+    <button type="button" onClick={()=>{change(deleteRecord(data,deleteId,"promote"));setDeleteId(null);}}>Promote children</button>
+    <button type="button" className="rounded bg-rose-700 px-2 py-2 text-white" onClick={()=>{
+     change(deleteRecord(data,deleteId,"subtree"));setDeleteId(null);}}>Delete branch</button>
+   </div>
+  </CollectionModalDialog>}
+ </div>;
 }
