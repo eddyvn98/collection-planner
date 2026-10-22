@@ -5,6 +5,7 @@ import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, pointerWithin, 
  useSensor, useSensors, type CollisionDetection, type DragEndEvent } from "@dnd-kit/core";
 import { descendantCounts, MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
 import { moveTaskTree } from "../collections/collectionTreeActions";
+import {setCollectionDependencies} from "../collections/collectionDependencies";
 import { addBucket,reorderBucket } from "./collectionBoardActions";
 import { boardGroups, moveGroupedTask, parseCardDragId } from "./collectionBoardGroups";
 import { CollectionBoardBucket } from "./CollectionBoardBucket";
@@ -24,6 +25,18 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
  const [newBucket,setNewBucket]=useState(""),[creating,setCreating]=useState(false);
  const [showSubtasks,setShowSubtasks]=useState(false);
  const [dragWarning,setDragWarning]=useState("");
+ const [keyboardLink,setKeyboardLink]=useState<string|null>(null);
+ const link=(source:string,target:string)=>{
+  const destination=data.records.find(row=>row.id===target);
+  const next=destination?setCollectionDependencies(data,target,
+   [...(destination.dependsOn??[]),source]):data;
+  if(next!==data){onChange(next);setDragWarning("Dependency created · Undo available");}
+  else setDragWarning("Dependency not allowed: duplicate, cycle or completed predecessor.");
+ };
+ const keyboardDependency=(id:string)=>{
+  if(keyboardLink&&keyboardLink!==id){link(keyboardLink,id);setKeyboardLink(null);}
+  else{setKeyboardLink(id);setDragWarning("Choose a target card's link handle to finish dependency.");}
+ };
  const [selected,setSelected]=useState<string[]>([]);
  const [context,setContext]=useState<{id:string;x:number;y:number}|null>(null);
  const select=(id:string)=>setSelected(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
@@ -87,6 +100,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group} counts={counts}
      readOnly={readOnly} onChange={onChange} showSubtasks={showSubtasks}
      selectedIds={selected} onTaskSelect={select} onTaskContext={(id,x,y)=>setContext({id,x,y})}
+     onDependency={link} onKeyboardDependency={keyboardDependency}
      onTaskSwipe={swipe}
      onReorder={(source,target)=>{if(mode!=="bucket"||!group)return;
       const next=reorderBucket(data,group.id,source,target);

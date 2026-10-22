@@ -14,10 +14,11 @@ interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;
  onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;
  onReorder:(source:string,target:string)=>void;
  selectedIds:string[];onTaskSelect:(id:string)=>void;
+ onDependency:(source:string,target:string)=>void;onKeyboardDependency:(source:string)=>void;
  onTaskContext:(id:string,x:number,y:number)=>void;
  onTaskSwipe:(id:string,direction:"right"|"left",x:number,y:number)=>void;}
 export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtasks,counts,
- onChange,onOpen,onReorder,selectedIds,onTaskSelect,onTaskContext,onTaskSwipe}:Props){
+ onChange,onOpen,onReorder,selectedIds,onTaskSelect,onTaskContext,onTaskSwipe,onDependency,onKeyboardDependency}:Props){
  const bucketMenuRef=useRef<HTMLButtonElement>(null);
  const addTriggerRef=useRef<HTMLButtonElement>(null);
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
@@ -63,6 +64,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
    onSelect={()=>onTaskSelect(record.id)}
    onContext={(x,y)=>onTaskContext(record.id,x,y)}
    onSwipe={(direction,x,y)=>onTaskSwipe(record.id,direction,x,y)}
+   onDependency={onDependency} onKeyboardDependency={onKeyboardDependency}
    onOpen={trigger=>onOpen(record.id,trigger)}/>;
  return <section ref={drop.setNodeRef} data-testid="collection-kanban-column" data-status={group.key}
    className={"w-[calc(100vw-64px)] max-w-[340px] shrink-0 snap-start self-start rounded-md sm:w-72 bg-[var(--planner-canvas)] p-2 "+

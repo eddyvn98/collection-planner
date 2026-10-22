@@ -5,11 +5,9 @@ import { CollectionViewTabs } from "./CollectionViewTabs";
 import { CollectionMobileViewPicker } from "./CollectionMobileViewPicker";
 import { CollectionToolbarSearch } from "./CollectionToolbarSearch";
 import { CollectionReminderCenter } from "./CollectionReminderCenter";
-import { Moon,Check } from "lucide-react";
+import { Moon } from "lucide-react";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
-import { ListFilter } from "lucide-react";
 import { CollectionPhase4Controls } from "./CollectionPhase4Controls";
-import { BOARD_MODES } from "./collectionBoardGroups";
 import { resolveMyTasksId } from "../collections/collectionFilterChips";
 import type { CollectionBlockPayload, CollectionView } from "../collections/model";
 import type { TaskFilterState } from "../collections/collectionPlannerFilters";
@@ -19,7 +17,7 @@ interface Props {
  onTitle:(text:string)=>void; onSelect:(id:string)=>void; onDelete:(id:string)=>void;
  onDataChange:(next:CollectionBlockPayload)=>void;
  assignedMode:boolean;onAssignedMode:(mode:boolean)=>void;
- onAddView:(kind:CollectionView["kind"])=>void; onGroup:(mode:NonNullable<CollectionView["boardGroupBy"]>)=>void;
+ onAddView:(kind:CollectionView["kind"])=>void;
  onSettings:()=>void; onHistory:()=>void; settings:boolean; showHistory:boolean; importExport:ReactNode;
  canUndo:boolean; canRedo:boolean; undo:()=>void; redo:()=>void; darkMode:boolean; setDarkMode:(x:boolean)=>void;
  navigation?:{collectionsHref:string;canvasHref:string;syncMessage:string};
@@ -28,11 +26,10 @@ interface Props {
 const item="flex min-h-9 w-full items-center gap-2 rounded px-3 text-left text-sm hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]";
 export function CollectionPlannerHeader(p:Props){
  const [more,setMore]=useState(false),[help,setHelp]=useState(false);
- const [copied,setCopied]=useState(false);
  useEffect(()=>{const help=()=>setHelp(true);document.addEventListener("planner:shortcuts",help);return()=>document.removeEventListener("planner:shortcuts",help);},[]);
- const [groupMenu,setGroupMenu]=useState(false),[viewsMenu,setViewsMenu]=useState(false);
+ const [viewsMenu,setViewsMenu]=useState(false);
  const moreRef=useRef<HTMLButtonElement>(null),helpRef=useRef<HTMLButtonElement>(null);
- const groupRef=useRef<HTMLButtonElement>(null),viewsRef=useRef<HTMLButtonElement>(null);
+ const viewsRef=useRef<HTMLButtonElement>(null);
  const [chooseMe,setChooseMe]=useState(false);
  const [me,setMe]=useState(()=>{try{return localStorage.getItem("planner:my-person")??"";}catch{return "";}});
  const [star,setStar]=useState(()=>{try{return localStorage.getItem("planner:star:"+p.data.title)==="1";}catch{return false;}});
@@ -62,17 +59,8 @@ export function CollectionPlannerHeader(p:Props){
       <option value="">Who am I?</option>{(p.data.people??[]).map(person=><option value={person.id} key={person.id}>{person.name}</option>)}
     </select>}
     <CollectionReminderCenter data={p.data} readOnly={p.readOnly} onChange={p.onDataChange}/>
-    {p.view.kind==="kanban"&&<div className="relative">
-      <button ref={groupRef} aria-label="Group by" aria-expanded={groupMenu} className={menuButton+" lg:w-auto lg:px-2"} onClick={()=>setGroupMenu(!groupMenu)}>
-        <ListFilter size={16} strokeWidth={1.75}/><span className="hidden lg:inline text-xs">Group</span><ChevronDown className="hidden sm:block" size={14}/></button>
-      <CollectionFloatingPanel open={groupMenu} anchorRef={groupRef} onClose={()=>setGroupMenu(false)}
-        role="menu" label="Group by" className="w-44 rounded p-1">
-        {BOARD_MODES.map(mode=><button role="menuitem" className={item} key={mode.value}
-         onClick={()=>{p.onGroup(mode.value);setGroupMenu(false);}}>{mode.label}</button>)}
-      </CollectionFloatingPanel>
-    </div>}
     <button title="Copy page link (plan data stays local)" aria-label="Copy plan link" className={menuButton+" hidden sm:inline-flex"}
-      onClick={()=>{void navigator.clipboard?.writeText(window.location.href).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2400);});}}><Share2 size={16}/></button>
+      onClick={()=>document.dispatchEvent(new Event("planner:share"))}><Share2 size={16}/></button>
     <button type="button" aria-label="Toggle dark theme from toolbar" title="Toggle dark mode"
       className={menuButton+" hidden lg:inline-flex"} onClick={()=>p.setDarkMode(!p.darkMode)}><Moon size={16}/></button>
     <div className="relative"><button ref={helpRef} aria-label="Shortcuts" title="Keyboard shortcuts" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setHelp(!help)}>
@@ -103,14 +91,13 @@ export function CollectionPlannerHeader(p:Props){
              {({table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts",timeline:"Timeline",
                gallery:"Gallery",mindmap:"Mind Map",form:"Form"})[kind]}</button>)}
        </details>
-       <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{void navigator.clipboard?.writeText(window.location.href).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2400);});setMore(false);}}><Share2 size={16}/> Copy plan link</button>
+       <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{document.dispatchEvent(new Event("planner:share"));setMore(false);}}><Share2 size={16}/> Copy plan link</button>
        <button role="menuitem" className={item+" sm:hidden"} onClick={()=>{setHelp(!help);setMore(false);}}>
          <HelpCircle size={16}/> Keyboard shortcuts</button>
        <CollectionPhase4Controls readOnly={p.readOnly} canUndo={p.canUndo} canRedo={p.canRedo}
          undo={p.undo} redo={p.redo} darkMode={p.darkMode} setDarkMode={p.setDarkMode}/>
       </CollectionFloatingPanel>
     </div>
-    {copied&&<span role="status" className="absolute right-2 top-full z-[100] rounded bg-[var(--planner-surface)] px-3 py-2 text-xs shadow-lg"><Check size={14} className="inline"/> Page link copied · plan data stays local</span>}
     <div className="relative"><button ref={viewsRef} disabled={p.readOnly} aria-label="Add view" title="Add view" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setViewsMenu(!viewsMenu)}>
       <Plus size={16}/><span className="hidden xl:inline text-xs">View</span></button>
       <CollectionFloatingPanel open={viewsMenu} anchorRef={viewsRef} onClose={()=>setViewsMenu(false)}

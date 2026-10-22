@@ -11,6 +11,7 @@ import { CollectionBoardSubtaskDrop } from "./CollectionBoardSubtaskDrop";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { CollectionBoardQuickEdit } from "./CollectionBoardQuickEdit";
+import {CollectionDependencyDragHandle} from "./CollectionDependencyDragHandle";
 import {plannerInputEnabled} from "./CollectionInputSettings";
 import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
@@ -18,10 +19,11 @@ interface Props {
  onChange:(data:CollectionBlockPayload)=>void;onOpen:(trigger:HTMLButtonElement)=>void;
  descendants?:{done:number;total:number};
  selected?:boolean;onSelect?:()=>void;onContext?:(x:number,y:number)=>void;
+ onDependency?:(source:string,target:string)=>void;onKeyboardDependency?:(source:string)=>void;
  onSwipe?:(direction:"right"|"left",x:number,y:number)=>void;
 }
 export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,onChange,onOpen,
- selected=false,onSelect,onContext,onSwipe}:Props){
+ selected=false,onSelect,onContext,onSwipe,onDependency,onKeyboardDependency}:Props){
  const tap=useRef<{id:number;x:number;y:number}|null>(null);
  const touch=useRef<{x:number;y:number}|null>(null);
  const hold=useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -140,6 +142,9 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
     }}
     className={"min-h-11 min-w-0 flex-1 text-left text-sm font-medium hover:text-[var(--planner-accent)] focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+
      (complete?"text-[var(--planner-secondary)] line-through":"")}>{title}</button>}
+   {!readOnly&&<CollectionDependencyDragHandle title={title} sourceId={record.id} disabled={readOnly}
+     onDrop={(source,target)=>onDependency?.(source,target)}
+     onKeyboard={source=>onKeyboardDependency?.(source)}/>}
    <button type="button" aria-label={"Delete "+title} title="Delete task or branch"
     disabled={readOnly} onClick={()=>setConfirmDelete(true)}
     className="grid h-8 w-8 shrink-0 place-items-center rounded text-[var(--planner-secondary)] opacity-80 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 hover:text-rose-600">

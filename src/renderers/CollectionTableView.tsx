@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { Plus } from "lucide-react";
 import { CollectionGridRows } from "./CollectionGridRows";
+import {groupViewRows} from "../collections/collectionToolbarGrouping";
 import { buildTaskTree } from "../collections/collectionTaskTree";
 import { visibleTaskTree,moveTaskTree,type TreeDropMode } from "../collections/collectionTreeActions";
 import { flexRender, getCoreRowModel, useReactTable,
@@ -82,8 +83,11 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
   }, [rows]);
   const treeIndex=useMemo(()=>buildTaskTree(data.records),[data.records]);
   const projected=useMemo(()=>visibleTaskTree(data,rows,collapsed,Number.MAX_SAFE_INTEGER),[data,rows,collapsed]);
-  const page = useMemo(() => collectionTablePage(projected.rows, requestedPage, pageSize),
-    [projected, requestedPage, pageSize]);
+  const groupField=data.fields.find(f=>f.id===view.groupFieldId&&f.type==="select");
+  const groupable=!data.records.some(item=>item.parentId);
+  const page = useMemo(() => collectionTablePage(
+    groupViewRows(projected.rows,groupable?groupField:undefined), requestedPage, pageSize),
+    [projected, requestedPage, pageSize, groupField, groupable]);
   // Stable controlled state: one sorting array per saved View configuration.
   const sorting = useMemo<SortingState>(() => viewSorts(view).map(s =>
     ({ id: s.fieldId, desc: s.direction === "desc" })), [view]);
@@ -181,6 +185,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     <CollectionGridToolbar data={data} view={view} visibleCount={rows.length} selectedIds={selectedIds} readOnly={readOnly}
       onChange={onChange} onClear={() => setSelected([])} />
     <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
+      groupField={groupable?groupField:undefined}
       onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
       onOpen={setOpenRecordId} onChange={onChange} onDeleteRequest={setPendingDeleteTaskId}/>
     {!page.rows.length && <p role="status" className="rounded-lg border border-dashed p-4 text-center text-sm text-[var(--planner-secondary)]">
@@ -223,6 +228,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       <th style={{ width: 108 }} className="border-b border-[var(--planner-border)]"> </th>
     </tr>)}</thead>
     <CollectionGridRows table={table} data={data} readOnly={readOnly}
+      groupField={groupable?groupField:undefined}
       selected={selectedIds} setSelected={setSelected} collapsed={collapsed} tree={treeIndex} toggle={toggleTree}
       onChange={onChange} onOpen={setOpenRecordId} onDelete={setPendingDeleteTaskId}
       numbers={numericFieldIds}/>

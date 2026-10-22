@@ -1,7 +1,7 @@
 name: Planner polish and browser pointer tests
 on:
   push:
-    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f, feat/planner-phase-5g, feat/planner-phase-6a, feat/phase-7d-input-flow]
+    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f, feat/planner-phase-5g, feat/planner-phase-6a, feat/phase-7d-input-flow, feat/phase-7e-in-place-toolbar]
   pull_request:
     branches: [main]
 permissions:
@@ -45,6 +45,7 @@ jobs:
             if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          node tests/e2e/phase7e-steps.mjs
           node tests/e2e/schedule-pointer.mjs
           node tests/e2e/phase5-quick-add.mjs
           node tests/e2e/phase5d-ui.mjs
@@ -275,3 +276,22 @@ jobs:
         with:
           name: phase7d-input-before-after-1280-375
           path: /tmp/phase7d/
+      - name: Capture Phase 7E Board at 1280 and 375 (before and after)
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/phase7e/before /tmp/phase7e/after
+          SCREENSHOT_OUTPUT=/tmp/phase7e/after node tests/e2e/phase7e-steps.mjs
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/phase7e-main FETCH_HEAD
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/phase7e-main/node_modules
+          (cd /tmp/phase7e-main && node_modules/.bin/vite --host 127.0.0.1 --port 4185 > /tmp/phase7e-before.log 2>&1) &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4185/ > /dev/null; then break; fi
+            sleep 1
+          done
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4185 SCREENSHOT_OUTPUT=/tmp/phase7e/before node tests/e2e/phase7e-steps.mjs
+      - uses: actions/upload-artifact@v4
+        if: success() && github.event_name == 'pull_request'
+        with:
+          name: phase7e-in-place-before-after-1280-375
+          path: /tmp/phase7e/

@@ -29,9 +29,9 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
     setPresetName("");
   };
   return <div className="relative">
-    <button ref={trigger} type="button" aria-label="Filters" aria-haspopup="dialog" aria-expanded={expanded}
+    <button ref={trigger} type="button" style={{minWidth:44,minHeight:44}} aria-label="Filters" aria-haspopup="dialog" aria-expanded={expanded}
       onClick={()=>setExpanded(!expanded)}
-      className="inline-flex h-10 w-10 items-center justify-center gap-1 rounded-md px-1 sm:w-auto sm:px-2 text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+      className="inline-flex h-11 min-h-11 w-11 min-w-11 items-center justify-center gap-1 rounded-md px-1 sm:w-auto sm:px-2 text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
       <Filter size={16} strokeWidth={1.75}/> <span className="hidden sm:inline">Filter</span>
       {count>0&&<span aria-label={count+" active filters"} className="rounded-full bg-[var(--planner-accent)] px-1.5 text-xs text-white">{count}</span>}
     </button>
@@ -43,6 +43,18 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
         <button aria-label="Close filters" type="button" onClick={()=>setExpanded(false)}
           className="rounded p-2 hover:bg-[var(--planner-hover)]"><X size={16}/></button>
       </div>
+    <fieldset aria-label="Quick assignee filters" className="mb-2 border-b border-[var(--planner-border)] pb-2">
+      <legend className="text-xs font-semibold">Filter by person · 2 clicks</legend>
+      <div className="flex max-h-40 flex-wrap gap-1 overflow-y-auto pt-1">
+       {([{id:"",name:"Everyone"},...(data.people??[])]).map(person=>
+        <button type="button" key={person.id} aria-label={"Filter for "+person.name}
+         aria-pressed={value.assignee===person.id} onClick={()=>{
+          set("assignee",person.id);setExpanded(false);
+         }}
+         className="min-h-11 rounded-full border border-[var(--planner-border)] px-3 text-xs hover:bg-[var(--planner-hover)] aria-pressed:bg-[var(--planner-accent)] aria-pressed:text-white">
+         {person.name}</button>)}
+      </div>
+    </fieldset>
     <div className="flex flex-col gap-2">
       <label className="text-xs">Due
         <select aria-label="Filter due date" className={control+" mt-1 block"} value={value.due}
