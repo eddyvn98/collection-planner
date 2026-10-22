@@ -2,13 +2,14 @@ import {useEffect,useRef,useState} from "react";
 import {createPortal} from "react-dom";
 import {bulkUpdateGrid,type GridBulkAction} from "../collections/collectionGridActions";
 import {recordTitle,type CollectionBlockPayload} from "../collections/model";
-import {setTaskProgress} from "./collectionBoardGroups";
+import {usePlannerKeyboardInset} from "./usePlannerKeyboardInset";
 interface Menu{id:string;x:number;y:number}
 interface Props{data:CollectionBlockPayload;selected:string[];setSelected:(ids:string[])=>void;
  menu:Menu|null;setMenu:(value:Menu|null)=>void;readOnly:boolean;
  onChange:(next:CollectionBlockPayload)=>void;}
 export function CollectionBoardInputBar({data,selected,setSelected,menu,setMenu,readOnly,onChange}:Props){
  const [deleteIds,setDeleteIds]=useState<string[]>([]);
+ const keyboardInset=usePlannerKeyboardInset();
  const menuRef=useRef<HTMLDivElement>(null);
  const previousFocus=useRef<HTMLElement|null>(null);
  const change=(ids:string[],action:GridBulkAction)=>{
@@ -36,7 +37,7 @@ export function CollectionBoardInputBar({data,selected,setSelected,menu,setMenu,
  };
  return <>
   {selected.length>0&&<div role="toolbar" aria-label="Selected task actions" data-testid="planner-bulk-bar"
-   className="fixed inset-x-3 bottom-3 z-[10000] mx-auto flex min-h-14 max-w-[680px] flex-wrap items-center justify-center gap-2 rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm shadow-xl">
+   style={{bottom:Math.max(12,keyboardInset+12)}} className="fixed inset-x-3 z-[10000] mx-auto flex min-h-14 max-w-[680px] flex-wrap items-center justify-center gap-2 rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm shadow-xl">
    <span aria-live="polite" className="px-2">{selected.length} selected</span>
    <button type="button" className="min-h-11 rounded px-3 hover:bg-[var(--planner-hover)]"
     onClick={()=>apply("complete")}>Complete selected</button>
