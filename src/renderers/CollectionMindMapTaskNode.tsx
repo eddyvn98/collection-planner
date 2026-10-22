@@ -1,4 +1,4 @@
-import {memo,useLayoutEffect,useRef,useState} from "react";
+import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
 import {Handle,Position,type Node,type NodeProps} from "@xyflow/react";
 import {ChevronDown,ChevronRight,Flag,Plus,CornerDownRight,CalendarDays,CheckCircle2} from "lucide-react";
 
@@ -13,6 +13,11 @@ export type MindCardNode=Node<MindCardData,"plannerTask">;
 function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
  const [draft,setDraft]=useState(data.label),cancel=useRef(false);
  const renameInput=useRef<HTMLInputElement>(null);
+ const saveTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const saved=useRef(false);
+ useEffect(()=>{
+  if(data.isEditing){saved.current=false;cancel.current=false;}
+ },[data.isEditing,data.id]);
  useLayoutEffect(()=>{
   if(!data.isEditing)return;
   const input=renameInput.current;
@@ -26,7 +31,18 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
   });
   return()=>cancelAnimationFrame(frame);
  },[data.isEditing,data.id]);
- const commit=()=>{if(!cancel.current)data.onSave(data.id,draft);};
+ const commit=(value:string)=>{
+  if(saved.current||cancel.current)return;
+  saved.current=true;
+  if(saveTimer.current)clearTimeout(saveTimer.current);
+  data.onSave(data.id,value);
+ };
+ const deferBlur=(value:string)=>{
+  if(saved.current||cancel.current)return;
+  // Let a pending pointer-up/click finish before React Flow changes nodes.
+  if(saveTimer.current)clearTimeout(saveTimer.current);
+  saveTimer.current=setTimeout(()=>commit(value),150);
+ };
  const shades=["#5B5FC7","#0F6CBD","#107C41","#A14ABC","#C45B08"];
  const tone=shades[[...data.bucket].reduce((sum,char)=>sum+char.charCodeAt(0),0)%shades.length];
  const status=data.progress==="completed"?"Completed":data.progress==="in_progress"?"In progress":"Not started";
@@ -39,11 +55,20 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
    <span className="mt-0.5 h-5 w-1 shrink-0 rounded-full" style={{backgroundColor:data.progress==="completed"?"#238636":
     data.priority==="urgent"?"#d13438":data.priority==="important"?"#ff8c00":"var(--planner-accent)"}}/>
    {data.isEditing?<input ref={renameInput} data-mindmap-rename={data.id} autoFocus aria-label={"Rename "+data.label} defaultValue={data.label}
-     onFocus={event=>{cancel.current=false;event.currentTarget.select();setDraft(event.currentTarget.value);}}
+     onFocus={event=>{
+      if(saveTimer.current)clearTimeout(saveTimer.current);
+      cancel.current=false;event.currentTarget.select();setDraft(event.currentTarget.value);
+     }}
      onChange={event=>setDraft(event.target.value)}
-     onKeyDown={event=>{event.stopPropagation();if(event.key==="Enter")commit();
-      else if(event.key==="Escape"){cancel.current=true;data.onCancel();}}}
-     onBlur={commit}
+     onKeyDown={event=>{
+      event.stopPropagation();
+      if(event.key==="Enter"){event.preventDefault();commit(event.currentTarget.value);}
+      else if(event.key==="Escape"){
+       cancel.current=true;if(saveTimer.current)clearTimeout(saveTimer.current);
+       data.onCancel();
+      }
+     }}
+     onBlur={event=>deferBlur(event.currentTarget.value)}
      className="nodrag nopan min-w-0 flex-1 rounded border-2 border-[var(--planner-accent)] bg-transparent px-1 text-xs"/>:
     <strong className="min-w-0 flex-1 break-words text-left text-xs" title={data.label}>{data.label}</strong>}
    {!data.readOnly&&<button type="button" className="nodrag nopan grid h-11 w-11 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2"
