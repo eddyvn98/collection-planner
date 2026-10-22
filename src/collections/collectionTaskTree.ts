@@ -61,6 +61,11 @@ export function canSetTaskParent(records:CollectionRecord[],recordId:string,pare
  const tree=buildTaskTree(records),record=tree.byId.get(recordId);
  if(!record || parentId===recordId || (parentId&&!tree.byId.has(parentId)))return false;
  if(parentId && isTreeAncestor(tree,recordId,parentId))return false;
+ const visited=new Set<string>();let cursor=parentId;
+ while(cursor){
+  if(visited.has(cursor)||!tree.byId.has(cursor))return false;
+  visited.add(cursor);cursor=tree.byId.get(cursor)?.parentId??null;
+ }
  const branch=taskBranch(tree,recordId), ids=new Set(branch.map(row=>row.id));
  const deepest=Math.max(1,...branch.map(row=>(tree.depth.get(row.id)??1)-(tree.depth.get(recordId)??1)+1));
  const destinationDepth=parentId ? tree.depth.get(parentId)??0 : 0;
