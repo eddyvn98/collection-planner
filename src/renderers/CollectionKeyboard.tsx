@@ -1,43 +1,41 @@
-import { useEffect } from "react";
-export function CollectionKeyboard({ root, undo, redo, onEscape, disabled }: {
-  root: React.RefObject<HTMLDivElement>; undo:()=>void; redo:()=>void;
-  onEscape:()=>void; disabled:boolean;
-}) {
-  useEffect(() => {
-    const keydown=(event:KeyboardEvent)=>{
-      const node=root.current;
-      if (!node || !node.contains(event.target as Node)) return;
-      const target=event.target as HTMLElement;
-      const editing=target.matches("input,textarea,select,[contenteditable='true']") ||
-        !!target.closest("[contenteditable='true']");
-      const dialog=target.closest('[role="dialog"],[role="alertdialog"]');
-      if (dialog) return;
-      const mod=event.ctrlKey || event.metaKey;
-      if (mod && event.key.toLowerCase()==="z" && !editing && !disabled) {
-        event.preventDefault();(event.shiftKey?redo:undo)();return;
-      }
-      if (editing || event.altKey || mod) return;
-      if (event.key === "Escape") {onEscape();return;}
-      if (disabled) return;
-      if (event.key === "/") {
-        const search=node.querySelector<HTMLInputElement>('[aria-label="Filter task keyword"],[aria-label="Search records"]');
-        if (search) {
-          event.preventDefault();
-          const toggle=node.querySelector<HTMLButtonElement>('[aria-label="Toggle task filters"]');
-          if (toggle && !toggle.getAttribute("aria-expanded")?.includes("true") &&
-              window.matchMedia("(max-width: 639px)").matches) toggle.click();
-          requestAnimationFrame(()=>{search.focus();search.select();});
-        }
-      }
-      if (event.key.toLowerCase()==="n" && !event.shiftKey) {
-        const field=node.querySelector<HTMLInputElement>('[aria-label="New task title"]');
-        const add=node.querySelector<HTMLButtonElement>('[data-planner-add-task]:not(:disabled)');
-        if (field) {event.preventDefault();field.focus();}
-        else if (add) {event.preventDefault();add.click();}
-      }
-    };
-    document.addEventListener("keydown",keydown);
-    return ()=>document.removeEventListener("keydown",keydown);
-  },[root,undo,redo,onEscape,disabled]);
-  return null;
+import {useEffect} from "react";
+export function CollectionKeyboard({root,undo,redo,onEscape,onView,disabled}:{
+ root:React.RefObject<HTMLDivElement>;undo:()=>void;redo:()=>void;
+ onEscape:()=>void;onView?:(index:number)=>void;disabled:boolean;
+}){
+ useEffect(()=>{
+  const keydown=(event:KeyboardEvent)=>{
+   const node=root.current;
+   if(!node||!node.contains(event.target as Node))return;
+   const target=event.target as HTMLElement;
+   const editing=target.matches("input,textarea,select,[contenteditable=true]")||
+    !!target.closest("[contenteditable=true]");
+   const dialog=target.closest('[role="dialog"],[role="alertdialog"]');
+   if(dialog)return;
+   const mod=event.ctrlKey||event.metaKey;
+   if(mod&&event.key.toLowerCase()==="z"&&!editing&&!disabled){
+    event.preventDefault();(event.shiftKey?redo:undo)();return;
+   }
+   if(event.key==="Escape"&&editing&&target.matches('[aria-label^="New task in "]'))return;
+   if(event.key==="Escape"){onEscape();return;}
+   if(editing||event.altKey||mod)return;
+   if(event.key==="/"){event.preventDefault();
+    document.dispatchEvent(new Event("planner:focus-search"));return;}
+   if(event.key==="?"||event.key==="Shift+?"){event.preventDefault();
+    document.dispatchEvent(new Event("planner:shortcuts"));return;}
+   if(["1","2","3","4"].includes(event.key)&&!event.shiftKey){
+    event.preventDefault();onView?.(Number(event.key)-1);return;
+   }
+   if(disabled)return;
+   if(event.key.toLowerCase()==="n"&&!event.shiftKey){
+    const field=node.querySelector<HTMLInputElement>('[aria-label^="New task in "],[aria-label="New task title"]');
+    const add=node.querySelector<HTMLButtonElement>('[data-planner-add-task]:not(:disabled)');
+    if(field){event.preventDefault();field.focus();}
+    else if(add){event.preventDefault();add.click();}
+   }
+  };
+  document.addEventListener("keydown",keydown);
+  return ()=>document.removeEventListener("keydown",keydown);
+ },[root,undo,redo,onEscape,onView,disabled]);
+ return null;
 }
