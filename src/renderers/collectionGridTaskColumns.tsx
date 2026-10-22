@@ -1,3 +1,6 @@
+import { CollectionGridEditable } from "./CollectionGridEditable";
+import { recordTitle } from "../collections/model";
+import { visibleGridTaskKeys } from "../collections/collectionPlannerFilters";
 import { CollectionGridMultiSelect } from "./CollectionGridMultiSelect";
 import type { ColumnDef } from "@tanstack/react-table";
 import { setTaskProgress } from "./collectionBoardGroups";
@@ -10,14 +13,14 @@ export function gridTaskColumns(data: () => CollectionBlockPayload,
   const make = (id: GridTaskKey, label: string, size: number): ColumnDef<CollectionRecord> => ({
     id, header: label, size, enableSorting: false,
     cell: ({ row }) => {
-      const current = data(), record = row.original;
-      if (id === "__progress") return <select aria-label={"Progress for " + record.id}
+      const current = data(), record = row.original, title = recordTitle(current, record);
+      if (id === "__progress") return <select aria-label={"Progress for " + title}
         className="w-full rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5 text-xs text-[var(--planner-text)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)] dark:text-white"
         disabled={readOnly} value={record.progress ?? "not_started"}
         onChange={e => save(setTaskProgress(current, record.id, e.target.value as TaskProgress))}>
         {PROGRESS.map(p => <option value={p.value} key={p.value}>{p.label}</option>)}
       </select>;
-      if (id === "__priority") return <select aria-label={"Priority for " + record.id}
+      if (id === "__priority") return <select aria-label={"Priority for " + title}
         className="w-full rounded-md border border-[var(--planner-border)] bg-[var(--planner-surface)] p-1.5 text-xs text-[var(--planner-text)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)] dark:text-white"
         disabled={readOnly} value={record.priority ?? "medium"}
         onChange={e => save(updateTask(current, record.id, { priority: e.target.value as TaskPriority }, "Changed priority"))}>
