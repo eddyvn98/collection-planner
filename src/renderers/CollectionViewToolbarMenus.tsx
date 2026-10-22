@@ -34,7 +34,7 @@ export function CollectionViewToolbarMenus({data,view,readOnly,onChange}:Props){
  const supported=view.kind==="table"||view.kind==="gallery"||view.kind==="form";
  return <div data-testid="planner-view-toolbar-menus" className="flex shrink-0 flex-wrap items-center gap-1">
   {(["group","sort","fields"] as const).map(menu=><span key={menu} className="relative">
-   <button ref={anchors[menu]} type="button" aria-label={menu==="group"?"Group by":"View "+menu}
+   <button ref={anchors[menu]} type="button" style={{minWidth:44,minHeight:44}} aria-label={menu==="group"?"Group by":"View "+menu}
     aria-expanded={open===menu} aria-haspopup="dialog"
     className={touch} onClick={()=>setOpen(current=>current===menu?null:menu)}>
     {menu==="group"?<ListFilter size={16}/>:menu==="sort"?<ArrowDownAZ size={16}/>:<Columns3 size={16}/>}
