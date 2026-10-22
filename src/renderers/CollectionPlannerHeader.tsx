@@ -41,17 +41,17 @@ export function CollectionPlannerHeader(p:Props){
  const toggleMe=()=>{if(!currentMe){setChooseMe(true);return;}
    p.onFilters({...p.filters,assignee:mine?"":currentMe});p.onAssignedMode(!mine);};
  const menuButton="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-1 rounded px-1 text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]";
- return <header data-testid="planner-header" className="relative z-50 flex h-12 w-full min-w-0 shrink-0 items-center gap-0.5 sm:gap-2 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[var(--planner-text)] sm:px-3">
-  {p.full&&<button ref={p.backRef} aria-label="Back" className={menuButton} onClick={p.onClose}><ArrowLeft size={16}/></button>}
+ return <header data-testid="planner-header" className="relative z-50 flex min-h-12 h-auto sm:h-12 w-full min-w-0 shrink-0 flex-wrap sm:flex-nowrap items-center gap-0.5 sm:gap-2 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[var(--planner-text)] sm:px-3">
+  {p.full&&<button ref={p.backRef} aria-label="Back" className={menuButton+" absolute left-1 top-1 sm:static"} onClick={p.onClose}><ArrowLeft size={16}/></button>}
   <input aria-label="Collection title" value={p.data.title} disabled={p.readOnly} onChange={e=>p.onTitle(e.target.value)}
-    title={p.data.title} className="h-[44px] min-h-[44px] min-w-0 w-[min(24vw,88px)] shrink bg-transparent text-ellipsis text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:shrink-0 sm:text-xl"/>
+    title={p.data.title} className={"h-[44px] min-h-[44px] min-w-[120px] w-full shrink-0 bg-transparent text-ellipsis text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] sm:w-48 sm:shrink-0 sm:text-xl "+(p.full?"pl-10 sm:pl-0":"")}/>
   <button type="button" title={star?"Unstar plan":"Star plan"} aria-label="Star plan" aria-pressed={star} className={menuButton+" hidden sm:inline-flex"}
     onClick={()=>{const next=!star;setStar(next);try{localStorage.setItem("planner:star:"+p.data.title,next?"1":"0");}catch{}}}>
     <Star size={16} strokeWidth={1.75} fill={star?"#5B5FC7":"none"}/></button>
   <div className="hidden min-w-0 flex-1 overflow-x-auto overscroll-contain sm:block"><CollectionViewTabs views={p.data.views} activeViewId={p.view.id}
     readOnly={p.readOnly} onSelect={p.onSelect} onDelete={p.onDelete}/></div>
   <CollectionMobileViewPicker views={p.data.views} selected={p.view.id} onSelect={p.onSelect}/>
-  <div className="ml-auto flex shrink-0 items-center gap-0 sm:gap-1">
+  <div className="ml-auto flex max-w-full min-w-0 shrink-0 items-center gap-0 overflow-x-auto overscroll-x-contain sm:gap-1 sm:overflow-visible">
     <CollectionToolbarSearch value={p.filters.keyword} onChange={keyword=>p.onFilters({...p.filters,keyword})}/>
     {p.filterControl}
     <button aria-pressed={mine} className={menuButton+" xl:w-auto xl:px-2 xl:gap-1.5 "+(mine?" bg-[var(--planner-hover)] text-[var(--planner-accent)]":"")}
