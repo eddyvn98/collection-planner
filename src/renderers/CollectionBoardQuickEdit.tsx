@@ -23,6 +23,7 @@ export function CollectionBoardQuickEdit({kind,data,record,readOnly,onChange,chi
   <button ref={anchor} type="button" data-testid={testId} aria-label={label}
    title={label} aria-haspopup="dialog" aria-expanded={open} disabled={readOnly}
    onClick={event=>{event.stopPropagation();setOpen(value=>!value);}}
+   style={{minHeight:44,minWidth:44}}
    className={"nodrag nopan inline-flex min-h-11 min-w-11 max-w-full items-center justify-center gap-1.5 rounded px-2 text-left text-xs hover:bg-[var(--planner-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] disabled:cursor-default "+(warning?"text-red-600 font-semibold":"text-[var(--planner-secondary)]")}>
    {children}
   </button>
