@@ -1,16 +1,16 @@
-import {useMemo,type ChangeEvent,type KeyboardEvent} from "react";
+import {useMemo,type CSSProperties,type ChangeEvent,type KeyboardEvent} from "react";
 import {parseQuickAdd,type QuickAddParse} from "../collections/collectionInputParser";
 import type {CollectionBlockPayload} from "../collections/model";
 interface Props{data:CollectionBlockPayload;value:string;onChange:(text:string)=>void;
  label:string;placeholder?:string;autoFocus?:boolean;disabled:boolean;className:string;
- maxLength?:number;onEscape?:()=>void;}
+ maxLength?:number;onEscape?:()=>void;inputStyle?:CSSProperties;}
 export function CollectionQuickAddInput({data,value,onChange,label,placeholder,
- autoFocus,disabled,className,maxLength=300,onEscape}:Props){
+ autoFocus,disabled,className,maxLength=300,onEscape,inputStyle}:Props){
  const parsed=useMemo(()=>parseQuickAdd(value,data),[value,data]);
  const tokensOn=typeof localStorage==="undefined"||localStorage.getItem("planner:input:tokens")!=="off";
  const preview=tokensOn?parsed:{...parsed,tokens:[]};
  return <div className="min-w-0 flex-1">
-  <input autoFocus={autoFocus} aria-label={label} value={value} disabled={disabled}
+  <input autoFocus={autoFocus} aria-label={label} value={value} disabled={disabled} style={inputStyle}
    maxLength={maxLength} className={className} placeholder={placeholder}
    autoComplete="off" onChange={(event:ChangeEvent<HTMLInputElement>)=>onChange(event.target.value)}
    onFocus={event=>{

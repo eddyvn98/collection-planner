@@ -30,12 +30,12 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   const destination=data.records.find(row=>row.id===target);
   const next=destination?setCollectionDependencies(data,target,
    [...(destination.dependsOn??[]),source]):data;
-  if(next!==data){onChange(next);setDragWarning("Dependency created · Undo available");}
-  else setDragWarning("Dependency not allowed: duplicate, cycle or completed predecessor.");
+  if(next!==data){onChange(next);setDragWarning("Đã tạo phụ thuộc · Có thể hoàn tác");}
+  else setDragWarning("Không thể tạo phụ thuộc: trùng lặp, vòng lặp hoặc công việc tiền nhiệm đã hoàn thành.");
  };
  const keyboardDependency=(id:string)=>{
   if(keyboardLink&&keyboardLink!==id){link(keyboardLink,id);setKeyboardLink(null);}
-  else{setKeyboardLink(id);setDragWarning("Choose a target card's link handle to finish dependency.");}
+  else{setKeyboardLink(id);setDragWarning("Chọn tay nắm liên kết của thẻ đích để tạo phụ thuộc.");}
  };
  const [selected,setSelected]=useState<string[]>([]);
  const [context,setContext]=useState<{id:string;x:number;y:number}|null>(null);
@@ -69,7 +69,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   if(target.startsWith("subtask:")){
    const parent=target.slice(8);
    const next=moveTaskTree(data,moving[0],parent,"child");
-   if(next!==data){setDragWarning("");onChange(next);}else setDragWarning("Cannot move: cycle or maximum 6 levels.");
+   if(next!==data){setDragWarning("");onChange(next);}else setDragWarning("Không thể di chuyển: tạo vòng lặp hoặc vượt quá 6 cấp.");
    return;
   }
   if(target.startsWith("bucket:") && data.records.some(row=>row.id===moving[0]&&row.parentId)){

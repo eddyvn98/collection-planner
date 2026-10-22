@@ -19,8 +19,8 @@ export function CollectionUnifiedToolbar({data,view,filters,onFilters,readOnly,o
   const bucket=plannerBucket(data);
   const first=view.kind==="kanban"?bucket?.options?.[0]??"":undefined;
   const next=createQuickTask(data,draft,first!==undefined?bucket?.id:undefined,first);
-  if(next===data){setFeedback("Enter a task title.");return;}
-  onChange(next);setDraft("");setFeedback("Task added");
+  if(next===data){setFeedback("Nhập tên công việc.");return;}
+  onChange(next);setDraft("");setFeedback("Đã thêm công việc");
  };
  return <section data-testid="planner-unified-toolbar" aria-label="View toolbar"
   className="flex shrink-0 flex-wrap items-center gap-1 border-b border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 py-1 sm:px-3">
@@ -30,6 +30,7 @@ export function CollectionUnifiedToolbar({data,view,filters,onFilters,readOnly,o
   <form data-testid="planner-create-in-place" className="order-last flex w-full min-w-0 items-start gap-1 sm:order-none sm:ml-auto sm:w-auto sm:max-w-[390px]"
    onSubmit={e=>{e.preventDefault();create();}}>
    <CollectionQuickAddInput data={data} label="Quick create task" value={draft}
+    inputStyle={{height:44,minHeight:44}}
     onChange={value=>{setDraft(value);setFeedback("");}} disabled={readOnly}
     placeholder="Task · mai @người #nhãn !urgent"
     className="h-11 min-h-11 w-full min-w-[120px] rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-xs"/>
