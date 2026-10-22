@@ -8,8 +8,9 @@ import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
 interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;field?:CollectionField;
- readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;}
-export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,onOpen}:Props){
+ readOnly:boolean;counts:Map<string,{done:number;total:number}>;
+ onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;}
+export function CollectionBoardBucket({data,group,mode,field,readOnly,counts,onChange,onOpen}:Props){
  const bucketMenuRef=useRef<HTMLButtonElement>(null);
  const addTriggerRef=useRef<HTMLButtonElement>(null);
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
@@ -32,6 +33,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,onChange,o
  };
  const card=(record:typeof group.rows[number])=><CollectionTaskCard key={record.id} data={data}
    record={record} groupKey={group.key} readOnly={readOnly} onChange={onChange}
+   descendants={counts.get(record.id)}
    onOpen={trigger=>onOpen(record.id,trigger)}/>;
  return <section ref={drop.setNodeRef} data-testid="collection-kanban-column" data-status={group.key}
    className={"w-[calc(100vw-64px)] max-w-[340px] shrink-0 snap-start self-start rounded-md sm:w-72 bg-[var(--planner-canvas)] p-2 "+
