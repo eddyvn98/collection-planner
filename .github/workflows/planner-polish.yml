@@ -64,6 +64,7 @@ jobs:
           node tests/e2e/phase7c2b-board.mjs
           node tests/e2e/phase7c2c-views.mjs
           node tests/e2e/phase7d-input.mjs
+          node tests/e2e/phase7e-steps.mjs
       - name: Capture before and after Grid screenshots (1280/375, light/dark)
         if: success() && github.event_name == 'pull_request'
         run: |
@@ -275,3 +276,22 @@ jobs:
         with:
           name: phase7d-input-before-after-1280-375
           path: /tmp/phase7d/
+      - name: Capture Phase 7E Board at 1280 and 375 (before and after)
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/phase7e/before /tmp/phase7e/after
+          SCREENSHOT_OUTPUT=/tmp/phase7e/after node tests/e2e/phase7e-steps.mjs
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/phase7e-main FETCH_HEAD
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/phase7e-main/node_modules
+          (cd /tmp/phase7e-main && node_modules/.bin/vite --host 127.0.0.1 --port 4185 > /tmp/phase7e-before.log 2>&1) &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4185/ > /dev/null; then break; fi
+            sleep 1
+          done
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4185 SCREENSHOT_OUTPUT=/tmp/phase7e/before node tests/e2e/phase7e-steps.mjs
+      - uses: actions/upload-artifact@v4
+        if: success() && github.event_name == 'pull_request'
+        with:
+          name: phase7e-in-place-before-after-1280-375
+          path: /tmp/phase7e/
