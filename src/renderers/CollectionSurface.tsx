@@ -21,6 +21,7 @@ import { CollectionFilterChips } from "./CollectionFilterChips";
 
 import { CollectionSettingsSection } from "./CollectionSettingsSection";
 import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
+import { CollectionImportPrompts } from "./CollectionImportPrompts";
 import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
 import { useCollectionHistory } from "../collections/collectionHistory";
@@ -126,14 +127,15 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
   const renameView = (change: Partial<CollectionView>) => onChange(updateView(data, view.id, change));
   const options = group?.options ?? [];
   const groupOptions = [...options, ...new Set(rows.map((r) => r.values[group?.id ?? ""] || "").filter((o) => o && !options.includes(o)))];
+  const [pendingImport,setPendingImport]=useState<CollectionBlockPayload|null>(null),[importError,setImportError]=useState("");
   const openImport = () => fileInput.current?.click();
   const loadFile = async (file?: File) => {
     if (!file || readOnly) return;
     try {
       const text = await file.text();
       const next = file.name.toLowerCase().endsWith(".json") ? importCollectionJson(text) : importCollectionCsv(text);
-      if (window.confirm("Replace this collection with imported records?")) onChange(next);
-    } catch (error) { window.alert(error instanceof Error ? error.message : "Import failed"); }
+      setPendingImport(next);
+    } catch (error) { setImportError(error instanceof Error ? error.message : "Import failed"); }
   };
   const importExportMenu = <CollectionImportExportMenu
     onExportCsv={() => downloadCollection("collection.csv", exportCollectionCsv(data, sources), "text/csv")}
@@ -233,7 +235,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
           <input type="checkbox" aria-label={"Multiple links " + f.name} disabled={readOnly}
             checked={!!f.relationMultiple} onChange={e => {
               if (!e.target.checked && data.records.some(record => (record.values[f.id] ?? "").startsWith("["))) {
-                window.alert("Remove multi-link values before switching to single selection."); return;
+                setImportError("Remove multi-link values before switching to single selection."); return;
               }
               onChange(updateField(data, f.id, { relationMultiple: e.target.checked }));
             }} />
@@ -266,6 +268,9 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     {view.kind !== "table" && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
       <button className={btnClass} disabled={readOnly} onClick={() => onChange(addRecord(data))}>+ Record</button>
     </div>}
+    <CollectionImportPrompts pending={pendingImport} error={importError}
+      onConfirm={()=>{if(pendingImport)onChange(pendingImport);setPendingImport(null);}}
+      onCancel={()=>setPendingImport(null)} onErrorClose={()=>setImportError("")}/>
     <input ref={fileInput} type="file" accept=".csv,.json" className="hidden" onChange={(e) => { void loadFile(e.target.files?.[0]); e.target.value = ""; }} />
   </div>;
   if (full && typeof document !== "undefined") return createPortal(content, document.body);
