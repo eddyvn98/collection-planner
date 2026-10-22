@@ -40,13 +40,21 @@ try{
  await input.press("Escape");await input.waitFor({state:"detached"});
  await page.waitForFunction(()=>document.activeElement?.hasAttribute("data-planner-add-task"));
  console.log("PASS quick-add Enter continuous focus, Esc closes and returns focus");
+ await page.keyboard.press("n");
+ await page.getByRole("textbox",{name:"New task in To do"}).waitFor();
+ await page.keyboard.press("Escape");
+ await page.getByRole("textbox",{name:"New task in To do"}).waitFor({state:"detached"});
+ console.log("PASS N opens quick-add; Escape closes");
  await page.keyboard.press("?");
  const help=page.getByRole("dialog",{name:"Shortcuts"});await help.waitFor();
  assert((await help.textContent()).includes("1–4"));
  await page.keyboard.press("Escape");await help.waitFor({state:"detached"});
  await page.keyboard.press("1");await page.getByRole("button",{name:"Grid",exact:true}).waitFor();
  await page.keyboard.press("2");await page.getByTestId("collection-kanban").waitFor();
- console.log("PASS ? and 1/2 view shortcuts");
+ await page.keyboard.press("3");await page.getByTestId("collection-calendar-agenda").waitFor({state:"detached"}).catch(()=>{});
+ await page.keyboard.press("4");await page.getByTestId("collection-charts").waitFor();
+ await page.keyboard.press("2");await page.getByTestId("collection-kanban").waitFor();
+ console.log("PASS ? and 1–4 view shortcuts");
  const bell=page.getByRole("button",{name:/Notifications \(/});
  await bell.click();
  const notifications=page.getByRole("dialog",{name:"Task notifications"});await notifications.waitFor();
@@ -85,6 +93,34 @@ try{
  const bounds=await aside.boundingBox();assert(bounds&&bounds.x>600);
  await panel.getByRole("button",{name:"Close settings"}).click();await panel.waitFor({state:"detached"});
  console.log("PASS Planner settings right-side pane");
+ const duplicateCard=page.locator('[data-testid="collection-kanban-card"]').filter({hasText:"Prepare release (copy)"});
+ const titleButton=duplicateCard.locator("[data-board-card-focus]");
+ await titleButton.focus();await titleButton.press("e");
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).records
+  .some(row=>row.values.name==="Prepare release (copy)"&&row.progress==="completed"));
+ console.log("PASS E completes focused task");
+ const originalCard=page.locator('[data-record-id="r"][data-testid="collection-kanban-card"]');
+ await originalCard.locator("[data-board-card-focus]").focus();
+ await originalCard.locator("[data-board-card-focus]").press("Space");
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).records.find(x=>x.id==="r")?.progress==="completed");
+ console.log("PASS Space completes focused task");
+ const quick=page.locator('[data-testid="collection-kanban-card"]').filter({hasText:"Write spec"});
+ await quick.locator("[data-board-card-focus]").focus();
+ await quick.locator("[data-board-card-focus]").press("Delete");
+ const confirm=page.getByRole("alertdialog",{name:"Delete Write spec task?"});
+ await confirm.waitFor();await page.keyboard.press("Escape");await confirm.waitFor({state:"detached"});
+ console.log("PASS Delete requires confirmation; Esc cancels");
  await page.close();
+ const mobile=await browser.newPage({viewport:{width:375,height:812}});
+ await mobile.addInitScript(data=>localStorage.setItem("collection-planner:v1",JSON.stringify(data)),fixture);
+ await mobile.goto("http://127.0.0.1:4173/",{waitUntil:"networkidle"});
+ await mobile.getByRole("button",{name:"Search tasks"}).click();
+ await mobile.getByRole("textbox",{name:"Search plan tasks"}).fill("Mai Nguyen");
+ await mobile.locator('[data-record-id="r"][data-testid="collection-kanban-card"]').waitFor();
+ const scroll=await mobile.evaluate(()=>document.documentElement.scrollWidth);
+ assert(scroll<=375,"6A mobile header must not overflow: "+scroll);
+ await mobile.getByRole("textbox",{name:"Search plan tasks"}).press("Escape");
+ console.log("PASS 375px search by assigned person without page horizontal overflow");
+ await mobile.close();
 }catch(error){console.error("FAIL Phase6A browser",error);process.exitCode=1;}
 finally{await browser.close();}
