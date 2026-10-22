@@ -34,8 +34,8 @@ export function CollectionGanttBar({left,width,label,durationDays,disabled,pixel
   const current=gesture.current;
   if(!current)return;
   event.stopPropagation();
-  gesture.current=null;
   const amount=offset(event.clientX,event.shiftKey),dy=event.clientY-current.startY;
+  gesture.current=null;
   setPreview({days:0,mode:"move",y:0});
   if(current.mode==="dependency"){
    const target=document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>("[data-timeline-task-id]");
