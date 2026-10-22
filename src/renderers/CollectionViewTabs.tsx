@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { btnClass } from "./CollectionFieldEditor";
-import { Table2, Columns3, CalendarDays, BarChart3 } from "lucide-react";
+import { Table2, Columns3, CalendarDays, BarChart3, GanttChartSquare, Network, Images, ClipboardList } from "lucide-react";
 import type { CollectionView } from "../collections/model";
 
 interface Props {
@@ -21,8 +21,8 @@ export function CollectionViewTabs({ views, activeViewId, readOnly, onSelect, on
   const rightClickRef=useRef<HTMLButtonElement|null>(null);
   const target=views.find(view=>view.id===deleteViewId);
   const menuTarget=views.find(view=>view.id===contextMenu);
-  const icons = {table:Table2, kanban:Columns3, calendar:CalendarDays, charts:BarChart3};
-  const labels = {table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts"};
+  const icons = {table:Table2, kanban:Columns3, calendar:CalendarDays, charts:BarChart3,timeline:GanttChartSquare,mindmap:Network,gallery:Images,form:ClipboardList};
+  const labels = {table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts",timeline:"Timeline",mindmap:"Mind Map",gallery:"Gallery",form:"Form"};
   return <>
     <nav aria-label="Plan views" className="flex h-11 min-w-0 items-stretch gap-1 overflow-x-auto">
       {views.filter(v=>v.kind in icons).map(view=>{
