@@ -8,9 +8,9 @@ import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
 interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;field?:CollectionField;
- readOnly:boolean;counts:Map<string,{done:number;total:number}>;
+ readOnly:boolean;showSubtasks:boolean;counts:Map<string,{done:number;total:number}>;
  onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;}
-export function CollectionBoardBucket({data,group,mode,field,readOnly,counts,onChange,onOpen}:Props){
+export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtasks,counts,onChange,onOpen}:Props){
  const bucketMenuRef=useRef<HTMLButtonElement>(null);
  const addTriggerRef=useRef<HTMLButtonElement>(null);
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
@@ -87,7 +87,7 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,counts,onC
     <button ref={addTriggerRef} type="button" data-planner-add-task onClick={()=>setAdding(true)}
       className="mb-2 inline-flex min-h-9 w-full items-center gap-2 rounded px-2 text-left text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] hover:text-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
       <Plus size={16} strokeWidth={1.75}/>Add task</button>)}
-  <div aria-label={group.title+" tasks"} className="min-h-4">
+  <div aria-label={group.title+" tasks"} className="min-h-4" data-show-subtasks={showSubtasks}>
     {pending.map(card)}
     {!pending.length&&active&&<div aria-label="Drop task here" className="mb-2 h-12 rounded border-2 border-dashed border-[var(--planner-accent)]"/>}
     {!group.rows.length&&!active&&<div className="rounded-md px-3 py-5 text-center text-xs text-[var(--planner-secondary)]">
