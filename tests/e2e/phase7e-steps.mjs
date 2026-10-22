@@ -131,6 +131,13 @@ async function test(width,attempt){
   score("bucket",1);
  }
  await toolbar.getByRole("button",{name:"Share plan"}).click();
+ const feedbackSnapshot=await toolbar.evaluate(node=>{
+  const panel=node.querySelector('[data-testid="planner-share-feedback"]');
+  return {present:!!panel,text:panel?.textContent,
+   html:panel?.outerHTML.slice(0,600),shareButtons:node.querySelectorAll('[aria-label="Share plan"]').length,
+   toolbarVisible:getComputedStyle(node).visibility};
+ });
+ console.log("7E SHARE POST-CLICK",JSON.stringify(feedbackSnapshot));
  const share=page.getByTestId("planner-share-feedback");
  await share.waitFor();
  assert(/data stays (on this device|local)/i.test(await share.textContent()));
