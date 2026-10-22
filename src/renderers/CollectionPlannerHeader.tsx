@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect,useRef, useState, type ReactNode, type RefObject } from "react";
 import { Star, Plus, ChevronDown, Ellipsis, HelpCircle, Share2, UserRound, ArrowLeft, ExternalLink,
   Settings2, History, Maximize2, Minimize2 } from "lucide-react";
 import { CollectionViewTabs } from "./CollectionViewTabs";
@@ -28,6 +28,7 @@ const item="flex min-h-9 w-full items-center gap-2 rounded px-3 text-left text-s
 export function CollectionPlannerHeader(p:Props){
  const [more,setMore]=useState(false),[help,setHelp]=useState(false);
  const [copied,setCopied]=useState(false);
+ useEffect(()=>{const help=()=>setHelp(true);document.addEventListener("planner:shortcuts",help);return()=>document.removeEventListener("planner:shortcuts",help);},[]);
  const [groupMenu,setGroupMenu]=useState(false),[viewsMenu,setViewsMenu]=useState(false);
  const moreRef=useRef<HTMLButtonElement>(null),helpRef=useRef<HTMLButtonElement>(null);
  const groupRef=useRef<HTMLButtonElement>(null),viewsRef=useRef<HTMLButtonElement>(null);
