@@ -73,7 +73,7 @@ export function CollectionPlannerHeader(p:Props){
     </div>}
     <button title="Copy plan link" aria-label="Share plan" className={menuButton+" hidden sm:inline-flex"}
       onClick={()=>{void navigator.clipboard?.writeText(window.location.href).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2400);});}}><Share2 size={16}/></button>
-    <button type="button" aria-label="Toggle dark mode" title="Toggle dark mode"
+    <button type="button" aria-label="Toggle dark theme from toolbar" title="Toggle dark mode"
       className={menuButton+" hidden lg:inline-flex"} onClick={()=>p.setDarkMode(!p.darkMode)}><Moon size={16}/></button>
     <div className="relative"><button ref={helpRef} aria-label="Shortcuts" title="Keyboard shortcuts" className={menuButton+" hidden sm:inline-flex"} onClick={()=>setHelp(!help)}>
       <HelpCircle size={16}/></button>
