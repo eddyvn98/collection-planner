@@ -29,7 +29,11 @@ async function deletion(page){
  const card=page.locator('[data-testid="collection-kanban-card"][data-record-id="root"]');
  await card.locator("[data-board-card-focus]").click();
  const drawer=page.getByRole("dialog",{name:"Task Launch"});
- await drawer.waitFor();
+ try{await drawer.waitFor({timeout:4000});}catch(error){
+  console.error("6C debug dialogs",await page.locator('[role="dialog"]').evaluateAll(nodes=>nodes.map(x=>x.getAttribute("aria-label"))));
+  console.error("6C debug cards",await page.locator('[data-testid="collection-kanban-card"]').evaluateAll(nodes=>nodes.map(x=>x.dataset.recordId)));
+  throw error;
+ }
  await drawer.getByRole("button",{name:"Delete task",exact:true}).click();
  return page.getByRole("alertdialog",{name:"Delete task?"});
 }
