@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { CollectionModalDialog } from "./CollectionModalDialog";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import { gridFields, toggleGridField } from "../collections/collectionPlannerFilters";
 import { bulkUpdateGrid, type GridBulkAction } from "../collections/collectionGridActions";
@@ -9,11 +10,13 @@ interface Props { data: CollectionBlockPayload; view: CollectionView; visibleCou
 export function CollectionGridToolbar({data,view,visibleCount,selectedIds,readOnly,onChange,onClear}:Props){
  const [action,setAction]=useState("progress:completed");
  const [columnsOpen,setColumnsOpen]=useState(false);
+ const [confirmDelete,setConfirmDelete]=useState(false);
+ const bulkRef=useRef<HTMLButtonElement>(null);
  const columnsRef=useRef<HTMLButtonElement>(null);
  const shown=gridFields(data,view);
  const apply=()=>{
   const [kind,value]=action.split(":");
-  if(kind==="delete" && !window.confirm("Delete "+selectedIds.length+" selected tasks?"))return;
+  if(kind==="delete"){setConfirmDelete(true);return; }
   onChange(bulkUpdateGrid(data,selectedIds,kind==="delete"?{kind:"delete"}:
     {kind,value} as GridBulkAction,readOnly));onClear();
  };
@@ -52,9 +55,21 @@ export function CollectionGridToolbar({data,view,visibleCount,selectedIds,readOn
     </optgroup>
     <option value="delete:">Delete selected</option>
    </select>
-   <button type="button" disabled={readOnly} onClick={apply}
+   <button ref={bulkRef} type="button" disabled={readOnly} onClick={apply}
     className="rounded-lg bg-[var(--planner-accent)] px-3 py-2 font-semibold text-white disabled:opacity-50">Apply to selected</button>
    <button type="button" onClick={onClear} className="text-[var(--planner-secondary)] underline">Clear selection</button>
   </>}
+  {confirmDelete&&<CollectionModalDialog label="Delete selected tasks?"
+   trigger={bulkRef.current} onClose={()=>setConfirmDelete(false)}>
+    <h2 className="text-sm font-semibold">Delete {selectedIds.length} selected tasks?</h2>
+    <p className="mt-2 text-sm text-[var(--planner-secondary)]">This removes the selected records.</p>
+    <div className="mt-4 flex justify-end gap-2">
+     <button data-dialog-initial className="min-h-9 rounded px-3 hover:bg-[var(--planner-hover)]"
+       onClick={()=>setConfirmDelete(false)}>Cancel</button>
+     <button className="min-h-9 rounded bg-red-700 px-3 text-white"
+       onClick={()=>{onChange(bulkUpdateGrid(data,selectedIds,{kind:"delete"},readOnly));
+        onClear();setConfirmDelete(false);}}>Delete tasks</button>
+    </div>
+   </CollectionModalDialog>}
  </div>;
 }
