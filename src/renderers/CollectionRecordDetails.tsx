@@ -41,7 +41,7 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
  return createPortal(<div className="pointer-events-none fixed inset-0 z-[10020] flex justify-end"
   onPointerDown={e=>e.stopPropagation()}>
   <section role="dialog" aria-modal="false" aria-label={"Task "+recordTitle(data,record)}
-   className="pointer-events-auto flex h-full w-full max-w-[420px] flex-col border-l border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)] shadow-[-8px_0_24px_#00000018]">
+   className="planner-motion-drawer pointer-events-auto flex h-full w-full max-w-[420px] flex-col border-l border-[var(--planner-border)] bg-[var(--planner-surface)] text-[var(--planner-text)] shadow-[-8px_0_24px_#00000018]">
    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--planner-border)] px-4 py-3">
      <h2 className="text-sm font-semibold">Task details</h2>
      <div className="flex items-center gap-1"><CollectionDrawerActions data={data} record={record}
