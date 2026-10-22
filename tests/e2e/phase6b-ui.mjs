@@ -91,8 +91,8 @@ try{
   await page.waitForFunction(()=>document.activeElement?.getAttribute("aria-label")==="Assignees for Ship release");
   const actions=page.locator('[data-record-id="ship"] td').last().locator("div");
   assert.equal(await actions.evaluate(node=>getComputedStyle(node).opacity),"0");
-  await page.locator('[data-record-id="ship"]').hover();
-  await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-record-id="ship"] td:last-child div')).opacity==="1");
+  await page.locator('[data-testid="collection-tanstack-table"] [data-record-id="ship"]').hover();
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-testid="collection-tanstack-table"] [data-record-id="ship"] td:last-child div')).opacity==="1");
   console.log("PASS Grid Medium hidden, headers consistent, Esc focus, desktop hover actions");
   await page.close();
   const mobile=await newPage(375,"dark");
