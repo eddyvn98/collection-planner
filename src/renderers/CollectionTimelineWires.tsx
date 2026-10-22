@@ -2,12 +2,10 @@ import type {CollectionBlockPayload,CollectionRecord} from "../collections/model
 import {recordTitle} from "../collections/model";
 import {dayNumber} from "./collectionTimelineActions";
 interface Props{data:CollectionBlockPayload;rows:CollectionRecord[];from:string;pixels:number;
- width:number;readOnly:boolean;onRemove:(taskId:string,predecessorId:string)=>void}
-export function CollectionTimelineWires({data,rows,from,pixels,width,readOnly,onRemove}:Props){
+ width:number;startId:string;dueId:string;readOnly:boolean;onRemove:(taskId:string,predecessorId:string)=>void}
+export function CollectionTimelineWires({data,rows,from,pixels,width,startId,dueId,readOnly,onRemove}:Props){
  const rowPositions=new Map(rows.map((record,index)=>[record.id,index*48+24]));
  const records=new Map(data.records.map(record=>[record.id,record]));
- const startId=data.fields.find(f=>f.type==="date"&&/^(start|begin)/i.test(f.name))?.id;
- const dueId=data.fields.find(f=>f.type==="date"&&/^(due|end|deadline)/i.test(f.name))?.id;
  const links=rows.flatMap(record=>(record.dependsOn??[]).flatMap(dep=>{
   const predecessor=records.get(dep),y1=rowPositions.get(dep),y2=rowPositions.get(record.id);
   if(!predecessor||y1===undefined||y2===undefined)return [];
