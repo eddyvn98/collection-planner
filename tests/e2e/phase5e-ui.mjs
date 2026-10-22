@@ -83,7 +83,7 @@ try{
   assert.equal(style.background,"rgb(41, 41, 41)");
   assert.equal(style.border,"rgb(133, 133, 133)");
  }
- console.log("PASS full viewport dark tokens and native date/select");
+ console.log("PASS full viewport dark tokens on custom date/select picker buttons");
  await page.keyboard.press("Escape");
  const mobile=await browser.newPage({viewport:{width:375,height:812}});
  await mobile.addInitScript(data=>localStorage.setItem("collection-planner:v1",JSON.stringify(data)),fixture);

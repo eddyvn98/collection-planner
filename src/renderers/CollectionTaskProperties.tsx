@@ -5,6 +5,7 @@ import { CollectionDependencyPicker } from "./CollectionDependencyPicker";
 import { CollectionChecklist } from "./CollectionChecklist";
 import { setTaskProgress } from "./collectionBoardGroups";
 import { inputClass } from "./CollectionFieldEditor";
+import { CollectionInputPicker } from "./CollectionInputPicker";
 export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
  data: CollectionBlockPayload; record: CollectionRecord; readOnly: boolean;
  onChange: (next: CollectionBlockPayload) => void;
@@ -23,13 +24,20 @@ export function CollectionTaskProperties({ data, record, readOnly, onChange }: {
  };
  return <div className="space-y-5">
   <div className="grid grid-cols-2 gap-3">
-   <label className="text-xs">Progress<select className={inputClass+" w-full"} disabled={readOnly} value={record.progress??"not_started"}
-    onChange={e=>onChange(setTaskProgress(data,record.id,e.target.value as TaskProgress))}>{PROGRESS.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
-   <label className="text-xs">Priority<select className={inputClass+" w-full"} disabled={readOnly} value={record.priority??"medium"}
-    onChange={e=>patch({priority:e.target.value as TaskPriority})}>{PRIORITIES.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select></label>
-   {(["start","due"] as const).map(kind=><label key={kind} className="text-xs">{kind==="start"?"Start":"Due"} date
-    <input className={inputClass+" w-full"} type="date" disabled={readOnly} value={taskDate(data,record,kind)}
-     onChange={e=>onChange(setTaskDate(data,record.id,kind,e.target.value))} /></label>)}
+   <div className="min-w-0 text-xs"><span>Progress</span>
+    <CollectionInputPicker kind="select" label="Progress" value={record.progress??"not_started"}
+     options={PROGRESS} disabled={readOnly} onChange={v=>onChange(setTaskProgress(data,record.id,v as TaskProgress))}/>
+   </div>
+   <div className="min-w-0 text-xs"><span>Priority</span>
+    <CollectionInputPicker kind="select" label="Priority" value={record.priority??"medium"}
+     options={PRIORITIES} disabled={readOnly} onChange={v=>patch({priority:v as TaskPriority})}/>
+   </div>
+   {(["start","due"] as const).map(kind=><div className="min-w-0 text-xs" key={kind}>
+    <span>{kind==="start"?"Start":"Due"} date</span>
+    <CollectionInputPicker kind="date" label={kind==="start"?"Start date":"Due date"}
+     value={taskDate(data,record,kind)} disabled={readOnly}
+     onChange={v=>onChange(setTaskDate(data,record.id,kind,v))}/>
+   </div>)}
   </div>
   <fieldset className="space-y-2"><legend className="text-sm font-semibold">Assignees</legend>
    {(data.people??[]).map(p=><label key={p.id} className="mr-3 inline-flex gap-1 text-xs">

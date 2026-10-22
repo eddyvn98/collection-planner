@@ -17,7 +17,7 @@ import { CollectionAuditPanel } from "./CollectionAuditPanel";
 import { CollectionIntegrityPanel } from "./CollectionIntegrityPanel";
 import { CollectionPlannerHeader } from "./CollectionPlannerHeader";
 import { CollectionAssignedToMe } from "./CollectionAssignedToMe"; import { CollectionPlanTemplates } from "./CollectionPlanTemplates"; import { CollectionFilterChips } from "./CollectionFilterChips";
-import { CollectionSettingsSection } from "./CollectionSettingsSection"; import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
+import { CollectionSettingsSection } from "./CollectionSettingsSection"; import { CollectionInputSettings } from "./CollectionInputSettings"; import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
 import { CollectionImportPrompts } from "./CollectionImportPrompts"; import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
 import { useCollectionHistory } from "../collections/collectionHistory";
@@ -194,6 +194,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
       <div className="border-b border-[var(--planner-border)] pb-2 dark:border-[var(--planner-border)]"><button type="button" aria-label="Close settings" onClick={()=>setSettings(false)} className="float-right rounded px-2 py-1 hover:bg-[var(--planner-hover)]">×</button><h2 className="text-sm font-semibold">Settings</h2><p className={hintClass}>Configure this view and the collection’s fields. Changes save automatically.</p></div>
       <div className="flex flex-wrap items-center gap-2"><label>View name <input className={inputClass} value={view.name} disabled={readOnly} onChange={(e) => renameView({ name: e.target.value })} /></label></div>
       <CollectionPlanTemplates data={data} readOnly={readOnly} onChange={onChange}/>
+      <CollectionInputSettings/>
       <CollectionSettingsSection title="View options" description="Choose which records appear, how they are grouped or sorted, and what totals are shown.">
       <div className="flex flex-wrap items-center gap-2">
         {!assignedMode&&view.kind === "kanban" && <label>Group cards by <select className={inputClass} value={group?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ groupFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "select" && !isLegacyStatusField(f)).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}

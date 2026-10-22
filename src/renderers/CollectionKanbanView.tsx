@@ -9,6 +9,8 @@ import { addBucket,reorderBucket } from "./collectionBoardActions";
 import { boardGroups, moveGroupedTask, parseCardDragId } from "./collectionBoardGroups";
 import { CollectionBoardBucket } from "./CollectionBoardBucket";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
+import { CollectionBoardInputBar } from "./CollectionBoardInputBar";
+import { setTaskProgress } from "./collectionBoardGroups";
 import { type CollectionBlockPayload, type CollectionField, type CollectionRecord,
  type CollectionView } from "../collections/model";
 interface Props {
@@ -22,6 +24,16 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
  const [newBucket,setNewBucket]=useState(""),[creating,setCreating]=useState(false);
  const [showSubtasks,setShowSubtasks]=useState(false);
  const [dragWarning,setDragWarning]=useState("");
+ const [selected,setSelected]=useState<string[]>([]);
+ const [context,setContext]=useState<{id:string;x:number;y:number}|null>(null);
+ const select=(id:string)=>setSelected(prev=>prev.includes(id)?prev.filter(x=>x!==id):[...prev,id]);
+ const swipe=(id:string,direction:"right"|"left",x:number,y:number)=>{
+  if(readOnly)return;
+  if(direction==="left"){setContext({id,x,y});return;}
+  const record=data.records.find(row=>row.id===id);
+  if(record){const next=setTaskProgress(data,id,record.progress==="completed"?"not_started":"completed");
+   if(next!==data)onChange(next);}
+ };
  const mode=view.boardGroupBy??"bucket";
  const counts=useMemo(()=>descendantCounts(data.records),[data.records]);
  const boardRows=showSubtasks?rows:rows.filter(row=>!row.parentId);
@@ -74,6 +86,8 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
    <div className="flex min-h-0 flex-1 items-start gap-2 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:snap-none" data-testid="collection-kanban">
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group} counts={counts}
      readOnly={readOnly} onChange={onChange} showSubtasks={showSubtasks}
+     selectedIds={selected} onTaskSelect={select} onTaskContext={(id,x,y)=>setContext({id,x,y})}
+     onTaskSwipe={swipe}
      onReorder={(source,target)=>{if(mode!=="bucket"||!group)return;
       const next=reorderBucket(data,group.id,source,target);
       if(next!==data){setDragWarning("");onChange(next);}}}
@@ -90,6 +104,8 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
       onClick={()=>setCreating(true)}><Plus size={16} strokeWidth={1.75} className="inline-block"/> Add new bucket</button>)}
    </div>
   </DndContext>
+  <CollectionBoardInputBar data={data} selected={selected} setSelected={setSelected}
+   menu={context} setMenu={setContext} readOnly={readOnly} onChange={onChange}/>
   {openId&&<CollectionRecordDetails data={data} recordId={openId} returnFocusTo={opener.current} group={group}
    readOnly={readOnly} onChange={onChange} onClose={()=>setOpenId(null)}/>}
  </div>;
