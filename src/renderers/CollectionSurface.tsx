@@ -17,8 +17,9 @@ import { CollectionScheduledAutomationSettings } from "./CollectionScheduledAuto
 import { CollectionAuditPanel } from "./CollectionAuditPanel";
 import { CollectionIntegrityPanel } from "./CollectionIntegrityPanel";
 import { CollectionPlannerHeader } from "./CollectionPlannerHeader";
+import { CollectionAssignedToMe } from "./CollectionAssignedToMe";
+import { CollectionPlanTemplates } from "./CollectionPlanTemplates";
 import { CollectionFilterChips } from "./CollectionFilterChips";
-
 import { CollectionSettingsSection } from "./CollectionSettingsSection";
 import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
 import { CollectionImportPrompts } from "./CollectionImportPrompts";
@@ -26,7 +27,6 @@ import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
 import { useCollectionHistory } from "../collections/collectionHistory";
 import { CollectionKeyboard } from "./CollectionKeyboard";
-
 import { usePlannerDarkTheme } from "./usePlannerDarkTheme"; import { normalizeCollection } from "../collections/model";
 import { visiblePlannerFields, isLegacyStatusField } from "../collections/collectionPlannerFields";
 import type { CollectionBlockPayload, CollectionSources, CollectionField, CollectionRecord, CollectionView } from "../collections/model";
@@ -43,6 +43,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
   const [darkMode,setDarkMode]=useState(()=>typeof localStorage!=="undefined"&&localStorage.getItem("planner:dark")==="1");
   useEffect(()=>{try{localStorage.setItem("planner:dark",darkMode?"1":"0");}catch{/* storage unavailable */}},[darkMode]);
   usePlannerDarkTheme(darkMode);
+  const [assignedMode,setAssignedMode]=useState(false);
   const [search, setSearch] = useState(""); const [taskFilters, setTaskFilters] = useState<TaskFilterState>({...EMPTY_TASK_FILTERS}); const [localViewId, setLocalViewId] = useState<string | null>(null); const [settings, setSettings] = useState(false); const [fieldSettingsTarget, setFieldSettingsTarget] = useState<string | null>(null); const [fieldsPanelOpen, setFieldsPanelOpen] = useState(false); const [showHistory, setShowHistory] = useState(false); const [full, setFull] = useState(false); const expanded = full || standalone; const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   useEffect(() => {
     if (!settings || !fieldSettingsTarget) return;
@@ -159,13 +160,17 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     className={"flex min-h-[100dvh] h-full w-full flex-col overflow-hidden bg-[var(--planner-canvas)] text-[var(--planner-text)] " + (darkMode ? "dark " : "") + (full ? "fixed inset-0 z-[9999] p-0" : "")}
     onPointerDown={(e) => { if (!(e.target as HTMLElement).closest("[data-collection-drag-handle]")) e.stopPropagation(); }} onDoubleClick={(e) => e.stopPropagation()} onWheel={(e) => e.stopPropagation()}>
     <CollectionKeyboard root={root} undo={undo} redo={redo} disabled={readOnly}
+      onView={index=>{const kind=(["table","kanban","calendar","charts"] as const)[index];
+       const item=data.views.find(v=>v.kind===kind);if(item){setAssignedMode(false);
+        if(readOnly)setLocalViewId(item.id);else onChange({...data,activeViewId:item.id});}}}
       onEscape={()=>{setTaskFilters({...EMPTY_TASK_FILTERS});setSearch("");setSettings(false);}} />
     <CollectionPlannerHeader data={data} view={view} readOnly={readOnly}
+      onDataChange={onChange} assignedMode={assignedMode} onAssignedMode={setAssignedMode}
       filters={taskFilters} onFilters={setTaskFilters}
       filterControl={plannerView ? <CollectionTaskFilterBar data={data} value={taskFilters} readOnly={readOnly}
        onChange={setTaskFilters} onDataChange={onChange}/> : null}
       onTitle={title=>onChange({...data,title})}
-      onSelect={viewId=>{if(readOnly)setLocalViewId(viewId);else{setLocalViewId(null);onChange({...data,activeViewId:viewId});}}}
+      onSelect={viewId=>{setAssignedMode(false);if(readOnly)setLocalViewId(viewId);else{setLocalViewId(null);onChange({...data,activeViewId:viewId});}}}
       onDelete={viewId=>onChange(removeView(data,viewId))}
       onAddView={kind=>onChange(addView(data,kind))}
       onGroup={mode=>onChange(updateView(data,view.id,{boardGroupBy:mode}))}
@@ -185,17 +190,18 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     {revisionNotice?.error && <p role="alert" className="border-b px-3 py-2 text-sm text-red-700 dark:text-red-300">{revisionNotice.error}</p>}
     {revisionNotice?.refreshing && <p role="status" className="px-3 py-1 text-xs text-blue-600">Refreshing collection…</p>}
     {plannerView&&<CollectionFilterChips data={data} value={taskFilters} onChange={setTaskFilters}/>}
-    <div className={"flex min-h-0 flex-1 flex-col overflow-hidden " + (settings || showHistory ? "md:flex-row" : "")}>
-    {(settings || showHistory) && <aside className="max-h-[min(55vh,28rem)] min-h-0 shrink-0 overflow-y-auto overscroll-contain px-3 py-2 md:h-full md:max-h-none md:w-[min(24vw,20rem)] md:border-r md:border-[var(--planner-border)] dark:md:border-[var(--planner-border)]">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+    {(settings || showHistory) && <aside className="fixed right-0 top-12 bottom-0 z-[90] w-[min(100vw,440px)] overflow-y-auto overscroll-contain border-l border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 shadow-xl planner-motion-drawer">
     {showHistory && <CollectionAuditPanel data={data} onClose={() => setShowHistory(false)} />}
     {settings && <div role="region" aria-label="Collection settings" tabIndex={0} data-testid="collection-settings"
       className="min-h-0 space-y-2 text-xs">
-      <div className="border-b border-[var(--planner-border)] pb-2 dark:border-[var(--planner-border)]"><h2 className="text-sm font-semibold">Settings</h2><p className={hintClass}>Configure this view and the collection’s fields. Changes save automatically.</p></div>
+      <div className="border-b border-[var(--planner-border)] pb-2 dark:border-[var(--planner-border)]"><button type="button" aria-label="Close settings" onClick={()=>setSettings(false)} className="float-right rounded px-2 py-1 hover:bg-[var(--planner-hover)]">×</button><h2 className="text-sm font-semibold">Settings</h2><p className={hintClass}>Configure this view and the collection’s fields. Changes save automatically.</p></div>
       <div className="flex flex-wrap items-center gap-2"><label>View name <input className={inputClass} value={view.name} disabled={readOnly} onChange={(e) => renameView({ name: e.target.value })} /></label></div>
+      <CollectionPlanTemplates data={data} readOnly={readOnly} onChange={onChange}/>
       <CollectionSettingsSection title="View options" description="Choose which records appear, how they are grouped or sorted, and what totals are shown.">
       <div className="flex flex-wrap items-center gap-2">
-        {view.kind === "kanban" && <label>Group cards by <select className={inputClass} value={group?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ groupFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "select" && !isLegacyStatusField(f)).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}
-        {(view.kind === "calendar" || view.kind === "timeline") && <><label>{view.kind === "calendar" ? "Calendar date" : "Start date"} <select aria-label={view.kind === "calendar" ? "Calendar date" : "Start date"} className={inputClass} value={date?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ dateFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "date").map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>{view.kind === "timeline" && <label>End date <select aria-label="End date" className={inputClass} value={end?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ endDateFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "date").map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}</> }
+        {!assignedMode&&view.kind === "kanban" && <label>Group cards by <select className={inputClass} value={group?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ groupFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "select" && !isLegacyStatusField(f)).map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}
+        {(view.kind === "calendar" || view.kind === "timeline") && <><label>{view.kind === "calendar" ? "Calendar date" : "Start date"} <select aria-label={view.kind === "calendar" ? "Calendar date" : "Start date"} className={inputClass} value={date?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ dateFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "date").map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>{!assignedMode&&view.kind === "timeline" && <label>End date <select aria-label="End date" className={inputClass} value={end?.id ?? ""} disabled={readOnly} onChange={(e) => renameView({ endDateFieldId: e.target.value })}>{data.fields.filter((f) => f.type === "date").map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>}</> }
       </div>
       <CollectionViewConditions view={view} fields={visiblePlannerFields(data)} readOnly={readOnly} onChange={renameView} />
       <CollectionCardFormSettings view={view} fields={visiblePlannerFields(data)} readOnly={readOnly} onChange={renameView} />
@@ -249,20 +255,21 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     </div>}
     </aside>}
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-[var(--planner-hover)]/80 p-4 dark:bg-[var(--planner-surface)]">
-      {view.kind === "table" && <CollectionTableView data={data} sources={sources} view={view} rows={rows} readOnly={readOnly} onChange={onChange} patch={patch} onOpenFieldSettings={openFieldSettings} />}
+      {assignedMode&&taskFilters.assignee&&<CollectionAssignedToMe data={data} personId={taskFilters.assignee} readOnly={readOnly} onChange={onChange}/>}
+      {!assignedMode&&view.kind === "table" && <CollectionTableView data={data} sources={sources} view={view} rows={rows} readOnly={readOnly} onChange={onChange} patch={patch} onOpenFieldSettings={openFieldSettings} />}
       {view.kind === "kanban" && <CollectionKanbanView data={data} view={view} rows={rows} group={group} groupOptions={groupOptions} readOnly={readOnly} onChange={onChange} patch={patch} />}
-      {view.kind === "gallery" && <CollectionGalleryView data={data} sources={sources} view={view} rows={rows} titleField={titleField} readOnly={readOnly} patch={patch} onChange={onChange} />}
-      {view.kind === "calendar" && <CollectionScheduleView data={data} view={view} rows={rows} month={month} setMonth={setMonth} readOnly={readOnly} onChange={onChange} />}
-      {view.kind === "charts" && <CollectionChartsView data={data} rows={rows} onDrilldown={filters => {
+      {!assignedMode&&view.kind === "gallery" && <CollectionGalleryView data={data} sources={sources} view={view} rows={rows} titleField={titleField} readOnly={readOnly} patch={patch} onChange={onChange} />}
+      {!assignedMode&&view.kind === "calendar" && <CollectionScheduleView data={data} view={view} rows={rows} month={month} setMonth={setMonth} readOnly={readOnly} onChange={onChange} />}
+      {!assignedMode&&view.kind === "charts" && <CollectionChartsView data={data} rows={rows} onDrilldown={filters => {
         const grid = data.views.find(item => item.kind === "table");
         setTaskFilters(filters); if (!grid) return;
         if (readOnly) setLocalViewId(grid.id);
         else { setLocalViewId(null); onChange({ ...data, activeViewId: grid.id }); }
       }} />}
       {view.kind === "timeline" && <TimelineView rows={rows} data={data} start={date} end={end} readOnly={readOnly} patch={patch} onChange={onChange} />}
-      {view.kind === "mindmap" && <MindMapView rows={rows} data={data} readOnly={readOnly} onChange={onChange} />}
-      {view.kind === "form" && <CollectionFormView data={data} sources={sources} view={view} readOnly={readOnly} onChange={onChange} />}
-      {!rows.length && view.kind !== "form" && <div className="p-4 text-center text-xs text-[var(--planner-secondary)]">No matching records. Add one to get started.</div>}
+      {!assignedMode&&view.kind === "mindmap" && <MindMapView rows={rows} data={data} readOnly={readOnly} onChange={onChange} />}
+      {!assignedMode&&view.kind === "form" && <CollectionFormView data={data} sources={sources} view={view} readOnly={readOnly} onChange={onChange} />}
+      {!assignedMode&&!rows.length && view.kind !== "form" && <div className="p-4 text-center text-xs text-[var(--planner-secondary)]">No matching records. Add one to get started.</div>}
     </div>
     </div>
     {view.kind !== "table" && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
