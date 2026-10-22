@@ -25,6 +25,7 @@ export function CollectionGridRows({table,data,readOnly,selected,setSelected,col
      onChange={e=>setSelected(e.target.checked?[...new Set([...selected,id])]:selected.filter(x=>x!==id))}/>
    </div></td>
    {row.getVisibleCells().map((cell,index)=><td key={cell.id} style={{width:cell.column.getSize()}}
+     data-grid-field={data.fields.some(f=>f.id===cell.column.id&&["text","date","number","url","select"].includes(f.type))?cell.column.id:undefined}
      className={"p-0.5 "+(numbers.has(cell.column.id)?"text-right":"text-left")}>
      {index===0?<CollectionGridTreeCell data={data} record={row.original}
        collapsed={collapsed.has(id)} readOnly={readOnly} tree={tree} onToggle={toggle} onChange={onChange}>

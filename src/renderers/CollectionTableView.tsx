@@ -21,6 +21,7 @@ import { CollectionGridToolbar } from "./CollectionGridToolbar";
 import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
 import { CollectionGridAddQuick } from "./CollectionGridAddRow";
 import { CollectionGridEditable } from "./CollectionGridEditable";
+import { useGridSpreadsheet } from "./useGridSpreadsheet";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { localToday } from "../collections/collectionTasks";
@@ -122,6 +123,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     return [primary, first("__progress"), first("__assignee"), due,
       first("__priority"), first("__labels"), ...remaining].filter(Boolean) as ColumnDef<CollectionRecord>[];
   }, [visibleFields, visibleTaskKeys.join(","), readOnly, onChange]);
+  const spreadsheet=useGridSpreadsheet({data,rows:page.rows,selectedIds,readOnly,onChange});
   const numericFieldIds = useMemo(() => new Set(data.fields.filter(field => field.type === "number").map(field => field.id)), [data.fields]);
   const table = useReactTable({
     // Bind TanStack only to the visible page, not thousands of input editors.
@@ -175,6 +177,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     reorderColumn(event);
   };
   return <div className="min-w-0 space-y-2" data-testid="collection-paged-table">
+    {spreadsheet.status&&<p role="status" aria-live="polite" className="text-xs text-[var(--planner-secondary)]">{spreadsheet.status}</p>}
     <CollectionGridToolbar data={data} view={view} visibleCount={rows.length} selectedIds={selectedIds} readOnly={readOnly}
       onChange={onChange} onClear={() => setSelected([])} />
     <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
@@ -184,7 +187,8 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={finishDrag}>
     <div ref={tableScroll} className="hidden max-w-full overflow-x-auto rounded-md bg-[var(--planner-surface)] sm:block" role="region" aria-label="Scrollable Grid. Swipe to see all columns" tabIndex={0}>
-    <table style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-sm text-[var(--planner-text)]" data-testid="collection-tanstack-table">
+    <table onPasteCapture={spreadsheet.onPasteCapture} onKeyDownCapture={spreadsheet.onKeyDownCapture}
+     style={{ width: table.getTotalSize() + 188 }} className="table-fixed border-collapse text-left text-sm text-[var(--planner-text)]" data-testid="collection-tanstack-table">
     <colgroup>
       <col style={{ width: 76 }} />
       {table.getAllLeafColumns().map(column => <col key={column.id}

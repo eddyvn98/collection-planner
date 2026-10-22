@@ -117,12 +117,19 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    document.removeEventListener("keydown",stop,true);};
  },[editingId,graph.nodes.length,data.records.length]);
  useEffect(()=>{
-  if(!flow||!root.current||editingId)return;
+  if(!flow||!root.current)return;
   const node=root.current;
-  const refresh=()=>requestAnimationFrame(()=>{if(node.clientWidth>0&&node.clientHeight>0)
-   void flow.fitView(fit);});
+  // Adding a node relayouts the entire tree. Even while renaming, the new
+  // bounds must fit the viewport or siblings become visually unclickable.
+  // An instant fit during editing also avoids moving pointer coordinates.
+  let frame=0;
+  const refresh=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{
+   if(node.clientWidth>0&&node.clientHeight>0)
+    void flow.fitView({...fit,duration:editingId?0:fit.duration});
+  });};
+  if(editingId){refresh();return()=>cancelAnimationFrame(frame);}
   const observer=new ResizeObserver(refresh);observer.observe(node);refresh();
-  return()=>observer.disconnect();
+  return()=>{observer.disconnect();cancelAnimationFrame(frame);};
  },[flow,structure,layoutEpoch,editingId]);
  const dragTarget=(id:string,x:number,y:number)=>
   candidateMindMapParent(data,id,graph.nodes,x,y);
@@ -222,6 +229,9 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     const element=event.target as HTMLElement;
     if(element.closest("button,input,select,.react-flow__handle,.nodrag"))return;
     const dragged=element.closest<HTMLElement>(".react-flow__node[data-id]");
+    // Select on pointer-down. Blur-save may rerender the edited node before
+    // React Flow receives click, otherwise the first click on a sibling is lost.
+    if(dragged?.dataset.id&&event.button===0)select(dragged.dataset.id);
     pointerDrag.current=dragged?.dataset.id?{id:dragged.dataset.id,x:event.clientX,y:event.clientY}:null;
    }}
    onPointerUpCapture={event=>{
@@ -252,7 +262,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     onConnectEnd={endConnection} proOptions={{hideAttribution:true}}>
     <Background color="var(--planner-border)" gap={18}/>
     <Controls showInteractive={false} className="!rounded-lg !border !border-[var(--planner-border)] !bg-[var(--planner-surface)] [&>button]:!h-11 [&>button]:!w-11 [&>button]:!bg-[var(--planner-surface)] [&>button]:!fill-[var(--planner-text)]"/>
-    <MiniMap pannable zoomable nodeColor="var(--planner-accent)" maskColor="var(--planner-hover)" style={{background:"var(--planner-surface)"}}/>
+    <MiniMap pannable zoomable className="!hidden sm:!block" nodeColor="var(--planner-accent)" maskColor="var(--planner-hover)" style={{background:"var(--planner-surface)"}}/>
    </ReactFlow>
   </div>
   {deleteId&&<CollectionModalDialog label="Delete Mind Map branch?" onClose={()=>setDeleteId(null)}>

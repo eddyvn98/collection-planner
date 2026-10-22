@@ -59,6 +59,8 @@ jobs:
           node tests/e2e/phase7a-timeline.mjs
           node tests/e2e/phase7b-mindmap.mjs
           node tests/e2e/phase7c1-inline.mjs
+          node tests/e2e/phase7c2a-mindmap.mjs
+          node tests/e2e/phase7c2a-grid.mjs
       - name: Capture before and after Grid screenshots (1280/375, light/dark)
         if: success() && github.event_name == 'pull_request'
         run: |
@@ -192,3 +194,24 @@ jobs:
         with:
           name: phase7c1-inline-before-after
           path: /tmp/phase7c1-captures/
+      - name: Capture 7C-2a Mind Map and Grid before/after 1280/375
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/phase7c2a/before /tmp/phase7c2a/after
+          SCREENSHOT_OUTPUT=/tmp/phase7c2a/after node tests/e2e/phase7c2a-mindmap.mjs
+          SCREENSHOT_OUTPUT=/tmp/phase7c2a/after node tests/e2e/phase7c2a-grid.mjs
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/phase7c2a-main FETCH_HEAD
+          ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/phase7c2a-main/node_modules
+          (cd /tmp/phase7c2a-main && node_modules/.bin/vite --host 127.0.0.1 --port 4181 > /tmp/phase7c2a-before.log 2>&1) &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4181/ > /dev/null; then break; fi
+            sleep 1
+          done
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4181 SCREENSHOT_OUTPUT=/tmp/phase7c2a/before node tests/e2e/phase7c2a-mindmap.mjs
+          SCREENSHOT_BASE_URL=http://127.0.0.1:4181 SCREENSHOT_OUTPUT=/tmp/phase7c2a/before node tests/e2e/phase7c2a-grid.mjs
+      - uses: actions/upload-artifact@v4
+        if: success() && github.event_name == 'pull_request'
+        with:
+          name: phase7c2a-mindmap-grid-before-after
+          path: /tmp/phase7c2a/
