@@ -51,7 +51,7 @@ export function useGridSpreadsheet({data,rows,selectedIds,readOnly,onChange}:Pro
   if(event.ctrlKey||event.altKey||event.metaKey)return;
   if(!["Tab","Enter","ArrowDown","ArrowUp","ArrowLeft","ArrowRight"].includes(event.key))return;
   const input=target.matches("input,select,textarea");
-  if(input&&event.key!=="Enter")return;
+  if(input&&event.key!=="Enter"&&event.key!=="Tab")return;
   const nextRow=event.key==="ArrowDown"||event.key==="Enter"&&!event.shiftKey?row+1:
    event.key==="ArrowUp"||event.key==="Enter"&&event.shiftKey?row-1:row;
   let nextCol=event.key==="ArrowRight"||event.key==="Tab"&&!event.shiftKey?col+1:
