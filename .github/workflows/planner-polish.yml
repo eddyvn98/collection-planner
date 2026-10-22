@@ -50,3 +50,4 @@ jobs:
           node tests/e2e/phase5d-ui.mjs
           node tests/e2e/phase5e-ui.mjs
           node tests/e2e/phase5f-portals.mjs
+          node tests/e2e/phase5g-keyboard.mjs
