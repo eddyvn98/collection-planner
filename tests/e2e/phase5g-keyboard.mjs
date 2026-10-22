@@ -32,6 +32,7 @@ try{
  const cancel=dialog.getByRole("button",{name:"Cancel"});
  const remove=dialog.getByRole("button",{name:"Delete view"});
  await cancel.focus();await page.keyboard.press("Shift+Tab");
+ console.log("Focus after ShiftTab",await page.evaluate(()=>({active:document.activeElement?.outerHTML?.slice(0,300),floating:document.querySelectorAll("[data-planner-floating]").length,dialog:[...document.querySelectorAll("[role=alertdialog]")].map(x=>x.outerHTML.slice(0,100))})));
  assert(await remove.evaluate(e=>e===document.activeElement),"Shift+Tab should wrap to last button");
  await page.keyboard.press("Tab");
  assert(await cancel.evaluate(e=>e===document.activeElement),"Tab should wrap back to Cancel");
