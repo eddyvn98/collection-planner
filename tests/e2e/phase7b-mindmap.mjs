@@ -108,6 +108,11 @@ try {
   console.log("PASS Mind Map visible Undo/Redo for branch creation");
   const dragSource=node(page,"sibling").locator("strong");
   const parentTarget=node(page,"root");
+  // Redo re-runs layout and fitView; wait for the viewport to settle so drag coordinates stay valid.
+  for(let stable=0,last="";stable<4;){
+   const box=JSON.stringify([await dragSource.boundingBox(),await parentTarget.boundingBox()]);
+   stable=box===last?stable+1:0;last=box;await page.waitForTimeout(150);
+  }
   const from=await dragSource.boundingBox(),to=await parentTarget.boundingBox();
   assert(from&&to,"Mind Map drag endpoints visible");
   await page.mouse.move(from.x+from.width/2,from.y+from.height/2);
