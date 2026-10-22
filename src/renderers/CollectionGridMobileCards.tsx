@@ -1,4 +1,5 @@
-import { useMemo,useState } from "react";
+import { Fragment,useMemo,useState } from "react";
+import {viewGroupName} from "../collections/collectionToolbarGrouping";
 import {buildTaskTree} from "../collections/collectionTaskTree";
 import {taskBreadcrumb} from "../collections/collectionTreeActions";
 import { CheckCircle2, Circle, CircleDot, Flag, Pencil, Trash2, ChevronDown, ChevronRight, CornerDownRight } from "lucide-react";
@@ -6,13 +7,13 @@ import { taskAssignees, taskDate, localToday } from "../collections/collectionTa
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { setTaskProgress } from "./collectionBoardGroups";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
-import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
+import { recordTitle, type CollectionBlockPayload, type CollectionRecord, type CollectionField } from "../collections/model";
 interface Props {
  data:CollectionBlockPayload;rows:CollectionRecord[];selected:string[];readOnly:boolean;
  onSelect:(id:string,checked:boolean)=>void;onOpen:(id:string)=>void;
- onChange:(next:CollectionBlockPayload)=>void;onDeleteRequest:(id:string)=>void;
+ onChange:(next:CollectionBlockPayload)=>void;onDeleteRequest:(id:string)=>void;groupField?:CollectionField;
 }
-export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,onOpen,onChange,onDeleteRequest}:Props){
+export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,onOpen,onChange,onDeleteRequest,groupField}:Props){
  const tree=useMemo(()=>buildTaskTree(data.records),[data.records]);
  const [collapsed,setCollapsed]=useState<Set<string>>(()=>new Set());
  const toggle=(id:string)=>setCollapsed(previous=>{const next=new Set(previous);if(next.has(id))next.delete(id);else next.add(id);return next;});
@@ -20,14 +21,18 @@ export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,
   {rows.filter(record=>{let parent=record.parentId;const seen=new Set<string>();
    while(parent&&!seen.has(parent)){if(collapsed.has(parent))return false;seen.add(parent);parent=tree.byId.get(parent)?.parentId;}
    return true;
-  }).map(record=>{
+  }).map((record,index,all)=>{
    const depth=tree.depth.get(record.id)??1;
    const hasChildren=!!tree.children.get(record.id)?.length;
    const path=record.parentId?taskBreadcrumb(data,record.id).slice(0,-1).map(item=>recordTitle(data,item)).join(" › "):"";
    const title=recordTitle(data,record),people=taskAssignees(data,record);
    const labels=(data.labels??[]).filter(label=>record.labelIds?.includes(label.id));
    const due=taskDate(data,record,"due"),progress=record.progress??"not_started";
-   return <article key={record.id} data-record-id={record.id}
+   return <Fragment key={record.id}>
+   {groupField&&(index===0||all[index-1]?.values[groupField.id]!==record.values[groupField.id])&&
+    <h3 data-testid="planner-grid-group" className="min-h-11 border-b border-[var(--planner-border)] p-3 text-sm font-semibold">
+    {groupField.name}: {viewGroupName(record,groupField)}</h3>}
+   <article data-record-id={record.id}
     className={"rounded-lg border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)] "+(depth>1?"border-l-2 border-l-[var(--planner-accent)]":"")}
     style={{marginInlineStart:Math.min(depth-1,3)*14}} data-tree-depth={depth}>
     {depth>1&&<div className="mb-1 flex items-center gap-1 text-[10px] text-[var(--planner-secondary)]">
@@ -65,7 +70,7 @@ export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,
      {labels.map(label=><span key={label.id} className="rounded px-1.5 py-0.5 text-white" style={{backgroundColor:/^#[0-9a-f]{6}$/i.test(label.color)?label.color:"#5B5FC7"}}>{label.name}</span>)}
      {people.map(person=><span key={person.id} className="rounded-full bg-[var(--planner-hover)] px-1.5 py-0.5" title={person.name}>{person.name}</span>)}
     </button>
-   </article>;
+   </article></Fragment>;
   })}
   {!rows.length&&<p role="status" className="rounded-lg border border-dashed p-5 text-center text-xs text-[var(--planner-secondary)]">
    No matching tasks. Change filters or add a task.</p>}
