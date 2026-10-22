@@ -1,4 +1,7 @@
-import { CheckCircle2, Circle, CircleDot, Flag, Pencil, Trash2 } from "lucide-react";
+import { useMemo,useState } from "react";
+import {buildTaskTree} from "../collections/collectionTaskTree";
+import {taskBreadcrumb} from "../collections/collectionTreeActions";
+import { CheckCircle2, Circle, CircleDot, Flag, Pencil, Trash2, ChevronDown, ChevronRight, CornerDownRight } from "lucide-react";
 import { taskAssignees, taskDate, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { setTaskProgress } from "./collectionBoardGroups";
@@ -10,14 +13,32 @@ interface Props {
  onChange:(next:CollectionBlockPayload)=>void;onDeleteRequest:(id:string)=>void;
 }
 export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,onOpen,onChange,onDeleteRequest}:Props){
+ const tree=useMemo(()=>buildTaskTree(data.records),[data.records]);
+ const [collapsed,setCollapsed]=useState<Set<string>>(()=>new Set());
+ const toggle=(id:string)=>setCollapsed(previous=>{const next=new Set(previous);if(next.has(id))next.delete(id);else next.add(id);return next;});
  return <div data-testid="collection-mobile-grid" className="space-y-1 sm:hidden">
-  {rows.map(record=>{
+  {rows.filter(record=>{let parent=record.parentId;const seen=new Set<string>();
+   while(parent&&!seen.has(parent)){if(collapsed.has(parent))return false;seen.add(parent);parent=tree.byId.get(parent)?.parentId;}
+   return true;
+  }).map(record=>{
+   const depth=tree.depth.get(record.id)??1;
+   const hasChildren=!!tree.children.get(record.id)?.length;
+   const path=record.parentId?taskBreadcrumb(data,record.id).slice(0,-1).map(item=>recordTitle(data,item)).join(" › "):"";
    const title=recordTitle(data,record),people=taskAssignees(data,record);
    const labels=(data.labels??[]).filter(label=>record.labelIds?.includes(label.id));
    const due=taskDate(data,record,"due"),progress=record.progress??"not_started";
    return <article key={record.id} data-record-id={record.id}
-    className="rounded-lg border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)]">
-    <div className="flex items-center gap-2">
+    className={"rounded-lg border-b border-[var(--planner-border)] bg-[var(--planner-surface)] p-2.5 text-[var(--planner-text)] "+(depth>1?"border-l-2 border-l-[var(--planner-accent)]":"")}
+    style={{marginInlineStart:Math.min(depth-1,3)*10}} data-tree-depth={depth}>
+    {depth>1&&<div className="mb-1 flex items-center gap-1 text-[10px] text-[var(--planner-secondary)]">
+      <CornerDownRight size={12} aria-hidden="true"/><span className="truncate">{path}</span>
+    </div>}
+    <div className="flex items-center gap-1">
+     {hasChildren?<button type="button" aria-label={(collapsed.has(record.id)?"Expand ":"Collapse ")+title}
+       aria-expanded={!collapsed.has(record.id)} onClick={()=>toggle(record.id)}
+       className="grid h-10 w-6 shrink-0 place-items-center rounded text-[var(--planner-secondary)] focus-visible:ring-2">
+       {collapsed.has(record.id)?<ChevronRight size={15}/>:<ChevronDown size={15}/>}</button>:
+       <span className="w-6 shrink-0" aria-hidden="true"/>}
      <button type="button" aria-label={(progress==="completed"?"Reopen ":"Complete ")+title}
       disabled={readOnly} onClick={()=>onChange(setTaskProgress(data,record.id,progress==="completed"?"not_started":"completed"))}
       className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--planner-accent)] focus-visible:ring-2">
