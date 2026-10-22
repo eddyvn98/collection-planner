@@ -81,6 +81,13 @@ describe("Phase 6C — multi-level sub-task model",()=>{
   expect(validCollectionDependencies(data,"b",["root"])).toBe(false);
   expect(setCollectionDependencies(data,"root",["b"])).toBe(data);
  });
+ it("refuses reparent that turns existing predecessor into an ancestor",()=>{
+  const {data}=fixture();
+  data.records[3].dependsOn=["b"];
+  // Sibling depends on b. Moving sibling under b would make that dependency
+  // connect a parent to its descendant and must be rejected without mutation.
+  expect(setParent(data,"sibling","b")).toBe(data);
+ });
  it("copies entire branch, remapping child parents, IDs and internal sibling dependencies",()=>{
   const {data,title}=fixture();
   data.records[3].dependsOn=["a"];
