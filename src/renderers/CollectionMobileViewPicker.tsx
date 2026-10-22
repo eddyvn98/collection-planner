@@ -2,8 +2,8 @@ import { useRef, useState } from "react";
 import { BarChart3, CalendarDays, ChevronDown, Columns3, Table2 } from "lucide-react";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import type { CollectionView } from "../collections/model";
-const ICONS={table:Table2,kanban:Columns3,calendar:CalendarDays,charts:BarChart3};
-const NAMES={table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts"};
+const ICONS={table:Table2,kanban:Columns3,calendar:CalendarDays,charts:BarChart3,timeline:GanttChartSquare,mindmap:Network,gallery:Images,form:ClipboardList};
+const NAMES={table:"Grid",kanban:"Board",calendar:"Schedule",charts:"Charts",timeline:"Timeline",mindmap:"Mind Map",gallery:"Gallery",form:"Form"};
 export function CollectionMobileViewPicker({views,selected,onSelect}:{
  views:CollectionView[];selected:string;onSelect:(id:string)=>void;
 }){
