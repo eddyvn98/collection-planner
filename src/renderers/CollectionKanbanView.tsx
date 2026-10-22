@@ -5,7 +5,7 @@ import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, pointerWithin, 
  useSensor, useSensors, type CollisionDetection, type DragEndEvent } from "@dnd-kit/core";
 import { descendantCounts, MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
 import { moveTaskTree } from "../collections/collectionTreeActions";
-import { addBucket } from "./collectionBoardActions";
+import { addBucket,reorderBucket } from "./collectionBoardActions";
 import { boardGroups, moveGroupedTask, parseCardDragId } from "./collectionBoardGroups";
 import { CollectionBoardBucket } from "./CollectionBoardBucket";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
@@ -37,7 +37,8 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
  };
  const onDragEnd=({active,over}:DragEndEvent)=>{
   if(readOnly||!over)return;
-  const moving=parseCardDragId(String(active.id));
+  const activeId=String(active.id),targetId=String(over.id);
+  const moving=parseCardDragId(activeId);
   if(!moving)return;
   const target=String(over.id);
   if(target.startsWith("subtask:")){
@@ -72,7 +73,11 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={onDragEnd}>
    <div className="flex min-h-0 flex-1 items-start gap-2 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:snap-none" data-testid="collection-kanban">
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group} counts={counts}
-     readOnly={readOnly} onChange={onChange} showSubtasks={showSubtasks} onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
+     readOnly={readOnly} onChange={onChange} showSubtasks={showSubtasks}
+     onReorder={(source,target)=>{if(mode!=="bucket"||!group)return;
+      const next=reorderBucket(data,group.id,source,target);
+      if(next!==data){setDragWarning("");onChange(next);}}}
+     onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
     {mode==="bucket"&&!!group&&!readOnly&&(creating?
      <form className="w-64 shrink-0 space-y-2 rounded-xl bg-[var(--planner-hover)] p-3"
       onSubmit={e=>{e.preventDefault();const next=addBucket(data,group.id,newBucket);

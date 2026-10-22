@@ -58,3 +58,12 @@ export function moveBoardCard(data: CollectionBlockPayload, recordId: string, fi
   for (let i = 0; i < destination.length; i++) next = updateTask(next, destination[i].id, { boardOrder: i });
   return next;
 }
+
+/** Persist visual bucket order in the existing select-field option array. */
+export function reorderBucket(data:CollectionBlockPayload,fieldId:string,source:string,target:string){
+ const field=data.fields.find(item=>item.id===fieldId&&item.type==="select");
+ const options=[...(field?.options??[])],from=options.indexOf(source),to=options.indexOf(target);
+ if(!field||source===target||from<0||to<0)return data;
+ options.splice(to,0,options.splice(from,1)[0]);
+ return updateField(data,fieldId,{options});
+}

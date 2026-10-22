@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
-import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, GripVertical, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { createGroupedTask, splitBucketCompletion, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
 import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions";
 import { CollectionModalDialog } from "./CollectionModalDialog";
@@ -9,11 +9,28 @@ import { CollectionTaskCard } from "./CollectionTaskCard";
 import type { CollectionBlockPayload, CollectionField } from "../collections/model";
 interface Props {data:CollectionBlockPayload;group:BoardGroup;mode:BoardGroupBy;field?:CollectionField;
  readOnly:boolean;showSubtasks:boolean;counts:Map<string,{done:number;total:number}>;
- onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;}
-export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtasks,counts,onChange,onOpen}:Props){
+ onChange:(next:CollectionBlockPayload)=>void;onOpen:(id:string,trigger:HTMLButtonElement)=>void;
+ onReorder:(source:string,target:string)=>void;}
+export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtasks,counts,onChange,onOpen,onReorder}:Props){
  const bucketMenuRef=useRef<HTMLButtonElement>(null);
  const addTriggerRef=useRef<HTMLButtonElement>(null);
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
+ const bucketPointer=useRef<{id:number;x:number;y:number}|null>(null);
+ const [draggingBucket,setDraggingBucket]=useState(false);
+ const startBucket=(event:React.PointerEvent<HTMLButtonElement>)=>{
+  bucketPointer.current={id:event.pointerId,x:event.clientX,y:event.clientY};
+  event.currentTarget.setPointerCapture(event.pointerId);
+ };
+ const finishBucket=(event:React.PointerEvent<HTMLButtonElement>)=>{
+  const start=bucketPointer.current;bucketPointer.current=null;setDraggingBucket(false);
+  if(!start||start.id!==event.pointerId||
+   Math.hypot(event.clientX-start.x,event.clientY-start.y)<8)return;
+  const target=document.elementFromPoint(event.clientX,event.clientY)
+   ?.closest<HTMLElement>('[data-testid="collection-kanban-column"][data-status]')
+   ?.dataset.status;
+  if(target?.startsWith("bucket:")&&target!==group.key)
+   onReorder(group.key.slice(7),target.slice(7));
+ };
  const {active}=useDndContext();
  const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
  useEffect(()=>{const close=()=>setAdding(false);document.addEventListener("planner:escape",close);return()=>document.removeEventListener("planner:escape",close);},[]);
@@ -38,7 +55,23 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
  return <section ref={drop.setNodeRef} data-testid="collection-kanban-column" data-status={group.key}
    className={"w-[calc(100vw-64px)] max-w-[340px] shrink-0 snap-start self-start rounded-md sm:w-72 bg-[var(--planner-canvas)] p-2 "+
     (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}>
-  <header className="mb-1 flex min-h-9 items-center gap-2">
+  <header className="mb-1 flex min-h-11 items-center gap-1">
+   {!readOnly&&editable&&<button type="button"
+    aria-label={"Drag bucket "+group.title} title="Drag to reorder buckets; Arrow keys to move"
+    onPointerDown={startBucket}
+    onPointerMove={event=>{if(bucketPointer.current?.id===event.pointerId&&
+     Math.hypot(event.clientX-bucketPointer.current.x,event.clientY-bucketPointer.current.y)>=8)
+      setDraggingBucket(true);}}
+    onPointerUp={finishBucket}
+    onPointerCancel={()=>{bucketPointer.current=null;setDraggingBucket(false);}}
+    onKeyDown={event=>{if(event.key==="ArrowLeft"||event.key==="ArrowRight"){
+     event.preventDefault();const op=event.key==="ArrowLeft"?"left":"right";
+     action(op);
+    }}}
+    aria-pressed={draggingBucket}
+    className={"nodrag grid h-11 w-11 shrink-0 cursor-grab touch-none place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+
+     (draggingBucket?"bg-[var(--planner-hover)] ring-2 ring-[var(--planner-accent)]":"")}>
+    <GripVertical size={17}/></button>}
    {renaming&&editable?<input autoFocus aria-label="Bucket name" value={name}
       className="min-w-0 flex-1 rounded border border-[var(--planner-accent)] bg-[var(--planner-surface)] px-2 py-1 text-sm"
       onChange={e=>setName(e.target.value)}

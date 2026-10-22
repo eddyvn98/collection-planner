@@ -2,7 +2,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useEffect,useRef,useState } from "react";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2, Circle, ClipboardCheck, Flag, GripVertical,
- MessageCircle, Paperclip, StickyNote, Trash2, CornerDownRight } from "lucide-react";
+ MessageCircle, Paperclip, StickyNote, Trash2, CornerDownRight, Tag, UserRound } from "lucide-react";
 import { deleteRecord,primaryField,recordTitle,setRecordValue, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 import { taskAssignees, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
@@ -10,6 +10,7 @@ import { cardIndicators } from "../collections/collectionCardIndicators";
 import { CollectionBoardSubtaskDrop } from "./CollectionBoardSubtaskDrop";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { CollectionModalDialog } from "./CollectionModalDialog";
+import { CollectionBoardQuickEdit } from "./CollectionBoardQuickEdit";
 import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
  data:CollectionBlockPayload;record:CollectionRecord;groupKey:string;readOnly:boolean;
@@ -60,10 +61,6 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
     (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}
    style={{transform:CSS.Translate.toString(drag.transform),opacity:drag.isDragging?.55:1}}>
   {img&&<img src={img.url} alt={img.name} loading="lazy" className="mb-2 h-24 w-full rounded object-cover"/>}
-  {!!labels.length&&<div data-testid="card-labels" className="mb-2 flex flex-wrap gap-1">
-    {labels.map(label=><span key={label.id} className="rounded-[3px] px-2 py-0.5 text-[11px] text-white"
-      style={{backgroundColor:/^#[0-9a-f]{6}$/i.test(label.color)?label.color:"#5B5FC7"}}>{label.name}</span>)}
-   </div>}
   <div className="flex items-start gap-1.5">
    <button type="button" title={complete?"Mark not started":"Mark complete"} aria-label={(complete?"Reopen ":"Complete ")+title}
     disabled={readOnly} onClick={()=>onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"))}
@@ -119,23 +116,41 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
     <span>{descendants.done}/{descendants.total}</span><span className="inline-block h-1.5 w-8 rounded bg-[var(--planner-border)]">
      <span className="block h-full rounded bg-[var(--planner-accent)]" style={{width:Math.round(100*descendants.done/descendants.total)+"%"}}/></span>
    </span>}
-   {indicators.priority&&<span data-testid="card-priority" title={"Priority "+record.priority}
-     className="flex gap-1 text-red-600"><Flag size={15} strokeWidth={1.75}/>{formatPlannerPriority(record.priority??"")}</span>}
    {!!indicators.checklist&&<span data-testid="card-checklist" title="Checklist" className="flex gap-1"><ClipboardCheck size={15}/>{indicators.checklist}</span>}
    {!!indicators.attachments&&<span data-testid="card-attachments" title="Attachments" className="flex gap-1"><Paperclip size={15}/>{indicators.attachments}</span>}
    {indicators.notes&&<span data-testid="card-notes" title="Notes"><StickyNote size={15}/></span>}
    {!!indicators.comments&&<span data-testid="card-comments" title="Comments" className="flex gap-1"><MessageCircle size={15}/>{indicators.comments}</span>}
   </div>
-  {(due||people.length>0)&&<div className="mt-2 flex items-center justify-between gap-2 text-xs">
-   {due?<span data-testid="card-due" title={due} className={"inline-flex items-center gap-1 rounded px-1.5 py-1 "+
-     (late?"bg-red-50 font-semibold text-red-700 dark:bg-red-950 dark:text-red-300":"text-[var(--planner-secondary)]")}>
-      <CalendarDays size={14}/>{formatPlannerCardDate(due,localToday())}</span>:<span/>}
-   {!!people.length&&<div data-testid="card-avatars" className="flex -space-x-1.5">
-     {people.slice(0,4).map(person=><span key={person.id} title={person.name} aria-label={person.name}
-       className="grid h-7 w-7 place-items-center rounded-full border-2 border-[var(--planner-surface)] bg-[#dcdafa] text-[10px] font-bold text-[#32317a]">
-       {person.name.split(/\s+/).slice(0,2).map(x=>x[0]??"").join("").toUpperCase()}</span>)}
+  {(due||people.length>0||!readOnly||indicators.priority)&&<div className="mt-1 flex flex-nowrap items-center justify-between gap-0.5 text-xs">
+    {(indicators.priority||!readOnly)&&<CollectionBoardQuickEdit kind="priority" data={data}
+      record={record} title={title} testId={indicators.priority?"card-priority":"card-priority-editor"}
+      readOnly={readOnly} onChange={onChange}>
+      {indicators.priority&&<Flag size={15}/>}
+      {indicators.priority?formatPlannerPriority(record.priority??"medium"):<span>Pri</span>}
+    </CollectionBoardQuickEdit>}
+    {(due||!readOnly)&&<CollectionBoardQuickEdit kind="due" data={data} record={record}
+      title={title} testId="card-due" warning={late} readOnly={readOnly} onChange={onChange}>
+      <CalendarDays size={14}/>{due&&formatPlannerCardDate(due,localToday())}
+    </CollectionBoardQuickEdit>}
+    {(people.length>0||!readOnly)&&<div data-testid="card-avatars">
+      <CollectionBoardQuickEdit kind="assignees" data={data} record={record}
+       title={title} readOnly={readOnly} onChange={onChange}>
+       {people.length?people.slice(0,4).map(person=><span key={person.id} title={person.name}
+        className="grid h-7 w-7 place-items-center rounded-full bg-[#dcdafa] px-1 text-[10px] font-bold text-[#32317a]">
+        {person.name.split(/\s+/).slice(0,2).map(x=>x[0]??"").join("").toUpperCase()}</span>)
+        :<UserRound size={14}/>}
+      </CollectionBoardQuickEdit>
+    </div>}
+    {(labels.length>0||!readOnly)&&<div data-testid={labels.length?"card-labels":undefined} className="min-w-0">
+      <CollectionBoardQuickEdit kind="labels" data={data} record={record}
+       title={title} readOnly={readOnly} onChange={onChange}>
+       {labels.length?<>
+        <Tag size={14}/><span className="max-w-20 truncate">{labels[0].name}</span>
+        {labels.length>1&&<span>+{labels.length-1}</span>}
+       </>:<Tag size={14}/>}
+      </CollectionBoardQuickEdit>
+    </div>}
    </div>}
-  </div>}
   <CollectionBoardSubtaskDrop data={data} record={record}/>
   {confirmDelete&&<CollectionModalDialog label={"Delete "+title+" task?"} onClose={()=>setConfirmDelete(false)} trigger={titleRef.current}>
     <h3 className="font-semibold">Delete “{title}”?</h3>
