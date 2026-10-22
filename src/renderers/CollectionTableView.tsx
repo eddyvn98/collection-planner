@@ -18,6 +18,7 @@ import { CollectionGridAddRow } from "./CollectionGridAddRow";
 import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
 import { CollectionGridAddQuick } from "./CollectionGridAddRow";
 import { CollectionGridEditable } from "./CollectionGridEditable";
+import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { localToday } from "../collections/collectionTasks";
 import { visibleGridTaskKeys } from "../collections/collectionPlannerFilters";
@@ -73,7 +74,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     const base = visibleFields.map(field => ({
     id: field.id, accessorFn: record => record.values[field.id] ?? "", header: () => field.name,
     sortingFn: field.type === "number" ? "basic" : "alphanumeric",
-    cell: ctx => ["date","text","number","url","select"].includes(field.type)
+    cell: ctx => { const editor = ["date","text","number","url","select"].includes(field.type)
       ? <CollectionGridEditable label={`${field.name} for ${recordTitle(dataRef.current,ctx.row.original)}`}
          value={ctx.row.original.values[field.id] ?? ""} type={field.type} readOnly={readOnly}
          options={field.type==="select" ? [{value:"",label:"Unassigned"},...(field.options??[]).map(value=>({value,label:value}))] : undefined}
@@ -87,7 +88,13 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       : <FieldEditor field={field} value={ctx.row.original.values[field.id] ?? ""}
         readOnly={readOnly} data={dataRef.current} sources={sourcesRef.current}
         recordId={ctx.row.original.id}
-        compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
+        compact onSet={value => patchRef.current(ctx.row.original, field, value)} />;
+      return field.id !== visibleFields[0]?.id ? editor :
+        <div className="flex min-w-0 items-center gap-1">
+         <div className="min-w-0 flex-1">{editor}</div>
+         <CollectionBlockedBadge data={dataRef.current} record={ctx.row.original} compact/>
+        </div>;
+    },
   })) as ColumnDef<CollectionRecord>[];
     const task = gridTaskColumns(() => dataRef.current, onChange, readOnly)
       .filter(col => visibleTaskKeys.includes(col.id as typeof visibleTaskKeys[number]));
