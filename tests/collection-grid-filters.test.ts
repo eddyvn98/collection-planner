@@ -1,3 +1,4 @@
+import { initialGridHiddenFields } from "../src/collections/collectionPlannerFilters";
 import { describe, expect, it } from "vitest";
 import { createCollection, normalizeCollection } from "../src/collections/model";
 import { EMPTY_TASK_FILTERS, filterPlannerTasks, matchesPlannerTask,
@@ -61,7 +62,7 @@ describe("Planner Grid filter logic",()=>{
   expect(gridFields(hidden,hidden.views.find(v=>v.id===grid.id)!)).not.toContain(secondary);
   expect(gridFields(hidden,hidden.views.find(v=>v.id===grid.id)!)[0].id).toBe(data.fields[0].id);
   expect(toggleGridField(data,grid.id,data.fields[0].id)).toBe(data);
-  expect(toggleGridField(hidden,grid.id,secondary.id).views.find(v=>v.id===grid.id)?.gridHiddenFieldIds).toEqual([]);
+  expect(toggleGridField(hidden,grid.id,secondary.id).views.find(v=>v.id===grid.id)?.gridHiddenFieldIds).toEqual(initialGridHiddenFields(data));
  });
  it("bulk applies status, priority, delete without mutating input",()=>{
   const data=prepare();
