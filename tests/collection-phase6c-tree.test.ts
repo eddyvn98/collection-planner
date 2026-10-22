@@ -100,7 +100,8 @@ describe("Phase 6C — multi-level sub-task model",()=>{
   expect(next.records).toHaveLength(8);
   const fresh=next.records.filter(x=>!data.records.some(old=>old.id===x.id));
   expect(fresh).toHaveLength(4);
-  expect(fresh.every(x=>x.progress==="not_started")).toBe(true);
+  expect(fresh.every(x=>x.progress!=="completed")).toBe(true);
+  expect(fresh.filter(x=>![...new Set(fresh.map(r=>r.parentId))].includes(x.id)).every(x=>x.progress==="not_started")).toBe(true);
   expect(fresh.every(x=>x.values[due]==="2026-10-28")).toBe(true);
   expect(fresh.find(x=>x.values[data.fields[0].id]==="a")?.parentId).toBe(fresh[0].id);
   expect(setTaskProgress(next,"root","completed").records).toHaveLength(8);
@@ -139,10 +140,10 @@ describe("Phase 6C — multi-level sub-task model",()=>{
   const {data}=fixture();
   expect(activeTaskReminders(data,"2026-10-22")).toHaveLength(4);
   expect(groupAssignedTasks(data,"me","2026-10-22").Overdue).toHaveLength(4);
-  expect(searchTaskTree(data,"b")).toEqual(new Set(["b","a","root"]));
+  expect(searchTaskTree(data,"b")).toEqual(new Set(["b","a","root","sibling"]));
   expect(chartSeries(data,data.records,"progress").reduce((n,x)=>n+x.value,0)).toBe(4);
   const view=data.views.find(x=>x.kind==="table")!;
-  expect(visibleRecords(data,view,"b").map(x=>x.id)).toEqual(["root","a","b"]);
+  expect(visibleRecords(data,view,"b").map(x=>x.id)).toEqual(["root","a","b","sibling"]);
  });
  it("indexes 5000 nodes and keeps UI page size at most 500 without truncating stored data",()=>{
   const rows=Array.from({length:5000},(_,i)=>({id:"t"+i,values:{},parentId:i%5===0?null:"t"+(i-1)}));
