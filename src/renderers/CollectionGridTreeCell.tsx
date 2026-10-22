@@ -55,7 +55,7 @@ export function CollectionGridTreeCell({data,record,collapsed,readOnly,onToggle,
     className="relative z-20 grid h-7 w-7 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2">
     {collapsed?<ChevronRight size={15}/>:<ChevronDown size={15}/>}</button>:
     <span aria-hidden="true" className="w-7 shrink-0"/>}
-  <button type="button" aria-label={"Move "+recordTitle(data,record)} title="Drag to reorder; Tab indent, Shift+Tab outdent; Alt+arrows"
+  <button ref={drag.setNodeRef} type="button" aria-label={"Move "+recordTitle(data,record)} title="Drag to reorder; Tab indent, Shift+Tab outdent; Alt+arrows"
     disabled={readOnly} {...drag.attributes} {...drag.listeners} onKeyDown={keyboard}
     className="relative z-20 grid h-8 w-5 shrink-0 cursor-grab place-items-center rounded text-[var(--planner-secondary)] focus-visible:ring-2"
     style={{transform:CSS.Translate.toString(drag.transform)}}><GripVertical size={14}/></button>
