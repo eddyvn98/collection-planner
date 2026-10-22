@@ -155,7 +155,10 @@ async function test(width,attempt){
  await settingsToolbar.getByRole("button",{name:"View fields"}).click();
  await settingsToolbar.getByRole("button",{name:"Group by"}).click();
  await settingsPage.getByRole("dialog",{name:"View group"}).getByRole("button",{name:"Bucket"}).click();
- await settingsPage.getByTestId("planner-grid-group").first().waitFor();
+ await (width===375?
+  settingsPage.getByTestId("collection-mobile-grid"):
+  settingsPage.getByTestId("collection-tanstack-table"))
+  .getByTestId("planner-grid-group").first().waitFor();
  await switchView(settingsPage,width,"Gallery");
  await settingsToolbar.getByRole("button",{name:"Group by"}).click();
  await settingsPage.getByRole("dialog",{name:"View group"}).getByRole("button",{name:"Bucket"}).click();
