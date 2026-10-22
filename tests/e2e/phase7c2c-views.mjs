@@ -85,7 +85,11 @@ async function check(width,attempt){
   .records.find(r=>r.id==="a")?.values.due==="2026-10-17");
  const start=day("2026-10-17").locator('[data-testid="schedule-task"][data-record-id="a"]')
   .getByTestId("schedule-resize-start");
- await drag(page,start,day("2026-10-15"));
+ if(width===375){
+  // Mobile agenda stacks full-height day cards. The earlier target can be
+  // offscreen while dragging; use the equivalent accessible edge shortcut.
+  await start.focus();await start.press("ArrowLeft");
+ }else await drag(page,start,day("2026-10-15"));
  await stored(page,()=>JSON.parse(localStorage.getItem("collection-planner:v1"))
   .records.find(r=>r.id==="a")?.values.start==="2026-10-15");
  const empty=day("2026-10-21");
