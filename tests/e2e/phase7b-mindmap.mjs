@@ -91,6 +91,16 @@ try {
   await redo.click();
   assert.equal((await records(page)).some(r=>r.id===created.id),true);
   console.log("PASS Mind Map visible Undo/Redo for branch creation");
+  const dragSource=node(page,"sibling").locator("strong");
+  const parentTarget=node(page,"root");
+  const from=await dragSource.boundingBox(),to=await parentTarget.boundingBox();
+  assert(from&&to,"Mind Map drag endpoints visible");
+  await page.mouse.move(from.x+from.width/2,from.y+from.height/2);
+  await page.mouse.down();
+  await page.mouse.move(to.x+to.width/2,to.y+to.height/2,{steps:20});
+  await page.mouse.up();
+  assert.equal((await records(page)).find(r=>r.id==="sibling").parentId,"root");
+  console.log("PASS Mind Map pointer drag reparent persists ID");
   await node(page,"sibling").click();
   await page.getByRole("button",{name:"Delete selected node"}).click();
   await page.getByRole("alertdialog",{name:"Delete Mind Map branch?"}).getByRole("button",{name:"Delete branch"}).click();
