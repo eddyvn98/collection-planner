@@ -130,7 +130,13 @@ async function test(width,attempt){
   await waitRecord(page,release.id,{kind:"value",field:"bucket",expected:"Doing"});
   score("bucket",1);
  }
- await toolbar.getByRole("button",{name:"Share plan"}).click();
+ // The click right after a drop is lost while the board re-renders; wait for the Share button to stop moving.
+ const shareButton=toolbar.getByRole("button",{name:"Share plan"});
+ for(let stable=0,last="";stable<4;){
+  const box=JSON.stringify(await shareButton.boundingBox());
+  stable=box===last?stable+1:0;last=box;await page.waitForTimeout(150);
+ }
+ await shareButton.click();
  const feedbackSnapshot=await toolbar.evaluate(node=>{
   const panel=node.querySelector('[data-testid="planner-share-feedback"]');
   return {present:!!panel,text:panel?.textContent,
