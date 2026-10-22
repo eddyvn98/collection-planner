@@ -183,8 +183,8 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     onConnectStart={(_event,params)=>{connectionStart.current=params.nodeId??null;}}
     onConnectEnd={endConnection} proOptions={{hideAttribution:true}}>
     <Background color="var(--planner-border)" gap={18}/>
-    <Controls showInteractive={false}/>
-    <MiniMap pannable zoomable style={{background:"var(--planner-surface)"}}/>
+    <Controls showInteractive={false} className="!rounded-lg !border !border-[var(--planner-border)] !bg-[var(--planner-surface)] [&>button]:!bg-[var(--planner-surface)] [&>button]:!fill-[var(--planner-text)]"/>
+    <MiniMap pannable zoomable nodeColor="var(--planner-accent)" maskColor="var(--planner-hover)" style={{background:"var(--planner-surface)"}}/>
    </ReactFlow>
   </div>
   {deleteId&&<CollectionModalDialog label="Delete Mind Map branch?" onClose={()=>setDeleteId(null)}>
