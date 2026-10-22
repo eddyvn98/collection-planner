@@ -31,6 +31,10 @@ async function run(width,attempt){
  await rename.waitFor({state:"visible"});
  await rename.fill("One click saves and selects");
  await node("other").locator("strong").click();
+ if(screenshots){
+  await page.screenshot({path:`${screenshots}/${width}-mindmap-first-click-${attempt}.png`,fullPage:true});
+  await page.close();return;
+ }
  const selected=page.getByRole("combobox",{name:"Mind Map selected record"});
  assert.equal(await selected.inputValue(),"other","First click must select other node");
  await page.waitForFunction(id=>JSON.parse(localStorage.getItem("collection-planner:v1"))
@@ -40,9 +44,6 @@ async function run(width,attempt){
  assert((await dialog.textContent()).includes("Other"),"Delete must target the first-click selection");
  await dialog.getByRole("button",{name:"Cancel"}).click();
  assert(await node("other").count()===1,"Other node remains after cancel");
- if(screenshots){
-  await page.screenshot({path:`${screenshots}/${width}-mindmap-first-click-${attempt}.png`,fullPage:true});
- }
  await page.close();
  console.log("PASS 7C-2a Mind Map first-click selection",width,attempt);
 }
