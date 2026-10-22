@@ -6,8 +6,9 @@ import { FieldEditor, btnClass, hintClass } from "./CollectionFieldEditor";
 import { addUtcDays, timelineLayout } from "./collectionTimelineDates";
 import { isoDay, parseCalendarDay } from "./collectionCalendarDates";
 import { CollectionGanttBar } from "./CollectionGanttBar";
+import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { collectionTablePage } from "./collectionTablePaging";
-import { longestCollectionDependencyChain, scheduleCollectionDependencies, setCollectionDependencies } from "../collections/collectionDependencies";
+import { availableCollectionDependencies, longestCollectionDependencyChain, scheduleCollectionDependencies, setCollectionDependencies } from "../collections/collectionDependencies";
 
 interface Props { rows: CollectionRecord[]; data: CollectionBlockPayload; start?: CollectionField;
   end?: CollectionField; readOnly: boolean; onChange: (next: CollectionBlockPayload) => void;
@@ -115,7 +116,8 @@ export function TimelineView({ rows, data, start, end, readOnly, onChange, patch
           <div className="flex min-h-12 items-center border-b" key={record.id}
             data-testid="collection-timeline-row" data-record-id={record.id}>
             <div className="sticky left-0 z-10 flex min-h-12 w-[220px] shrink-0 items-center border-r bg-[var(--planner-surface)] px-2 py-1 leading-4 dark:bg-[var(--planner-surface)]" title={recordTitle(data, record)}>
-              {recordTitle(data, record)}
+              <span className="min-w-0 flex-1 truncate">{recordTitle(data, record)}</span>
+              <CollectionBlockedBadge data={data} record={record} compact/>
             </div>
             <div className="relative h-11" style={{ width: span }}>
               {Math.max(startOffset, windowOffset) < Math.min(startOffset + length, windowOffset + view.days) && <CollectionGanttBar
@@ -156,7 +158,7 @@ export function TimelineView({ rows, data, start, end, readOnly, onChange, patch
               else onChange(next);
             }}>
             <option value="">+ Predecessor</option>
-            {data.records.filter(item => item.id !== record.id && !(record.dependsOn ?? []).includes(item.id))
+            {availableCollectionDependencies(data,record)
               .map(item => <option key={item.id} value={item.id}>{recordTitle(data, item)}</option>)}
           </select>
         </label>
