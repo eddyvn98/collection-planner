@@ -18,7 +18,7 @@ interface Props {
 export function CollectionViewTabs({ views, activeViewId, readOnly, onSelect, onDelete }: Props) {
   const [deleteViewId, setDeleteViewId] = useState<string | null>(null);
   const [contextMenu,setContextMenu]=useState<string|null>(null);
-  const rightClickRef=useRef<HTMLButtonElement>(null);
+  const rightClickRef=useRef<HTMLButtonElement|null>(null);
   const target=views.find(view=>view.id===deleteViewId);
   const menuTarget=views.find(view=>view.id===contextMenu);
   const icons = {table:Table2, kanban:Columns3, calendar:CalendarDays, charts:BarChart3};
