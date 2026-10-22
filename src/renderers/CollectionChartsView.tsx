@@ -44,7 +44,7 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
       {points.map((point) => <button type="button" key={point.key}
         onClick={() => onChoose(dimension, point.key)}
         className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs hover:border-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] border-[var(--planner-border)]"
-        title={"Show " + point.name + " tasks in Grid"}>
+        title={"Filter " + point.name + " tasks in Charts"}>
         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: chartPointColor(points, point) }}/>
         {point.name} <strong>{point.value}</strong>
       </button>)}
@@ -53,9 +53,9 @@ function ChartPanel({ dimension, title, points, style, onChoose }: {
       A task assigned to several people contributes to each person.</p>}
   </section>;
 }
-export function CollectionChartsView({ data, rows, onDrilldown }: {
+export function CollectionChartsView({ data, rows, onDrilldown,onOpenGrid }: {
   data: CollectionBlockPayload; rows: CollectionRecord[];
-  onDrilldown: (filters: TaskFilterState) => void;
+  onDrilldown: (filters: TaskFilterState) => void;onOpenGrid?:()=>void;
 }) {
   const [style, setStyle] = useState<"donut" | "bar">("donut");
   const today = localToday();
@@ -71,18 +71,18 @@ export function CollectionChartsView({ data, rows, onDrilldown }: {
   return <div data-testid="collection-charts" className="min-w-0 space-y-4">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-lg font-semibold">Charts</h2>
-        <p className="text-xs text-[var(--planner-secondary)]">{summary.total} {summary.total === 1 ? "task" : "tasks"}. Click any category to filter Grid.</p>
+        <p className="text-xs text-[var(--planner-secondary)]">{summary.total} {summary.total === 1 ? "task" : "tasks"}. Click a category to filter Charts here.</p>
       </div>
-      <label className="text-sm">Display <select aria-label="Chart type"
+      <div className="flex items-center gap-2"><button type="button" onClick={onOpenGrid} className="min-h-10 rounded border border-[var(--planner-border)] px-3 text-sm hover:bg-[var(--planner-hover)]">Open in Grid</button><label className="text-sm">Display <select aria-label="Chart type"
         className="ml-2 rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 py-1.5 text-[var(--planner-text)]"
         value={style} onChange={event => setStyle(event.target.value as "donut" | "bar")}>
         <option value="donut">Donut</option><option value="bar">Bar</option>
-      </select></label>
+      </select></label></div>
     </header>
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       {counters.map(counter => <button type="button" key={counter.key}
         onClick={() => onDrilldown(summarySelection(counter.key))}
-        aria-label={"Show " + counter.label + " tasks in Grid"}
+        aria-label={"Filter " + counter.label + " tasks in Charts"}
         className="rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] p-4 text-left shadow-sm transition hover:border-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] ">
         <span className="block text-xs text-[var(--planner-secondary)]">{counter.label}</span>
         <strong className={"mt-1 block text-3xl tabular-nums " + counter.shade}>{counter.value}</strong>
