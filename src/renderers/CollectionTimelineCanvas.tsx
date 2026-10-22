@@ -89,7 +89,7 @@ export function CollectionTimelineCanvas({data,entries,from,days,zoom,readOnly,h
     </div>;
    })}
    <CollectionTimelineWires data={data} rows={entries.map(item=>item.record)} from={from}
-      pixels={pixels} width={span} readOnly={readOnly} onRemove={onRemove}/>
+      pixels={pixels} width={span} startId={startId} dueId={endId} readOnly={readOnly} onRemove={onRemove}/>
   </div>
   {!readOnly&&<div className="flex h-12 items-stretch border-b border-[var(--planner-border)]" data-testid="timeline-blank-row">
    <div className="sticky left-0 z-[5] flex w-[220px] shrink-0 items-center border-r border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-xs text-[var(--planner-secondary)]">+ Drag to create task</div>
