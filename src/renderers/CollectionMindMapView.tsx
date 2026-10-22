@@ -222,6 +222,9 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     const element=event.target as HTMLElement;
     if(element.closest("button,input,select,.react-flow__handle,.nodrag"))return;
     const dragged=element.closest<HTMLElement>(".react-flow__node[data-id]");
+    // Select on pointer-down. Blur-save may rerender the edited node before
+    // React Flow receives click, otherwise the first click on a sibling is lost.
+    if(dragged?.dataset.id&&event.button===0)select(dragged.dataset.id);
     pointerDrag.current=dragged?.dataset.id?{id:dragged.dataset.id,x:event.clientX,y:event.clientY}:null;
    }}
    onPointerUpCapture={event=>{
