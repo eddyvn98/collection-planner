@@ -2,11 +2,11 @@ import {useEffect,useState,type ReactNode} from "react";
 import {useDraggable,useDroppable,useDndContext} from "@dnd-kit/core";
 import {CSS} from "@dnd-kit/utilities";
 import {ChevronDown,ChevronRight,GripVertical,CornerDownRight} from "lucide-react";
-import {buildTaskTree} from "../collections/collectionTaskTree";
+import type {TreeIndex} from "../collections/collectionTaskTree";
 import {shiftTreeSibling,indentTreeTask,outdentTreeTask,moveTaskTree} from "../collections/collectionTreeActions";
 import {recordTitle,type CollectionBlockPayload,type CollectionRecord} from "../collections/model";
 interface Props{data:CollectionBlockPayload;record:CollectionRecord;collapsed:boolean;readOnly:boolean;
- onToggle:(id:string)=>void;onChange:(next:CollectionBlockPayload)=>void;children:ReactNode}
+ onToggle:(id:string)=>void;onChange:(next:CollectionBlockPayload)=>void;tree:TreeIndex;children:ReactNode}
 const targetId=(mode:string,id:string)=>"tree-target:"+mode+":"+id;
 function TreeDropTarget({id,mode,onHoverExpand}: {id:string;mode:"before"|"after"|"child";onHoverExpand?:()=>void}){
  const {active}=useDndContext(),{isOver,setNodeRef}=useDroppable({id:targetId(mode,id),disabled:!active});
@@ -18,9 +18,9 @@ function TreeDropTarget({id,mode,onHoverExpand}: {id:string;mode:"before"|"after
   className={"absolute left-0 right-0 z-10 "+(mode==="before"?"top-0 h-2":mode==="after"?"bottom-0 h-2":"top-2 bottom-2")+
    (!active?" pointer-events-none":isOver?" bg-[var(--planner-accent)]/25 ring-2 ring-[var(--planner-accent)]":" pointer-events-auto bg-transparent")}/>;
 }
-export function CollectionGridTreeCell({data,record,collapsed,readOnly,onToggle,onChange,children}:Props){
+export function CollectionGridTreeCell({data,record,collapsed,readOnly,onToggle,onChange,tree,children}:Props){
  const [moving,setMoving]=useState(false),[warning,setWarning]=useState("");
- const tree=buildTaskTree(data.records),depth=tree.depth.get(record.id)??1;
+ const depth=tree.depth.get(record.id)??1;
  const hasChildren=(tree.children.get(record.id)?.length??0)>0;
  const drag=useDraggable({id:"tree:"+record.id,disabled:readOnly});
  const update=(next:CollectionBlockPayload)=>{
