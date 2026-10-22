@@ -79,7 +79,12 @@ try {
   assert(created&&created.parentId==="root","Node + adds direct child");
   await node(page,created.id).waitFor();
   console.log("PASS node + creates child and renders in graph");
+  const activeEditor=node(page,created.id).locator("input[data-mindmap-rename]");
+  await activeEditor.waitFor();
+  await activeEditor.fill("Draft child title");
   await graph.getByRole("button",{name:"Collapse Renamed Root"}).click();
+  assert.equal((await records(page)).find(r=>r.id===created.id).values.name,"Draft child title",
+   "Collapse should save the in-place rename");
   await node(page,"child").waitFor({state:"detached"});
   assert.equal(await node(page,"child").count(),0);
   await graph.getByRole("button",{name:"Expand Renamed Root"}).click();
