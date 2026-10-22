@@ -1,8 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { btnClass, fieldTypeGuidance, fieldTypeLabels, hintClass, inputClass, FieldEditor } from "./CollectionFieldEditor";
-import { CollectionScheduleView } from "./CollectionScheduleView";
-import { CollectionChartsView } from "./CollectionChartsView";
+import { CollectionScheduleView } from "./CollectionScheduleView"; import { CollectionChartsView } from "./CollectionChartsView";
 import { CollectionTaskFilterBar } from "./CollectionTaskFilterBar";
 import { EMPTY_TASK_FILTERS, filterPlannerTasks, type TaskFilterState } from "../collections/collectionPlannerFilters";
 import { TimelineView } from "./CollectionTimelineView";
@@ -17,13 +16,12 @@ import { CollectionScheduledAutomationSettings } from "./CollectionScheduledAuto
 import { CollectionAuditPanel } from "./CollectionAuditPanel";
 import { CollectionIntegrityPanel } from "./CollectionIntegrityPanel";
 import { CollectionPlannerHeader } from "./CollectionPlannerHeader";
-import { CollectionAssignedToMe } from "./CollectionAssignedToMe"; import { CollectionPlanTemplates } from "./CollectionPlanTemplates";
-import { CollectionFilterChips } from "./CollectionFilterChips";
-import { CollectionSettingsSection } from "./CollectionSettingsSection";
-import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
+import { CollectionAssignedToMe } from "./CollectionAssignedToMe"; import { CollectionPlanTemplates } from "./CollectionPlanTemplates"; import { CollectionFilterChips } from "./CollectionFilterChips";
+import { CollectionSettingsSection } from "./CollectionSettingsSection"; import { CollectionImportExportMenu } from "./CollectionImportExportMenu";
 import { CollectionImportPrompts } from "./CollectionImportPrompts"; import { CollectionViewConditions } from "./CollectionViewConditions";
 import { createPortal } from "react-dom";
 import { useCollectionHistory } from "../collections/collectionHistory";
+import {usePlannerUndoToast,CollectionUndoToast} from "./CollectionUndoToast";
 import { CollectionKeyboard } from "./CollectionKeyboard"; import { usePlannerDarkTheme } from "./usePlannerDarkTheme"; import { normalizeCollection } from "../collections/model";
 import { visiblePlannerFields, isLegacyStatusField } from "../collections/collectionPlannerFields";
 import type { CollectionBlockPayload, CollectionSources, CollectionField, CollectionRecord, CollectionView } from "../collections/model";
@@ -35,7 +33,8 @@ interface Props { blockId: string; data: CollectionBlockPayload; sources?: Colle
   revisionNotice?: { stale: boolean; refreshing: boolean; error: string; refresh: () => Promise<void> };
   onChange: (next: CollectionBlockPayload) => void; readOnly: boolean }
 export function CollectionSurface({ blockId, data, sources = {}, revisionNotice, standalone = false, standaloneNavigation, onChange: persist, readOnly }: Props) {
-  const {onChange,undo,redo,canUndo,canRedo}=useCollectionHistory(data,persist,readOnly);
+  const history=useCollectionHistory(data,persist,readOnly);
+  const {onChange,undo,redo,canUndo,canRedo,toast,dismiss}=usePlannerUndoToast(data,history,readOnly);
   const root=useRef<HTMLDivElement>(null);
   const [darkMode,setDarkMode]=useState(()=>typeof localStorage!=="undefined"&&localStorage.getItem("planner:dark")==="1");
   useEffect(()=>{try{localStorage.setItem("planner:dark",darkMode?"1":"0");}catch{/* storage unavailable */}},[darkMode]);
@@ -271,6 +270,7 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
     {view.kind !== "table" && <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[var(--planner-border)] bg-[var(--planner-surface)] px-4 py-3 dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]">
       <button className={btnClass} disabled={readOnly} onClick={() => onChange(addRecord(data))}>+ Record</button>
     </div>}
+    <CollectionUndoToast message={toast} onUndo={undo} onClose={dismiss} canUndo={canUndo}/>
     <CollectionImportPrompts pending={pendingImport} error={importError}
       onConfirm={()=>{if(pendingImport)onChange(pendingImport);setPendingImport(null);}}
       onCancel={()=>setPendingImport(null)} onErrorClose={()=>setImportError("")}/>
