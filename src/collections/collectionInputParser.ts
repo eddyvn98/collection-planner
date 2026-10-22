@@ -70,8 +70,9 @@ export function applyQuickTokens(base:CollectionBlockPayload,parsed:QuickAddPars
  return next;
 }
 export function createQuickTask(data:CollectionBlockPayload,input:string,
- groupFieldId?:string,bucket="",today=localToday()):CollectionBlockPayload{
- const parsed=parseQuickAdd(input,data,today);
+ groupFieldId?:string,bucket="",today=localToday(),tokensEnabled=true):CollectionBlockPayload{
+ const parsed=tokensEnabled?parseQuickAdd(input,data,today):
+  {title:input.trim(),due:"",assigneeIds:[],labelIds:[],tokens:[]};
  if(!parsed.title)return data;
  const next=createBoardTask(data,parsed.title,groupFieldId,bucket);
  return next===data?data:applyQuickTokens(next,parsed);
