@@ -126,11 +126,11 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
      onEscape={()=>{setAdding(false);requestAnimationFrame(()=>addTriggerRef.current?.focus());}}
      className="min-h-11 w-full rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] p-2 text-sm"/>
     <div className="flex gap-2">
-      <button type="submit" disabled={!title.trim()} className="min-h-8 rounded bg-[var(--planner-accent)] px-3 text-xs text-white disabled:opacity-50">Add task</button>
-      <button type="button" className="min-h-8 rounded px-2 text-xs hover:bg-[var(--planner-hover)]" onClick={()=>setAdding(false)}>Cancel</button>
+      <button type="submit" disabled={!title.trim()} className="min-h-11 rounded bg-[var(--planner-accent)] px-3 text-xs text-white disabled:opacity-50">Add task</button>
+      <button type="button" className="min-h-11 rounded px-2 text-xs hover:bg-[var(--planner-hover)]" onClick={()=>setAdding(false)}>Cancel</button>
     </div></form>:
     <button ref={addTriggerRef} type="button" data-planner-add-task onClick={()=>setAdding(true)}
-      className="mb-2 inline-flex min-h-9 w-full items-center gap-2 rounded px-2 text-left text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] hover:text-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+      className="mb-2 inline-flex min-h-11 w-full items-center gap-2 rounded px-2 text-left text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] hover:text-[var(--planner-accent)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
       <Plus size={16} strokeWidth={1.75}/>Add task</button>)}
   <div aria-label={group.title+" tasks"} className="min-h-4" data-show-subtasks={showSubtasks}>
     {pending.map(card)}
