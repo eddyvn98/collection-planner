@@ -3,7 +3,6 @@ import {ListFilter,ArrowDownAZ,Columns3} from "lucide-react";
 import {CollectionFloatingPanel} from "./CollectionFloatingPanel";
 import {BOARD_MODES} from "./collectionBoardGroups";
 import {GRID_TASK_COLUMNS,gridFields,initialGridHiddenFields,toggleGridField} from "../collections/collectionPlannerFilters";
-import {formFields} from "../collections/collectionForm";
 import {primaryField,updateView,viewSorts,type CollectionBlockPayload,type CollectionView} from "../collections/model";
 import {isLegacyStatusField} from "../collections/collectionPlannerFields";
 type Menu="group"|"sort"|"fields";
@@ -21,7 +20,7 @@ export function CollectionViewToolbarMenus({data,view,readOnly,onChange}:Props){
  const title=primaryField(data)?.id;
  const gallery=eligible.filter(f=>f.id!==title&&f.type!=="image");
  const galleryShown=view.galleryFieldIds??gallery.slice(0,3).map(f=>f.id);
- const form=formFields(data,view);
+ const form=eligible.filter(f=>!["formula","lookup","rollup"].includes(f.type));
  const formShown=view.formFieldIds??form.map(f=>f.id);
  const gridShown=gridFields(data,view).map(f=>f.id);
  const fieldsShown=(view.gridHiddenFieldIds??initialGridHiddenFields(data));
@@ -35,18 +34,19 @@ export function CollectionViewToolbarMenus({data,view,readOnly,onChange}:Props){
  const supported=view.kind==="table"||view.kind==="gallery"||view.kind==="form";
  return <div data-testid="planner-view-toolbar-menus" className="flex shrink-0 flex-wrap items-center gap-1">
   {(["group","sort","fields"] as const).map(menu=><span key={menu} className="relative">
-   <button ref={anchors[menu]} type="button" aria-label={"View "+menu}
+   <button ref={anchors[menu]} type="button" aria-label={menu==="group"?"Group by":"View "+menu}
     aria-expanded={open===menu} aria-haspopup="dialog"
     className={touch} onClick={()=>setOpen(current=>current===menu?null:menu)}>
     {menu==="group"?<ListFilter size={16}/>:menu==="sort"?<ArrowDownAZ size={16}/>:<Columns3 size={16}/>}
     <span className="hidden sm:inline">{menu==="group"?"Group":menu==="sort"?"Sort":"Fields"}</span>
    </button>
    <CollectionFloatingPanel open={open===menu} anchorRef={anchors[menu]} onClose={()=>setOpen(null)}
-    role="dialog" label={"View "+menu} align="start"
+    role={menu==="group"&&view.kind==="kanban"?"menu":"dialog"}
+    label={menu==="group"&&view.kind==="kanban"?"Group by":"View "+menu} align="start"
     className="w-[min(300px,calc(100vw-16px))] rounded-lg p-3">
     <strong className="block pb-2 text-sm">{menu==="group"?"Group tasks":menu==="sort"?"Sort tasks":"Visible fields"}</strong>
     {menu==="group"&&(view.kind==="kanban"?
-     <div className="grid gap-1">{BOARD_MODES.map(mode=><button key={mode.value} type="button"
+     <div className="grid gap-1">{BOARD_MODES.map(mode=><button key={mode.value} type="button" role="menuitem"
       disabled={readOnly} aria-pressed={(view.boardGroupBy??"bucket")===mode.value}
       onClick={()=>{setView({boardGroupBy:mode.value});setOpen(null);}}
       className="min-h-11 rounded px-3 text-left text-sm hover:bg-[var(--planner-hover)] aria-pressed:bg-[var(--planner-hover)]">
