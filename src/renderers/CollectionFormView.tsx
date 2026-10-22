@@ -5,6 +5,8 @@ import { formFields, requiredFormFieldIds, submitCollectionForm } from "../colle
 import { btnClass, emptyValueClass, hintClass, inputClass } from "./CollectionFieldEditor";
 import { recordTitle } from "../collections/model";
 import { relationIds, encodeRelationIds } from "../collections/collectionRelations";
+import {reorderFormField} from "../collections/collectionViewReorder";
+import {CollectionReorderHandle} from "./CollectionReorderHandle";
 
 interface Props { data: CollectionBlockPayload; sources?: CollectionSources;
   view: CollectionView; readOnly: boolean;
@@ -44,6 +46,11 @@ export function CollectionFormView({ data, sources, view, readOnly, onChange }: 
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState("");
   const fields = formFields(data, view);
+  const order=fields.map(field=>field.id);
+  const move=(source:string,target:string)=>{
+   const next=reorderFormField(data,view.id,source,target);
+   if(next!==data)onChange(next);
+  };
   const required = new Set(requiredFormFieldIds(data, view));
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,11 +65,20 @@ export function CollectionFormView({ data, sources, view, readOnly, onChange }: 
     aria-label="Collection form" data-testid="collection-form" onSubmit={submit}>
     <h3 className="text-base font-semibold">{view.name}</h3>
     <p className={hintClass}>Responses become records in {data.title}.</p>
-    {fields.map(field => <label key={field.id} className="block space-y-1 text-xs">
-      <span className="font-semibold">{field.name}{required.has(field.id) ? " *" : ""}</span>
-      <FormInput field={field} data={data} sources={sources} readOnly={readOnly} required={required.has(field.id)}
-        value={draft[field.id] ?? ""} onSet={value => { setDraft(previous => ({ ...previous, [field.id]: value })); setFeedback(""); }} />
-    </label>)}
+    {fields.map(field => <div key={field.id} data-reorder-kind="form" data-reorder-id={field.id}
+      className="min-w-0 rounded border border-[var(--planner-border)] p-2">
+      <div className="mb-1 flex min-h-11 items-center gap-2">
+       <CollectionReorderHandle kind="form" itemId={field.id} label={field.name}
+        items={order} disabled={readOnly} onMove={move}/>
+       <label htmlFor={"form-field-"+field.id} className="min-w-0 flex-1 text-xs font-semibold">
+        {field.name}{required.has(field.id)?" *":""}
+       </label>
+      </div>
+      <div id={"form-field-"+field.id}>
+       <FormInput field={field} data={data} sources={sources} readOnly={readOnly} required={required.has(field.id)}
+        value={draft[field.id] ?? ""} onSet={value => {setDraft(previous=>({...previous,[field.id]:value}));setFeedback("");}}/>
+      </div>
+    </div>)}
     <button type="submit" className={btnClass} disabled={readOnly || !fields.length || data.records.length >= 5000}>Submit record</button>
     {readOnly && <p className={hintClass}>Read-only access: submissions are disabled.</p>}
     {feedback && <p role="status" className="text-xs">{feedback}</p>}
