@@ -24,6 +24,7 @@ export function CollectionInputPicker({label,value,onChange,disabled,kind,option
   format(addDays(first,i-pad),"yyyy-MM-dd"));
  return <span className="inline-flex min-w-0 max-w-full">
   <button ref={trigger} type="button" disabled={disabled} aria-label={label} data-testid={testId}
+   style={{minHeight:44,minWidth:44}}
    aria-haspopup="dialog" aria-expanded={open} onClick={()=>{setOpen(x=>!x);setError("");}}
    className={"flex min-h-11 min-w-11 max-w-full items-center gap-2 rounded border border-[var(--planner-border)] bg-[var(--planner-surface)] px-3 text-sm hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)] "+(warning?"font-semibold text-red-600":"")}>
    {children??<>
