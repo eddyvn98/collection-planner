@@ -132,7 +132,10 @@ try {
   console.log("PASS drag from handle onto canvas creates sub-task");
   await node(page,"sibling").click();
   await page.getByRole("button",{name:"Delete selected node"}).click();
-  await page.getByRole("alertdialog",{name:"Delete Mind Map branch?"}).getByRole("button",{name:"Delete branch"}).click();
+  const deleteDialog=page.getByRole("alertdialog",{name:"Delete Mind Map branch?"});
+  assert((await deleteDialog.textContent()).includes("Independent"),
+   "Delete confirmation must target the newly selected sibling, not the prior editor");
+  await deleteDialog.getByRole("button",{name:"Delete branch"}).click();
   await page.waitForFunction(()=>
    !JSON.parse(localStorage.getItem("collection-planner:v1")).records.some(r=>r.id==="sibling"),
    null,{timeout:5000});
