@@ -48,7 +48,7 @@ try{
    await page.keyboard.press("Escape");
    await page.getByRole("button",{name:"Grid column visibility"}).click();
    await page.getByRole("checkbox",{name:"Show column Start"}).check();
-   await page.waitForFunction(()=>document.querySelectorAll(\'[data-testid="collection-tanstack-table"] thead th\').length===10);
+   await page.waitForFunction(()=>document.querySelectorAll('[data-testid="collection-tanstack-table"] thead th').length===10);
    await page.keyboard.press("Escape");
    console.log("PASS default columns, date, editor, person creation and visibility");
    await page.getByRole("button",{name:"More plan actions"}).click();
