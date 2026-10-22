@@ -20,7 +20,7 @@ export function importCollectionCsv(text: string): CollectionBlockPayload {
   const columns=header.flatMap((_,i)=>i===idIndex||i===parentIndex?[]:[i]);
   const records = rows.slice(1).map(row=>({
     id:idIndex>=0 ? String(row[idIndex]??"") : newId(),
-    parentId:parentIndex>=0 ? String(row[parentIndex]??"")||null : null,
+    ...(parentIndex>=0?{parentId:String(row[parentIndex]??"")||null}:{}),
     values:Object.fromEntries(fields.map((f,i)=>[f.id,String(row[columns[i]]??"")])),
   }));
   const data={...createCollection(),title:"Imported CSV",fields,records};
