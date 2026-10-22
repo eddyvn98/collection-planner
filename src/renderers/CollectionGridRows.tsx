@@ -1,15 +1,16 @@
 import {flexRender,type Table} from "@tanstack/react-table";
 import {Circle,CheckCircle2,ExternalLink,Trash2} from "lucide-react";
+import type {TreeIndex} from "../collections/collectionTaskTree";
 import {recordTitle,type CollectionBlockPayload,type CollectionRecord} from "../collections/model";
 import {CollectionGridTreeCell} from "./CollectionGridTreeCell";
 import {setTaskProgress} from "./collectionBoardGroups";
 import {CollectionGridAddRow} from "./CollectionGridAddRow";
 interface Props{table:Table<CollectionRecord>;data:CollectionBlockPayload;readOnly:boolean;
- selected:string[];setSelected:(ids:string[])=>void;collapsed:Set<string>;
+ selected:string[];setSelected:(ids:string[])=>void;collapsed:Set<string>;tree:TreeIndex;
  toggle:(id:string)=>void;onChange:(next:CollectionBlockPayload)=>void;
  onOpen:(id:string)=>void;onDelete:(id:string)=>void;numbers:Set<string>}
 export function CollectionGridRows({table,data,readOnly,selected,setSelected,collapsed,toggle,
- onChange,onOpen,onDelete,numbers}:Props){
+ onChange,onOpen,onDelete,numbers,tree}:Props){
  return <tbody>{table.getRowModel().rows.map(row=>{
   const title=recordTitle(data,row.original),id=row.original.id;
   return <tr key={id} data-record-id={id} className="group h-10 border-b border-[var(--planner-border)] hover:bg-[var(--planner-hover)]">
@@ -26,7 +27,7 @@ export function CollectionGridRows({table,data,readOnly,selected,setSelected,col
    {row.getVisibleCells().map((cell,index)=><td key={cell.id} style={{width:cell.column.getSize()}}
      className={"p-0.5 "+(numbers.has(cell.column.id)?"text-right":"text-left")}>
      {index===0?<CollectionGridTreeCell data={data} record={row.original}
-       collapsed={collapsed.has(id)} readOnly={readOnly} onToggle={toggle} onChange={onChange}>
+       collapsed={collapsed.has(id)} readOnly={readOnly} tree={tree} onToggle={toggle} onChange={onChange}>
        {flexRender(cell.column.columnDef.cell,cell.getContext())}
       </CollectionGridTreeCell>:flexRender(cell.column.columnDef.cell,cell.getContext())}
    </td>)}
