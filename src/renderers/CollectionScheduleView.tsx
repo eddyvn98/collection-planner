@@ -6,7 +6,7 @@ import { useCompactSchedule } from "./useCompactSchedule";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { CollectionScheduleDay } from "./CollectionScheduleDay";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
-import { createScheduledTask, moveSchedulePeriod, rescheduleTask, scheduleDays,
+import { createScheduledTask, moveSchedulePeriod, rescheduleTask, resizeScheduleRange, scheduleDays,
   scheduledTaskDay, type ScheduleMode } from "../collections/collectionSchedule";
 import { localToday } from "../collections/collectionTasks";
 import type { CollectionBlockPayload, CollectionRecord, CollectionView } from "../collections/model";
@@ -38,6 +38,11 @@ export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,o
   const id=task.slice(14),day=target.slice(13);
   if(!rows.some(row=>row.id===id))return;
   const next=rescheduleTask(data,view,id,day);
+  if(next!==data)onChange(next);
+ };
+ const resize=(id:string,edge:"start"|"end",day:string)=>{
+  if(readOnly)return;
+  const next=resizeScheduleRange(data,view,id,edge,day);
   if(next!==data)onChange(next);
  };
  const create=(day:string,title:string)=>{
@@ -77,18 +82,18 @@ export function CollectionScheduleView({data,view,rows,month,setMonth,readOnly,o
            {format(parseISO(day),"EEE, d MMM yyyy")}
          </h3>
          <CollectionScheduleDay data={data} view={view} day={day} today={today} outside={false}
-           rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId}/>
+           rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId} onResize={resize}/>
         </div>)}
       </div> : <div className="grid min-w-[700px] grid-cols-7 gap-1.5 text-xs" role="grid" aria-label="Task schedule">
        {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(name=>
          <strong key={name} className="pb-1 text-center text-[var(--planner-secondary)]">{name}</strong>)}
        {days.map(day=><CollectionScheduleDay key={day} data={data} view={view} day={day}
          today={today} outside={mode==="month"&&!day.startsWith(anchor.slice(0,7))}
-         rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId}/>)}
+         rows={byDay.get(day)??[]} readOnly={readOnly} onCreate={create} onOpen={setOpenId} onResize={resize}/>)}
       </div>}
    </DndContext>
   </div>
-  <p className="text-xs text-[var(--planner-secondary)]">Drag a task to another day to reschedule it, or click a date to add a task.</p>
+  <p className="text-xs text-[var(--planner-secondary)]">Drag a task to reschedule; drag Start/End handles to resize its range. Double-click a day to create.</p>
   {openId&&<CollectionRecordDetails data={data} recordId={openId} readOnly={readOnly}
     onChange={onChange} onClose={()=>setOpenId(null)}/>}
  </div>;
