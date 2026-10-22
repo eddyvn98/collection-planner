@@ -36,7 +36,7 @@ try{
    assert.equal(await page.getByRole("combobox",{name:"Progress for Prepare release"}).count(),0);
    const due=page.getByRole("button",{name:"Due for Prepare release"});
    assert((await due.textContent()).includes("21/10"));
-   await due.click();const input=page.getByRole("textbox",{name:"Due for Prepare release"});
+   await due.click();const input=page.getByLabel("Due for Prepare release");
    await input.fill("2026-11-02");await input.press("Enter");
    assert((await due.textContent()).includes("02/11"));
    const assignee=page.getByRole("button",{name:"Assignees for Prepare release"});
