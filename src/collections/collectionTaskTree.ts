@@ -69,7 +69,13 @@ export function canSetTaskParent(records:CollectionRecord[],recordId:string,pare
  const branch=taskBranch(tree,recordId), ids=new Set(branch.map(row=>row.id));
  const deepest=Math.max(1,...branch.map(row=>(tree.depth.get(row.id)??1)-(tree.depth.get(recordId)??1)+1));
  const destinationDepth=parentId ? tree.depth.get(parentId)??0 : 0;
- return ids.size>0 && destinationDepth+deepest<=MAX_TASK_DEPTH;
+ if(!ids.size || destinationDepth+deepest>MAX_TASK_DEPTH)return false;
+ const moved=records.map(row=>row.id===recordId?{...row,parentId}:row);
+ const next=buildTaskTree(moved);
+ for(const row of moved)for(const dependency of row.dependsOn??[]){
+  if(isTreeAncestor(next,row.id,dependency)||isTreeAncestor(next,dependency,row.id))return false;
+ }
+ return true;
 }
 /** Repair legacy storage conservatively: keep every task; detach only invalid links. */
 export function sanitizeTaskParents(records:CollectionRecord[]):CollectionRecord[] {
