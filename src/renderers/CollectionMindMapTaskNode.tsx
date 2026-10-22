@@ -32,7 +32,7 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
      onBlur={commit}
      className="nodrag nopan min-w-0 flex-1 rounded border-2 border-[var(--planner-accent)] bg-transparent px-1 text-xs"/>:
     <strong className="min-w-0 flex-1 break-words text-left text-xs" title={data.label}>{data.label}</strong>}
-   {!data.readOnly&&<button type="button" className="nodrag nopan grid h-7 w-7 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2"
+   {!data.readOnly&&<button type="button" className="nodrag nopan grid h-11 w-11 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2"
      aria-label={"Add child to "+data.label} onClick={event=>{event.stopPropagation();data.onAdd(data.id);}}>
      <Plus size={15}/></button>}
   </div>
@@ -47,7 +47,7 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
       {person.slice(0,2).toUpperCase()}</span>)}
   </div>
   {data.total>0&&<button type="button"
-   className="nodrag nopan absolute -bottom-4 left-1/2 z-10 flex h-8 min-w-8 -translate-x-1/2 items-center gap-0.5 rounded-full border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[10px] shadow"
+   className="nodrag nopan absolute -bottom-5 left-1/2 z-10 flex h-11 min-w-11 -translate-x-1/2 items-center gap-0.5 rounded-full border border-[var(--planner-border)] bg-[var(--planner-surface)] px-2 text-[10px] shadow"
    aria-label={(data.isCollapsed?"Expand ":"Collapse ")+data.label}
    aria-expanded={!data.isCollapsed}
    onClick={event=>{event.stopPropagation();data.onToggle(data.id);}}>
