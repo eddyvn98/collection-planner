@@ -1,7 +1,7 @@
 name: Planner polish and browser pointer tests
 on:
   push:
-    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f, feat/planner-phase-5g, feat/planner-phase-6a, feat/phase-7d-input-flow]
+    branches: [feat/planner-polish, feat/planner-ui-a-header, feat/planner-ui-b-board, feat/planner-ui-c-drawer, feat/planner-phase-5d, feat/planner-phase-5e, feat/planner-phase-5f, feat/planner-phase-5g, feat/planner-phase-6a, feat/phase-7d-input-flow, feat/phase-7e-in-place-toolbar]
   pull_request:
     branches: [main]
 permissions:
