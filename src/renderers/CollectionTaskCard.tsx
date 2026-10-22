@@ -7,6 +7,7 @@ import { deleteRecord,recordTitle, type CollectionBlockPayload, type CollectionR
 import { taskAssignees, localToday } from "../collections/collectionTasks";
 import { formatPlannerCardDate,formatPlannerPriority } from "../collections/collectionDateDisplay";
 import { cardIndicators } from "../collections/collectionCardIndicators";
+import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
 import { CollectionModalDialog } from "./CollectionModalDialog";
 import { setTaskProgress, cardDragId } from "./collectionBoardGroups";
 interface Props {
@@ -70,6 +71,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,onChange,onOpe
     {...drag.attributes} {...drag.listeners}><GripVertical size={16} strokeWidth={1.75}/></button>
   </div>
   <div className="mt-1.5 flex flex-wrap items-center gap-3 pl-1 text-xs text-[var(--planner-secondary)]">
+   <CollectionBlockedBadge data={data} record={record}/>
    {indicators.priority&&<span data-testid="card-priority" title={"Priority "+record.priority}
      className="flex gap-1 text-red-600"><Flag size={15} strokeWidth={1.75}/>{formatPlannerPriority(record.priority??"")}</span>}
    {!!indicators.checklist&&<span data-testid="card-checklist" title="Checklist" className="flex gap-1"><ClipboardCheck size={15}/>{indicators.checklist}</span>}
