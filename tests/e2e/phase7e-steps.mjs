@@ -139,27 +139,30 @@ async function test(width,attempt){
   const button=toolbar.getByRole("button",{name});
   const box=await button.boundingBox();assert(box&&box.height>=44&&box.width>=44,name+" >=44x44");
  }
- await switchView(page,width,"Grid");
- await toolbar.getByRole("button",{name:"View sort"}).click();
- await page.getByRole("dialog",{name:"View sort"}).getByRole("combobox",{name:"Sort field in view"}).selectOption("due");
- await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1"))
+ const settingsPage=await open(width);
+ const settingsToolbar=settingsPage.getByTestId("planner-unified-toolbar");
+ await switchView(settingsPage,width,"Grid");
+ await settingsToolbar.getByRole("button",{name:"View sort"}).click();
+ await settingsPage.getByRole("dialog",{name:"View sort"}).getByRole("combobox",{name:"Sort field in view"}).selectOption("due");
+ await settingsPage.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1"))
   .views.find(v=>v.id==="grid")?.sorts?.[0]?.fieldId==="due");
- await toolbar.getByRole("button",{name:"View sort"}).click();
- await toolbar.getByRole("button",{name:"View fields"}).click();
- await page.getByRole("dialog",{name:"View fields"}).getByRole("checkbox",{name:"Show Due"}).check();
- await page.getByRole("dialog",{name:"View fields"}).getByRole("checkbox",{name:"Show Start"}).check();
- await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1"))
+ await settingsToolbar.getByRole("button",{name:"View sort"}).click();
+ await settingsToolbar.getByRole("button",{name:"View fields"}).click();
+ await settingsPage.getByRole("dialog",{name:"View fields"}).getByRole("checkbox",{name:"Show Due"}).check();
+ await settingsPage.getByRole("dialog",{name:"View fields"}).getByRole("checkbox",{name:"Show Start"}).check();
+ await settingsPage.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1"))
   .views.find(v=>v.id==="grid")?.gridHiddenFieldIds?.includes("start")===false);
- await toolbar.getByRole("button",{name:"View fields"}).click();
- await toolbar.getByRole("button",{name:"Group by"}).click();
- await page.getByRole("dialog",{name:"View group"}).getByRole("button",{name:"Bucket"}).click();
- await page.getByTestId("planner-grid-group").first().waitFor();
- await switchView(page,width,"Gallery");
- await toolbar.getByRole("button",{name:"Group by"}).click();
- await page.getByRole("dialog",{name:"View group"}).getByRole("button",{name:"Bucket"}).click();
- await page.getByTestId("planner-gallery-group").first().waitFor();
- await switchView(page,width,"Schedule");
- assert.equal(await toolbar.getByRole("button",{name:"Share plan"}).count(),1);
+ await settingsToolbar.getByRole("button",{name:"View fields"}).click();
+ await settingsToolbar.getByRole("button",{name:"Group by"}).click();
+ await settingsPage.getByRole("dialog",{name:"View group"}).getByRole("button",{name:"Bucket"}).click();
+ await settingsPage.getByTestId("planner-grid-group").first().waitFor();
+ await switchView(settingsPage,width,"Gallery");
+ await settingsToolbar.getByRole("button",{name:"Group by"}).click();
+ await settingsPage.getByRole("dialog",{name:"View group"}).getByRole("button",{name:"Bucket"}).click();
+ await settingsPage.getByTestId("planner-gallery-group").first().waitFor();
+ await switchView(settingsPage,width,"Schedule");
+ assert.equal(await settingsToolbar.getByRole("button",{name:"Share plan"}).count(),1);
+ await settingsPage.close();
  console.log("PASS 7E actions "+width+" iteration "+attempt);
  await page.close();
 }
