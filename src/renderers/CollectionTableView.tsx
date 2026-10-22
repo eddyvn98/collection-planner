@@ -18,6 +18,8 @@ import { CollectionGridAddRow } from "./CollectionGridAddRow";
 import { CollectionGridMobileCards } from "./CollectionGridMobileCards";
 import { CollectionGridAddQuick } from "./CollectionGridAddRow";
 import { CollectionGridEditable } from "./CollectionGridEditable";
+import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
+import { localToday } from "../collections/collectionTasks";
 import { visibleGridTaskKeys } from "../collections/collectionPlannerFilters";
 import { gridTaskColumns } from "./collectionGridTaskColumns";
 
@@ -75,7 +77,13 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
       ? <CollectionGridEditable label={`${field.name} for ${recordTitle(dataRef.current,ctx.row.original)}`}
          value={ctx.row.original.values[field.id] ?? ""} type={field.type} readOnly={readOnly}
          options={field.type==="select" ? [{value:"",label:"Unassigned"},...(field.options??[]).map(value=>({value,label:value}))] : undefined}
-         onSave={value=>patchRef.current(ctx.row.original,field,value)}/>
+         onSave={value=>patchRef.current(ctx.row.original,field,value)}>
+         {field.type==="date" && ctx.row.original.values[field.id] ?
+           <span className={/^(due|deadline|end)( date)?$/i.test(field.name.trim()) &&
+             ctx.row.original.values[field.id] < localToday() && ctx.row.original.progress!=="completed" ? "text-rose-600" : ""}>
+             {formatPlannerCardDate(ctx.row.original.values[field.id],localToday())}
+           </span> : undefined}
+        </CollectionGridEditable>
       : <FieldEditor field={field} value={ctx.row.original.values[field.id] ?? ""}
         readOnly={readOnly} data={dataRef.current} sources={sourcesRef.current}
         recordId={ctx.row.original.id}
