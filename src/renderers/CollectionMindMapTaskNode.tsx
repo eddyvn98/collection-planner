@@ -1,4 +1,4 @@
-import {memo,useState} from "react";
+import {memo,useRef,useState} from "react";
 import {Handle,Position,type Node,type NodeProps} from "@xyflow/react";
 import {ChevronDown,ChevronRight,Flag,Plus,CornerDownRight,CalendarDays,CheckCircle2} from "lucide-react";
 
@@ -11,8 +11,10 @@ export interface MindCardData extends Record<string,unknown>{
 }
 export type MindCardNode=Node<MindCardData,"plannerTask">;
 function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
- const [draft,setDraft]=useState(data.label);
- const commit=()=>data.onSave(data.id,draft);
+ const [draft,setDraft]=useState(data.label),cancel=useRef(false);
+ const commit=()=>{if(!cancel.current)data.onSave(data.id,draft);};
+ const shades=["#5B5FC7","#0F6CBD","#107C41","#A14ABC","#C45B08"];
+ const tone=shades[[...data.bucket].reduce((sum,char)=>sum+char.charCodeAt(0),0)%shades.length];
  const status=data.progress==="completed"?"Completed":data.progress==="in_progress"?"In progress":"Not started";
  return <div data-testid="mindmap-task-node" data-task-id={data.id}
   className={"relative min-w-[205px] max-w-[260px] rounded-lg border-2 bg-[var(--planner-surface)] p-2 text-[var(--planner-text)] shadow-sm transition "+
@@ -23,10 +25,10 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
    <span className="mt-0.5 h-5 w-1 shrink-0 rounded-full" style={{backgroundColor:data.progress==="completed"?"#238636":
     data.priority==="urgent"?"#d13438":data.priority==="important"?"#ff8c00":"var(--planner-accent)"}}/>
    {data.isEditing?<input autoFocus aria-label={"Rename "+data.label} defaultValue={data.label}
-     onFocus={event=>{event.currentTarget.select();setDraft(event.currentTarget.value);}}
+     onFocus={event=>{cancel.current=false;event.currentTarget.select();setDraft(event.currentTarget.value);}}
      onChange={event=>setDraft(event.target.value)}
      onKeyDown={event=>{event.stopPropagation();if(event.key==="Enter")commit();
-      else if(event.key==="Escape")data.onCancel();}}
+      else if(event.key==="Escape"){cancel.current=true;data.onCancel();}}}
      onBlur={commit}
      className="nodrag nopan min-w-0 flex-1 rounded border-2 border-[var(--planner-accent)] bg-transparent px-1 text-xs"/>:
     <strong className="min-w-0 flex-1 break-words text-left text-xs" title={data.label}>{data.label}</strong>}
@@ -35,10 +37,10 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
      <Plus size={15}/></button>}
   </div>
   <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-[var(--planner-secondary)]">
-   {data.bucket&&<span className="rounded bg-[var(--planner-hover)] px-1.5 py-0.5">{data.bucket}</span>}
+   {data.bucket&&<span className="rounded bg-[var(--planner-hover)] px-1.5 py-0.5" style={{borderLeft:"3px solid "+tone}}>{data.bucket}</span>}
    {data.priority!=="medium"&&<span className="inline-flex items-center gap-0.5"><Flag size={11}/>{data.priority}</span>}
    {data.due&&<span className="inline-flex items-center gap-0.5"><CalendarDays size={11}/>{data.due.slice(8)}/{data.due.slice(5,7)}</span>}
-   {data.progress==="completed"&&<span className="inline-flex items-center gap-0.5 text-green-600"><CheckCircle2 size={12}/>{status}</span>}
+   {data.progress!=="not_started"&&<span className={"inline-flex items-center gap-0.5 "+(data.progress==="completed"?"text-green-600":"text-[var(--planner-accent)]")}><CheckCircle2 size={12}/>{status}</span>}
    {data.total>0&&<span data-testid="mindmap-children-badge" className="rounded bg-[var(--planner-hover)] px-1">{data.done}/{data.total}</span>}
    {data.assignees.map((person,i)=><span key={i} title={person} aria-label={"Assigned to "+person}
       className="grid h-5 min-w-5 place-items-center rounded-full bg-[var(--planner-accent)] px-1 text-[9px] text-white">
