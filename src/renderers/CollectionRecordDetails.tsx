@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { focusSelector,nextFocusIndex } from "./collectionInteraction";
 import { createPortal } from "react-dom";
 import { CollectionDrawerActions } from "./CollectionDrawerActions";
@@ -12,16 +12,20 @@ import { setTaskProgress } from "./collectionBoardGroups";
 import { FieldEditor, hintClass, inputClass } from "./CollectionFieldEditor";
 import { taskDateFields } from "../collections/collectionTasks";
 import { CollectionPlannerTaskFields } from "./CollectionPlannerTaskFields";
+import { CollectionSubtasks } from "./CollectionSubtasks";
+import { taskBreadcrumb } from "../collections/collectionTreeActions";
 import { CollectionPlannerTaskExtras } from "./CollectionPlannerTaskExtras";
 import { CollectionTaskActions } from "./CollectionTaskActions";
 interface Props{data:CollectionBlockPayload;sources?:CollectionSources;recordId:string;group?:CollectionField;
  readOnly:boolean;onChange:(next:CollectionBlockPayload)=>void;onClose:()=>void;returnFocusTo?:HTMLElement|null;}
 /** Non-modal side pane: the Board stays clickable while task details are open. */
 export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange,onClose,returnFocusTo}:Props){
+ const [currentId,setCurrentId]=useState(recordId);
+ useEffect(()=>setCurrentId(recordId),[recordId]);
  const titleInput=useRef<HTMLInputElement>(null),closeRef=useRef(onClose);
  const paneRef=useRef<HTMLElement>(null);
  closeRef.current=onClose;
- const record=data.records.find(row=>row.id===recordId);
+ const record=data.records.find(row=>row.id===currentId);
  useEffect(()=>{
   const prior=returnFocusTo??(document.activeElement instanceof HTMLElement?document.activeElement:null);
   titleInput.current?.focus();
@@ -66,6 +70,14 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
        <X size={16} strokeWidth={1.75}/></button></div>
    </header>
    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+    <nav aria-label="Task hierarchy" className="flex flex-wrap items-center gap-1 text-xs text-[var(--planner-secondary)]">
+     {taskBreadcrumb(data,record.id).map((item,index,all)=><span key={item.id} className="inline-flex items-center gap-1">
+      <button type="button" aria-current={index===all.length-1?"page":undefined}
+       className="max-w-28 truncate rounded px-1 py-1 hover:bg-[var(--planner-hover)]"
+       onClick={()=>setCurrentId(item.id)}>{recordTitle(data,item)}</button>
+      {index<all.length-1&&<span aria-hidden="true">›</span>}
+     </span>)}
+    </nav>
     <div className="flex items-center gap-2">
       <button type="button" disabled={readOnly} aria-label={complete?"Reopen task":"Complete task"}
        onClick={()=>onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"))}
@@ -78,6 +90,7 @@ export function CollectionRecordDetails({data,sources,recordId,readOnly,onChange
           (complete?"line-through text-[var(--planner-secondary)]":"")}/>}
     </div>
     <CollectionPlannerTaskFields data={data} record={record} readOnly={readOnly} onChange={onChange}/>
+    <CollectionSubtasks data={data} record={record} readOnly={readOnly} onChange={onChange} onOpen={setCurrentId}/>
     <CollectionPlannerTaskExtras data={data} record={record} readOnly={readOnly} onChange={onChange}/>
     <details className="rounded border border-[var(--planner-border)] p-2">
       <summary className="min-h-8 cursor-pointer text-sm font-medium">More task actions</summary>
