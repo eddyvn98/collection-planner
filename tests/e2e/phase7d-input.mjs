@@ -51,15 +51,18 @@ async function run(width,attempt){
  await card(page,added.id).locator("[data-board-card-focus]").click();
  const drawer=page.getByRole("dialog",{name:/Task /});
  await drawer.waitFor();
- const picker=drawer.getByRole("button",{name:"Due date",exact:true});
+ const picker=drawer.getByRole("button",{name:"Task due date",exact:true});
  await picker.click();
- const calendar=page.getByRole("dialog",{name:"Due date picker"});
- const natural=calendar.getByRole("textbox",{name:"Natural date for Due date"});
+ const calendar=page.getByRole("dialog",{name:"Task due date picker"});
+ const natural=calendar.getByRole("textbox",{name:"Natural date for Task due date"});
  await natural.fill("+3d");await natural.press("Enter");
- await page.waitForFunction(id=>{
-  const row=JSON.parse(localStorage.getItem("collection-planner:v1")).records.find(x=>x.id===id);
-  return row?.values.due && row.values.due!==undefined;
- },added.id);
+ const expected=await page.evaluate(()=>{
+  const date=new Date();date.setDate(date.getDate()+3);
+  return [date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),
+   String(date.getDate()).padStart(2,"0")].join("-");
+ });
+ await page.waitForFunction(({id,expected})=>JSON.parse(localStorage.getItem("collection-planner:v1"))
+  .records.find(x=>x.id===id)?.values.due===expected,{id:added.id,expected});
  await drawer.getByRole("button",{name:"Close task details"}).click();
  await card(page,added.id).click({button:"right"});
  const menu=page.getByRole("menu",{name:"Task context actions"});
