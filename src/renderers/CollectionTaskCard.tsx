@@ -135,7 +135,7 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
   </div>
   {(due||people.length>0||!readOnly)&&<div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs">
     {(due||!readOnly)&&<CollectionBoardQuickEdit kind="due" data={data} record={record}
-      title={title} testId="card-due" readOnly={readOnly} onChange={onChange}>
+      title={title} testId="card-due" warning={late} readOnly={readOnly} onChange={onChange}>
       <CalendarDays size={14}/><span className={late?"font-semibold text-red-600":""}>
        {due?formatPlannerCardDate(due,localToday()):"+ Due date"}</span>
     </CollectionBoardQuickEdit>}
