@@ -46,7 +46,13 @@ try{
  console.log("PASS 12-step pointer drag across buckets");
  const open=moved.locator("[data-board-card-focus]");
  await open.click();
- await page.getByRole("dialog",{name:"Task Move this task"}).waitFor();
+ const state=await page.evaluate(()=>({
+    dialogs:[...document.querySelectorAll('[role=dialog]')].map(x=>x.getAttribute("aria-label")),
+    active:document.activeElement?.outerHTML?.slice(0,200),
+    cards:[...document.querySelectorAll('[data-record-id="moving"]')].map(x=>x.outerHTML.slice(0,300))
+ }));
+ console.log("Phase5E drawer-after-drag",JSON.stringify(state));
+ await page.getByRole("dialog",{name:"Task Move this task"}).waitFor({timeout:7000});
  await page.keyboard.press("Escape");
  await page.getByRole("dialog",{name:"Task Move this task"}).waitFor({state:"detached"});
  await page.waitForFunction(()=>document.activeElement?.matches("[data-record-id='moving'] [data-board-card-focus]"));
