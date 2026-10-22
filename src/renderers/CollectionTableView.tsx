@@ -8,10 +8,8 @@ import { flexRender, getCoreRowModel, useReactTable,
 import { addField, addRecord, deleteRecord, removeField, recordTitle, viewSorts, type CollectionBlockPayload,
   type CollectionField, type CollectionRecord, type CollectionView, type CollectionSources } from "../collections/model";
 import { CollectionTableColumnHeader } from "./CollectionTableColumnHeader";
-import { CollectionWrappedTextCell } from "./CollectionWrappedTextCell";
 import { btnClass, FieldEditor } from "./CollectionFieldEditor";
 import { CollectionRecordDetails } from "./CollectionRecordDetails";
-import { CollectionSelectChip } from "./CollectionSelectChip";
 import { calculateCollectionAggregate } from "../collections/collectionFormula";
 import { COLLECTION_PAGE_SIZES, collectionTablePage, type CollectionPageSize } from "./collectionTablePaging";
 import { gridFields } from "../collections/collectionPlannerFilters";
@@ -73,17 +71,12 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     const base = visibleFields.map(field => ({
     id: field.id, accessorFn: record => record.values[field.id] ?? "", header: () => field.name,
     sortingFn: field.type === "number" ? "basic" : "alphanumeric",
-    cell: ctx => field.type === "date" ? <CollectionGridEditable label={`${field.name} for ${recordTitle(dataRef.current,ctx.row.original)}`}
-        value={ctx.row.original.values[field.id] ?? ""} type="date" readOnly={readOnly}
-        onSave={value=>patchRef.current(ctx.row.original,field,value)}/>
-      : field.type === "select"
-      ? <CollectionSelectChip label={`${field.name} for ${recordTitle(dataRef.current, ctx.row.original)}`}
-        value={ctx.row.original.values[field.id] ?? ""} options={field.options ?? []} disabled={readOnly}
-        onChange={value => patchRef.current(ctx.row.original, field, value)} />
-      : field.type === "text" && field.wrapText
-        ? <CollectionWrappedTextCell label={field.name} value={ctx.row.original.values[field.id] ?? ""}
-            disabled={readOnly} onChange={value => patchRef.current(ctx.row.original, field, value)} />
-        : <FieldEditor field={field} value={ctx.row.original.values[field.id] ?? ""}
+    cell: ctx => ["date","text","number","url","select"].includes(field.type)
+      ? <CollectionGridEditable label={`${field.name} for ${recordTitle(dataRef.current,ctx.row.original)}`}
+         value={ctx.row.original.values[field.id] ?? ""} type={field.type} readOnly={readOnly}
+         options={field.type==="select" ? [{value:"",label:"Unassigned"},...(field.options??[]).map(value=>({value,label:value}))] : undefined}
+         onSave={value=>patchRef.current(ctx.row.original,field,value)}/>
+      : <FieldEditor field={field} value={ctx.row.original.values[field.id] ?? ""}
         readOnly={readOnly} data={dataRef.current} sources={sourcesRef.current}
         recordId={ctx.row.original.id}
         compact onSet={value => patchRef.current(ctx.row.original, field, value)} />,
