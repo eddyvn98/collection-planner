@@ -45,7 +45,7 @@ describe("6D tree operations",()=>{
   expect(data.records.find(x=>x.id==="c")?.parentId).toBe("b");
   data=outdentTreeTask(data,"b");
   expect(data.records.find(x=>x.id==="b")?.parentId).toBeNull();
-  expect(moveTaskTree(data,"a","c","child")).toBe(data);
+  expect(moveTaskTree(data,"b","c","child")).toBe(data);
   expect(taskBreadcrumb(data,"c").map(x=>x.id)).toEqual(["b","c"]);
  });
  it("reparents to a different bucket and detaches child to empty bucket",()=>{
