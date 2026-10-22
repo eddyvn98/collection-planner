@@ -51,7 +51,7 @@ try{
  await page.keyboard.press("Escape");await help.waitFor({state:"detached"});
  await page.keyboard.press("1");await page.getByRole("button",{name:"Grid",exact:true}).waitFor();
  await page.keyboard.press("2");await page.getByTestId("collection-kanban").waitFor();
- await page.keyboard.press("3");await page.getByTestId("collection-calendar-agenda").waitFor({state:"detached"}).catch(()=>{});
+ await page.keyboard.press("3");await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).activeViewId==="schedule");
  await page.keyboard.press("4");await page.getByTestId("collection-charts").waitFor();
  await page.keyboard.press("2");await page.getByTestId("collection-kanban").waitFor();
  console.log("PASS ? and 1–4 view shortcuts");
