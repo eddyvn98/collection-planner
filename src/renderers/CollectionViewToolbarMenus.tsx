@@ -51,8 +51,17 @@ export function CollectionViewToolbarMenus({data,view,readOnly,onChange}:Props){
       onClick={()=>{setView({boardGroupBy:mode.value});setOpen(null);}}
       className="min-h-11 rounded px-3 text-left text-sm hover:bg-[var(--planner-hover)] aria-pressed:bg-[var(--planner-hover)]">
       {mode.label}</button>)}</div>
+     :view.kind==="table"||view.kind==="gallery"?
+     <div className="grid gap-1">
+      <button type="button" disabled={readOnly} className={touch}
+       onClick={()=>{setView({groupFieldId:undefined});setOpen(null);}}>No grouping</button>
+      {eligible.filter(field=>field.type==="select").map(field=><button type="button"
+       key={field.id} disabled={readOnly} aria-pressed={view.groupFieldId===field.id}
+       className="min-h-11 rounded px-3 text-left text-sm hover:bg-[var(--planner-hover)] aria-pressed:bg-[var(--planner-hover)]"
+       onClick={()=>{setView({groupFieldId:field.id});setOpen(null);}}>{field.name}</button>)}
+     </div>
      :<p className="text-xs text-[var(--planner-secondary)]">
-      Grouped columns are available in Board. Switch to Board for drag-based grouping.
+      Group by is available in Board, Grid and Gallery. Other views keep their native layout.
      </p>)}
     {menu==="sort"&&<div className="grid gap-2">
      <button className={touch} disabled={readOnly} onClick={()=>{setView({sorts:[],sort:undefined});setOpen(null);}}>No sort</button>
