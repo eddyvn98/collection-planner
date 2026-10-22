@@ -58,7 +58,8 @@ jobs:
         run: |
           mkdir -p /tmp/grid-artifacts/before /tmp/grid-artifacts/after
           SCREENSHOT_OUTPUT=/tmp/grid-artifacts/after node tests/e2e/grid-airy.mjs
-          git worktree add --detach /tmp/grid-before "${{ github.event.pull_request.base.sha }}"
+          git fetch --no-tags --depth=1 origin main
+          git worktree add --detach /tmp/grid-before FETCH_HEAD
           ln -s "$GITHUB_WORKSPACE/node_modules" /tmp/grid-before/node_modules
           (cd /tmp/grid-before && node_modules/.bin/vite --host 127.0.0.1 --port 4174 > /tmp/grid-before.log 2>&1) &
           for i in $(seq 1 50); do
