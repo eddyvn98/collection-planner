@@ -13,6 +13,10 @@ export function CollectionQuickAddInput({data,value,onChange,label,placeholder,
   <input autoFocus={autoFocus} aria-label={label} value={value} disabled={disabled}
    maxLength={maxLength} className={className} placeholder={placeholder}
    autoComplete="off" onChange={(event:ChangeEvent<HTMLInputElement>)=>onChange(event.target.value)}
+   onFocus={event=>{
+    const input=event.currentTarget;
+    requestAnimationFrame(()=>{if(input.isConnected)input.scrollIntoView({block:"nearest",behavior:"auto"});});
+   }}
    onKeyDown={(event:KeyboardEvent<HTMLInputElement>)=>{
     if(event.key==="Escape"){event.stopPropagation();onEscape?.();}
     if(event.key==="Enter"&&event.nativeEvent.isComposing)event.preventDefault();
