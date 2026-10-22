@@ -6,7 +6,7 @@ import "@xyflow/react/dist/style.css";
 import {Maximize,Plus,Trash2,WandSparkles,Pencil,ArrowRight} from "lucide-react";
 import type {CollectionBlockPayload,CollectionRecord} from "../collections/model";
 import {deleteRecord,recordTitle,setParent} from "../collections/model";
-import {buildTaskTree,descendantCounts,isTreeAncestor,MAX_VISIBLE_TREE_NODES} from "../collections/collectionTaskTree";
+import {buildTaskTree,canSetTaskParent,descendantCounts,isTreeAncestor,MAX_VISIBLE_TREE_NODES} from "../collections/collectionTaskTree";
 import {layoutMindMap} from "./collectionMindMapLayout";
 import {visibleMindMapSelection} from "./collectionMindMapSelection";
 import {addMindMapRelative,renameMindMapTask,visibleMindMapRecords,candidateMindMapParent} from "./collectionMindMapActions";
@@ -89,8 +89,20 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  },[flow,structure,layoutEpoch]);
  const dragTarget=(id:string,x:number,y:number)=>
   candidateMindMapParent(data,id,graph.nodes,x,y);
- const drop=(id:string,x:number,y:number)=>{
-  const target=dragTarget(id,x,y);setDropTarget(null);setDragPositions({});
+ const pointerTarget=(id:string,event:MouseEvent|TouchEvent)=>{
+  const p="changedTouches" in event?event.changedTouches[0]:event;
+  const choices=[...root.current?.querySelectorAll<HTMLElement>(".react-flow__node[data-id]")??[]]
+   .filter(el=>el.dataset.id!==id&&el.dataset.id&&canSetTaskParent(data.records,id,el.dataset.id))
+   .map(el=>{const rect=el.getBoundingClientRect();
+    const dx=Math.max(rect.left-p.clientX,0,p.clientX-rect.right);
+    const dy=Math.max(rect.top-p.clientY,0,p.clientY-rect.bottom);
+    return {id:el.dataset.id!,distance:Math.hypot(dx,dy)};})
+   .sort((a,b)=>a.distance-b.distance);
+  return (choices[0]?.distance??Infinity)<=32?choices[0].id:null;
+ };
+ const drop=(id:string,x:number,y:number,event:MouseEvent|TouchEvent)=>{
+  const target=pointerTarget(id,event)??dragTarget(id,x,y);
+  setDropTarget(null);setDragPositions({});
   if(!target||readOnly)return;
   const moving=selectedIds.includes(id)?selectedIds.filter(current=>
    !selectedIds.some(other=>other!==current&&isTreeAncestor(tree,other,current))):[id];
@@ -176,9 +188,9 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
     multiSelectionKeyCode="Shift" selectionOnDrag panOnDrag={[1,2]}
     onInit={setFlow} onNodeClick={(_event,node)=>select(node.id)}
     onNodeDoubleClick={(_event,node)=>{select(node.id);setEditingId(node.id);}}
-    onNodeDrag={(_event,node)=>{setDragPositions(previous=>({...previous,[node.id]:node.position}));
-     setDropTarget(dragTarget(node.id,node.position.x,node.position.y));}}
-    onNodeDragStop={(_event,node)=>drop(node.id,node.position.x,node.position.y)}
+    onNodeDrag={(event,node)=>{setDragPositions(previous=>({...previous,[node.id]:node.position}));
+     setDropTarget(pointerTarget(node.id,event)??dragTarget(node.id,node.position.x,node.position.y));}}
+    onNodeDragStop={(event,node)=>drop(node.id,node.position.x,node.position.y,event)}
     onSelectionChange={({nodes})=>setSelectedIds(nodes.map(n=>n.id))}
     onConnect={connect}
     onConnectStart={(_event,params)=>{connectionStart.current=params.nodeId??null;}}
