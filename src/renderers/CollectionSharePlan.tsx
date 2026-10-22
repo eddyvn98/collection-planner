@@ -4,6 +4,10 @@ export function CollectionSharePlan(){
  const [message,setMessage]=useState("");
  const [manual,setManual]=useState(false);
  const share=async()=>{
+  // Feedback is immediate even if browser clipboard permission is pending.
+  // Keep a selectable URL fallback until the host confirms the write.
+  setMessage("Copying page link… Plan data stays on this device.");
+  setManual(true);
   try{
    if(!navigator.clipboard?.writeText)throw new Error("Clipboard unavailable");
    await navigator.clipboard.writeText(window.location.href);
