@@ -24,7 +24,7 @@ export function CollectionSharePlan(){
   return()=>document.removeEventListener("planner:share",requested);
  },[]);
  return <div className="relative flex min-w-0 items-center gap-1">
-  <button type="button" aria-label="Share plan" title="Copy this page link, not collection data"
+  <button type="button" style={{minWidth:44,minHeight:44}} aria-label="Share plan" title="Copy this page link, not collection data"
    onClick={()=>void share()}
    className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-xs hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
    <Share2 size={16}/> <span className="hidden sm:inline">Share</span></button>
