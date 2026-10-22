@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { BarChart3, CalendarDays, ChevronDown, Columns3, Table2 } from "lucide-react";
+import { BarChart3, CalendarDays, ChevronDown, Columns3, Table2, GanttChartSquare, Network, Images, ClipboardList } from "lucide-react";
 import { CollectionFloatingPanel } from "./CollectionFloatingPanel";
 import type { CollectionView } from "../collections/model";
 const ICONS={table:Table2,kanban:Columns3,calendar:CalendarDays,charts:BarChart3,timeline:GanttChartSquare,mindmap:Network,gallery:Images,form:ClipboardList};
