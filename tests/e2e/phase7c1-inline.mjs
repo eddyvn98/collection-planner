@@ -39,7 +39,19 @@ try{
   assert(added?.parentId==="root");
   const editor=page.locator('.react-flow__node[data-id="'+added.id+'"] input[data-mindmap-rename]');
   await editor.waitFor();
-  await page.waitForFunction(()=>document.activeElement?.hasAttribute("data-mindmap-rename"));
+  try{
+   await page.waitForFunction(id=>{
+    const input=document.querySelector('input[data-mindmap-rename="'+id+'"]');
+    return input!==null&&document.activeElement===input;
+   },added.id,{timeout:5000});
+  }catch(error){
+   console.error("Mind Map focus snapshot",await page.evaluate(id=>({
+    expected:id,focused:document.activeElement?.outerHTML.slice(0,300),
+    editors:[...document.querySelectorAll("input[data-mindmap-rename]")]
+     .map(input=>({id:input.getAttribute("data-mindmap-rename"),visible:input.getClientRects().length>0}))
+   }),added.id));
+   throw error;
+  }
   await page.keyboard.type("Focus fixed");
   await editor.press("Enter");
   assert.equal((await records(page)).find(r=>r.id===added.id).values.name,"Focus fixed");
