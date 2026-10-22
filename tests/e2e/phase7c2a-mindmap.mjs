@@ -30,17 +30,30 @@ async function run(width,attempt){
  const rename=node(added.id).locator("input[data-mindmap-rename]");
  await rename.waitFor({state:"visible"});
  await rename.fill("One click saves and selects");
- // Baseline main still has the blocking MiniMap at 375px. Capture it rather
- // than bypassing its hit-testing with a forced click.
- if(screenshots&&width<640){
-  await page.screenshot({path:`${screenshots}/${width}-mindmap-first-click-${attempt}.png`,fullPage:true});
-  await page.close();return;
- }
- await node("other").locator("strong").click();
  if(screenshots){
+  // The baseline app may not allow clicking this node at all. Capture the
+  // blocked state rather than force-clicking through the real hit target.
+  if(width>=640)try{await node("other").locator("strong").click({timeout:2000});}
+   catch{/* baseline interaction is obstructed */}
   await page.screenshot({path:`${screenshots}/${width}-mindmap-first-click-${attempt}.png`,fullPage:true});
   await page.close();return;
  }
+ // FitView after adding a node can alter the transform. Assert that the
+ // target has settled inside the interactive canvas before its first click.
+ let stable=0,last="";
+ for(let sample=0;sample<30&&stable<4;sample++){
+  const rect=await node("other").boundingBox();
+  const transform=await graph.locator(".react-flow__viewport").getAttribute("style");
+  const now=JSON.stringify({rect,transform});
+  stable=now===last?stable+1:0;last=now;
+  await page.waitForTimeout(100);
+ }
+ assert(stable>=4,"Mind Map viewport must settle after adding a child");
+ const bounds=await graph.boundingBox(),target=await node("other").boundingBox();
+ assert(bounds&&target&&target.x>=bounds.x&&target.x+target.width<=bounds.x+bounds.width+1&&
+  target.y>=bounds.y&&target.y+target.height<=bounds.y+bounds.height+1,
+  "The target node must be fully inside the clickable canvas");
+ await node("other").locator("strong").click();
  const selected=page.getByRole("combobox",{name:"Mind Map selected record"});
  assert.equal(await selected.inputValue(),"other","First click must select other node");
  await page.waitForFunction(id=>JSON.parse(localStorage.getItem("collection-planner:v1"))
