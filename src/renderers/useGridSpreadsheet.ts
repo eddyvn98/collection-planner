@@ -61,15 +61,18 @@ export function useGridSpreadsheet({data,rows,selectedIds,readOnly,onChange}:Pro
   if(nextCol<0){nextCol=fields.length-1;finalRow--;}
   if(finalRow<0||finalRow>=records.length)return;
   if(!input){event.preventDefault();event.stopPropagation();}
-  // Inputs finish their own Enter commit; focus moves after React renders.
   const table=event.currentTarget;
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const focusNext=()=>{
    const targetRow=[...table.querySelectorAll<HTMLTableRowElement>("tbody tr[data-record-id]")]
     .find(tr=>tr.dataset.recordId===records[finalRow]);
    const destination=[...(targetRow?.querySelectorAll<HTMLTableCellElement>("td[data-grid-field]")??[])]
     .find(td=>td.dataset.gridField===fields[nextCol]);
    destination?.querySelector<HTMLButtonElement>("[data-grid-cell-editor]")?.focus();
-  }));
+  };
+  // View cells require no rerender and must respond immediately. An active
+  // editor commits on Enter/Tab before its corresponding view button mounts.
+  if(input)requestAnimationFrame(()=>requestAnimationFrame(focusNext));
+  else focusNext();
  };
  return {status,onPasteCapture,onKeyDownCapture};
 }
