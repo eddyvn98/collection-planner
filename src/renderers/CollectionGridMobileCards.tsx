@@ -3,13 +3,13 @@ import { taskAssignees, taskDate, localToday } from "../collections/collectionTa
 import { formatPlannerCardDate } from "../collections/collectionDateDisplay";
 import { setTaskProgress } from "./collectionBoardGroups";
 import { CollectionBlockedBadge } from "./CollectionBlockedBadge";
-import { deleteRecord, recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
+import { recordTitle, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 interface Props {
  data:CollectionBlockPayload;rows:CollectionRecord[];selected:string[];readOnly:boolean;
  onSelect:(id:string,checked:boolean)=>void;onOpen:(id:string)=>void;
- onChange:(next:CollectionBlockPayload)=>void;
+ onChange:(next:CollectionBlockPayload)=>void;onDeleteRequest:(id:string)=>void;
 }
-export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,onOpen,onChange}:Props){
+export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,onOpen,onChange,onDeleteRequest}:Props){
  return <div data-testid="collection-mobile-grid" className="space-y-1 sm:hidden">
   {rows.map(record=>{
    const title=recordTitle(data,record),people=taskAssignees(data,record);
@@ -32,7 +32,7 @@ export function CollectionGridMobileCards({data,rows,selected,readOnly,onSelect,
      <button type="button" aria-label={"Edit "+title} title="Open task" onClick={()=>onOpen(record.id)}
       className="grid h-8 w-8 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)]"><Pencil size={15}/></button>
      <button type="button" aria-label={"Delete "+title} title="Delete task" disabled={readOnly}
-      onClick={()=>onChange(deleteRecord(data,record.id))}
+      onClick={()=>onDeleteRequest(record.id)}
       className="grid h-8 w-8 shrink-0 place-items-center rounded text-[var(--planner-secondary)] hover:text-rose-600"><Trash2 size={14}/></button>
     </div>
     <button type="button" aria-label={"Edit "+title+" details"}
