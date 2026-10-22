@@ -57,7 +57,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   change(next);
  };
  const save=(id:string,value:string)=>{
-  setEditingId(null);
+  setEditingId(active=>active===id?null:active);
   const current=latestData.current;
   const next=renameMindMapTask(current,id,value);
   if(next!==current)onChange(next);
