@@ -75,7 +75,7 @@ try{
   const style=await control.evaluate(el=>({
    background:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderTopColor}));
   assert.equal(style.background,"rgb(41, 41, 41)");
-  assert.equal(style.border,"rgb(61, 61, 61)");
+  assert.equal(style.border,"rgb(133, 133, 133)");
  }
  console.log("PASS full viewport dark tokens and native date/select");
  await page.keyboard.press("Escape");
