@@ -45,11 +45,12 @@ async function check(width,attempt){
  const page=await open(width);
  await edit(page,"due date").click();
  const due=page.getByRole("dialog",{name:"Edit due date for Alpha"});
- await due.getByRole("textbox",{name:"Due date for Alpha"}).fill("2026-11-15")
-  .catch(async()=>due.locator('input[type="date"]').fill("2026-11-15"));
+ await due.getByRole("textbox",{name:"Natural date for Edit due date for Alpha"})
+  .fill("2026-11-15");
+ await due.getByRole("button",{name:"Apply"}).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1"))
   .records.find(r=>r.id==="alpha")?.values.due==="2026-11-15");
- await due.getByRole("button",{name:"Done"}).click();
+ // The shared picker closes after a valid natural or ISO date selection.
  await edit(page,"priority").click();
  await page.getByRole("dialog",{name:"Edit priority for Alpha"})
   .getByRole("button",{name:"Urgent"}).click();
