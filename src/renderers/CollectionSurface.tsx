@@ -262,8 +262,8 @@ export function CollectionSurface({ blockId, data, sources = {}, revisionNotice,
         const grid=data.views.find(item=>item.kind==="table");if(!grid)return;
         if(readOnly)setLocalViewId(grid.id);else onChange({...data,activeViewId:grid.id});
        }}/>}
-      {!assignedMode&&view.kind === "timeline" && <TimelineView rows={rows} data={data} start={date} end={end} readOnly={readOnly} patch={patch} onChange={onChange} />}
-      {!assignedMode&&view.kind === "mindmap" && <MindMapView rows={rows} data={data} readOnly={readOnly} onChange={onChange} />}
+      {!assignedMode&&view.kind === "timeline" && <TimelineView rows={rows} data={data} start={date} end={end} readOnly={readOnly} patch={patch} onChange={onChange} history={{readOnly,canUndo,canRedo,undo,redo}} />}
+      {!assignedMode&&view.kind === "mindmap" && <MindMapView rows={rows} data={data} readOnly={readOnly} onChange={onChange} history={{readOnly,canUndo,canRedo,undo,redo}} />}
       {!assignedMode&&view.kind === "form" && <CollectionFormView data={data} sources={sources} view={view} readOnly={readOnly} onChange={onChange} />}
       {!assignedMode&&!rows.length && view.kind !== "form" && view.kind !== "table" && <div className="p-4 text-center text-xs text-[var(--planner-secondary)]">No matching records. Add one to get started.</div>}
     </div>
