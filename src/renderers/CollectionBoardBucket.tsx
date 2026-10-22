@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { useDndContext, useDroppable } from "@dnd-kit/core";
-import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
+import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import { ChevronDown, ChevronLeft, ChevronRight, Ellipsis, GripVertical, ListTodo, Pencil, Plus, Trash2 } from "lucide-react";
 import { createGroupedTask, splitBucketCompletion, type BoardGroup, type BoardGroupBy } from "./collectionBoardGroups";
 import { deleteBucket, moveBucket, renameBucket } from "./collectionBoardActions";
 import { CollectionModalDialog } from "./CollectionModalDialog";
@@ -14,6 +15,8 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
  const bucketMenuRef=useRef<HTMLButtonElement>(null);
  const addTriggerRef=useRef<HTMLButtonElement>(null);
  const drop=useDroppable({id:"bucket:"+group.key,disabled:readOnly});
+ const bucketDrag=useDraggable({id:"bucket-order:"+group.key,
+  disabled:readOnly||mode!=="bucket"||!field||!group.key.slice(7)});
  const {active}=useDndContext();
  const [title,setTitle]=useState(""),[adding,setAdding]=useState(false);
  useEffect(()=>{const close=()=>setAdding(false);document.addEventListener("planner:escape",close);return()=>document.removeEventListener("planner:escape",close);},[]);
@@ -38,7 +41,13 @@ export function CollectionBoardBucket({data,group,mode,field,readOnly,showSubtas
  return <section ref={drop.setNodeRef} data-testid="collection-kanban-column" data-status={group.key}
    className={"w-[calc(100vw-64px)] max-w-[340px] shrink-0 snap-start self-start rounded-md sm:w-72 bg-[var(--planner-canvas)] p-2 "+
     (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}>
-  <header className="mb-1 flex min-h-9 items-center gap-2">
+  <header className="mb-1 flex min-h-11 items-center gap-1">
+   {!readOnly&&editable&&<button type="button" ref={bucketDrag.setNodeRef}
+    aria-label={"Drag bucket "+group.title} title="Drag to reorder buckets"
+    {...bucketDrag.attributes} {...bucketDrag.listeners}
+    style={{transform:CSS.Translate.toString(bucketDrag.transform)}}
+    className="nodrag grid h-11 w-11 shrink-0 cursor-grab touch-none place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
+    <GripVertical size={17}/></button>}
    {renaming&&editable?<input autoFocus aria-label="Bucket name" value={name}
       className="min-w-0 flex-1 rounded border border-[var(--planner-accent)] bg-[var(--planner-surface)] px-2 py-1 text-sm"
       onChange={e=>setName(e.target.value)}
