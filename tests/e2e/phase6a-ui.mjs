@@ -53,8 +53,14 @@ try{
  await page.keyboard.press("2");await page.getByTestId("collection-kanban").waitFor();
  await page.keyboard.press("3");await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).activeViewId==="schedule");
  await page.keyboard.press("4");await page.getByTestId("collection-charts").waitFor();
+ await page.getByRole("button",{name:"Filter Late tasks in Charts"}).click();
+ await page.getByTestId("planner-active-filter-chips").waitFor();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).activeViewId),"charts");
+ await page.getByRole("button",{name:"Clear all filters"}).click();
+ await page.getByRole("button",{name:"Open in Grid"}).click();
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem("collection-planner:v1")).activeViewId==="grid");
  await page.keyboard.press("2");await page.getByTestId("collection-kanban").waitFor();
- console.log("PASS ? and 1–4 view shortcuts");
+ console.log("PASS ? and 1–4, Charts filter in place, optional Open in Grid");
  const bell=page.getByRole("button",{name:/Notifications \(/});
  await bell.click();
  const notifications=page.getByRole("dialog",{name:"Task notifications"});await notifications.waitFor();
