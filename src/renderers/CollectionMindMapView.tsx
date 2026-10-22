@@ -79,8 +79,9 @@ export function MindMapView({ rows, data, readOnly, onChange }: Props) {
     </div>
     {parentWarning&&<p role="alert" className="text-xs text-amber-700 dark:text-amber-300">{parentWarning}</p>}
     {selected?.parentId && !graph.nodes.some(node => node.id === selected.parentId) && <span className={hintClass}>Parent is outside this page; the saved relationship is unchanged.</span>}
-    <div className="min-h-[380px] flex-1 overflow-hidden rounded border" data-testid="collection-mindmap-graph">
+    <div className="relative h-[520px] min-h-[420px] w-full shrink-0 overflow-hidden rounded-lg border border-[var(--planner-border)] bg-[var(--planner-surface)]" data-testid="collection-mindmap-graph">
       <ReactFlow nodes={nodes} edges={edges} fitView minZoom={0.15} maxZoom={2}
+        style={{height:"100%",width:"100%"}}
         nodesDraggable={!readOnly} nodesConnectable={false} selectNodesOnDrag={false}
         onNodeDragStop={(_event, node) => dropParent(node.id, node.position.x, node.position.y)}
         onNodeClick={(_event, node) => selectRecord(node.id)}
