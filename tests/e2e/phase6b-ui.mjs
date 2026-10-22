@@ -66,7 +66,7 @@ try{
   assert((await picker.textContent()).includes("25/10"));
   const search=picker.getByRole("searchbox",{name:"Search dependency tasks"});
   await search.fill("QA");
-  await picker.getByRole("checkbox",{name:"Add dependency QA signoff"}).check();
+  await picker.getByRole("checkbox",{name:"Add dependency QA signoff"}).click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem("collection-planner:v1")));
   assert.deepEqual(saved.records.find(x=>x.id==="ship").dependsOn,["api","qa"]);
   await search.fill("");
