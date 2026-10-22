@@ -57,13 +57,10 @@ export function parseQuickAdd(input:string,data:CollectionBlockPayload,today=loc
  });
  return {title:text.replace(/\s+/g," ").trim(),due,priority,assigneeIds,labelIds,tokens};
 }
-export function createQuickTask(data:CollectionBlockPayload,input:string,
- groupFieldId?:string,bucket="",today=localToday()):CollectionBlockPayload{
- const parsed=parseQuickAdd(input,data,today);
- if(!parsed.title)return data;
- let next=createBoardTask(data,parsed.title,groupFieldId,bucket);
- if(next===data)return data;
- const record=next.records[next.records.length-1];
+export function applyQuickTokens(base:CollectionBlockPayload,parsed:QuickAddParse):CollectionBlockPayload{
+ if(!base.records.length)return base;
+ const record=base.records[base.records.length-1];
+ let next=base;
  if(parsed.due)next=setTaskDate(next,record.id,"due",parsed.due);
  if(parsed.priority||parsed.assigneeIds.length||parsed.labelIds.length)
   next=updateTask(next,record.id,{
@@ -71,4 +68,11 @@ export function createQuickTask(data:CollectionBlockPayload,input:string,
    assigneeIds:parsed.assigneeIds,labelIds:parsed.labelIds
   },"Quick add tokens");
  return next;
+}
+export function createQuickTask(data:CollectionBlockPayload,input:string,
+ groupFieldId?:string,bucket="",today=localToday()):CollectionBlockPayload{
+ const parsed=parseQuickAdd(input,data,today);
+ if(!parsed.title)return data;
+ const next=createBoardTask(data,parsed.title,groupFieldId,bucket);
+ return next===data?data:applyQuickTokens(next,parsed);
 }
