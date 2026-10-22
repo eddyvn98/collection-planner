@@ -1,8 +1,8 @@
 "use client";
 import { Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
-import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors,
- type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, pointerWithin, rectIntersection,
+ useSensor, useSensors, type CollisionDetection, type DragEndEvent } from "@dnd-kit/core";
 import { descendantCounts, MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
 import { moveTaskTree } from "../collections/collectionTreeActions";
 import { addBucket } from "./collectionBoardActions";
@@ -31,6 +31,10 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   useSensor(PointerSensor,{activationConstraint:{distance:6}}),
   useSensor(TouchSensor,{activationConstraint:{delay:600,tolerance:6}}),
   useSensor(KeyboardSensor));
+ const collisionDetection:CollisionDetection=args=>{
+  const nested=pointerWithin(args).filter(hit=>String(hit.id).startsWith("subtask:"));
+  return nested.length?nested:rectIntersection(args);
+ };
  const onDragEnd=({active,over}:DragEndEvent)=>{
   if(readOnly||!over)return;
   const moving=parseCardDragId(String(active.id));
@@ -65,7 +69,7 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   {rows.length>MAX_VISIBLE_TREE_NODES&&<p role="status" className="p-2 text-xs text-[var(--planner-secondary)]">
     Showing first {MAX_VISIBLE_TREE_NODES} of {rows.length} tasks. Use search or filters to narrow the plan.
   </p>}
-  <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+  <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={onDragEnd}>
    <div className="flex min-h-0 flex-1 items-start gap-2 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:snap-none" data-testid="collection-kanban">
     {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group} counts={counts}
      readOnly={readOnly} onChange={onChange} showSubtasks={showSubtasks} onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
