@@ -78,6 +78,7 @@ describe("6D tree operations",()=>{
   expect(tree.rows).toHaveLength(500);
   expect(tree.truncated).toBe(true);
   expect(data.records).toHaveLength(604);
+  expect(visibleTaskTree(data,data.records,new Set(),Number.MAX_SAFE_INTEGER).rows).toHaveLength(604);
   const collapsed=visibleTaskTree(data,data.records,new Set(["b"]));
   expect(collapsed.rows.some(x=>x.id==="c")).toBe(false);
   expect(collapsed.rows.findIndex(x=>x.id==="b")).toBeGreaterThan(0);
