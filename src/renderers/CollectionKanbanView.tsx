@@ -1,8 +1,9 @@
 "use client";
 import { Plus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors,
  type DragEndEvent } from "@dnd-kit/core";
+import { descendantCounts, MAX_VISIBLE_TREE_NODES } from "../collections/collectionTaskTree";
 import { addBucket } from "./collectionBoardActions";
 import { boardGroups, moveGroupedTask, parseCardDragId } from "./collectionBoardGroups";
 import { CollectionBoardBucket } from "./CollectionBoardBucket";
@@ -19,7 +20,9 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
  const opener=useRef<HTMLButtonElement|null>(null);
  const [newBucket,setNewBucket]=useState(""),[creating,setCreating]=useState(false);
  const mode=view.boardGroupBy??"bucket";
- const groups=boardGroups(data,rows,mode,group);
+ const counts=useMemo(()=>descendantCounts(data.records),[data.records]);
+ const visibleRows=rows.length>MAX_VISIBLE_TREE_NODES?rows.slice(0,MAX_VISIBLE_TREE_NODES):rows;
+ const groups=boardGroups(data,visibleRows,mode,group);
  const sensors=useSensors(
   useSensor(PointerSensor,{activationConstraint:{distance:6}}),
   useSensor(TouchSensor,{activationConstraint:{delay:200,tolerance:6}}),
@@ -36,9 +39,12 @@ export function CollectionKanbanView({data,view,rows,group,readOnly,onChange}:Pr
   if(next!==data)onChange(next);
  };
  return <div className="flex min-h-0 flex-1 flex-col">
+  {rows.length>MAX_VISIBLE_TREE_NODES&&<p role="status" className="p-2 text-xs text-[var(--planner-secondary)]">
+    Showing first {MAX_VISIBLE_TREE_NODES} of {rows.length} tasks. Use search or filters to narrow the plan.
+  </p>}
   <DndContext sensors={sensors} onDragEnd={onDragEnd}>
    <div className="flex min-h-0 flex-1 items-start gap-2 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:snap-none" data-testid="collection-kanban">
-    {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group}
+    {groups.map(item=><CollectionBoardBucket key={item.key} data={data} group={item} mode={mode} field={group} counts={counts}
      readOnly={readOnly} onChange={onChange} onOpen={(id, trigger) => { opener.current = trigger; setOpenId(id); }}/>)}
     {mode==="bucket"&&!!group&&!readOnly&&(creating?
      <form className="w-64 shrink-0 space-y-2 rounded-xl bg-[var(--planner-hover)] p-3"
