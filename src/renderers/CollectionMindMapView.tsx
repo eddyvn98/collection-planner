@@ -6,7 +6,7 @@ import "@xyflow/react/dist/style.css";
 import {Maximize,Plus,Trash2,WandSparkles,Pencil,ArrowRight} from "lucide-react";
 import type {CollectionBlockPayload,CollectionRecord} from "../collections/model";
 import {deleteRecord,recordTitle,setParent} from "../collections/model";
-import {buildTaskTree,descendantCounts,MAX_VISIBLE_TREE_NODES} from "../collections/collectionTaskTree";
+import {buildTaskTree,descendantCounts,isTreeAncestor,MAX_VISIBLE_TREE_NODES} from "../collections/collectionTaskTree";
 import {layoutMindMap} from "./collectionMindMapLayout";
 import {visibleMindMapSelection} from "./collectionMindMapSelection";
 import {addMindMapRelative,renameMindMapTask,visibleMindMapRecords,candidateMindMapParent} from "./collectionMindMapActions";
@@ -92,7 +92,8 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const drop=(id:string,x:number,y:number)=>{
   const target=dragTarget(id,x,y);setDropTarget(null);setDragPositions({});
   if(!target||readOnly)return;
-  const moving=selectedIds.includes(id)?selectedIds:[id];
+  const moving=selectedIds.includes(id)?selectedIds.filter(current=>
+   !selectedIds.some(other=>other!==current&&isTreeAncestor(tree,other,current))):[id];
   let next=data;
   for(const current of moving){
    if(current===target)continue;
@@ -117,17 +118,17 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const keyboard=(event:KeyboardEvent<HTMLDivElement>)=>{
   if(readOnly||event.target instanceof HTMLInputElement||event.target instanceof HTMLSelectElement)return;
   const id=selected?.id;if(!id)return;
-  if(event.key==="F2"){event.preventDefault();setEditingId(id);}
+  if(event.key==="F2"){event.preventDefault();event.stopPropagation();setEditingId(id);}
   else if(event.key==="Tab"&&!(event.target instanceof HTMLButtonElement)){
-   event.preventDefault();add(id,"child");
+   event.preventDefault();event.stopPropagation();add(id,"child");
   }else if(event.key==="Enter"&&!(event.target instanceof HTMLButtonElement)){
-   event.preventDefault();add(id,"sibling");
+   event.preventDefault();event.stopPropagation();add(id,"sibling");
   }else if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(event.key)){
    const siblings=graph.nodes.map(node=>node.id),index=siblings.indexOf(id);
    const next=event.key==="ArrowLeft"?tree.byId.get(id)?.parentId:
     event.key==="ArrowRight"?tree.children.get(id)?.[0]?.id:
     siblings[index+(event.key==="ArrowDown"?1:-1)];
-   if(next){event.preventDefault();select(next);}
+   if(next){event.preventDefault();event.stopPropagation();select(next);}
   }
  };
  const tidy=()=>{setDragPositions({});setLayoutEpoch(n=>n+1);void flow?.fitView(fit);};
@@ -172,7 +173,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
    <ReactFlow style={{width:"100%",height:"100%"}} nodes={nodes} edges={edges}
     nodeTypes={nodeTypes} fitView fitViewOptions={fit} minZoom={0.15} maxZoom={2}
     nodesDraggable={!readOnly} nodesConnectable={!readOnly} selectNodesOnDrag={false}
-    multiSelectionKeyCode="Shift" selectionOnDrag
+    multiSelectionKeyCode="Shift" selectionOnDrag panOnDrag={[1,2]}
     onInit={setFlow} onNodeClick={(_event,node)=>select(node.id)}
     onNodeDoubleClick={(_event,node)=>{select(node.id);setEditingId(node.id);}}
     onNodeDrag={(_event,node)=>{setDragPositions(previous=>({...previous,[node.id]:node.position}));
