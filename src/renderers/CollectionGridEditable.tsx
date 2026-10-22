@@ -28,10 +28,10 @@ export function CollectionGridEditable({label, value, readOnly, onSave, children
     onBlur={()=>close(false)} onKeyDown={keys}>
     {options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
    </select> :
-   <input ref={editor as React.RefObject<HTMLInputElement>} aria-label={label}
+   <input data-grid-input ref={editor as React.RefObject<HTMLInputElement>} aria-label={label}
      className={gridEditClass} type={type==="date"?"date":type==="number"?"number":"text"}
      value={draft} onChange={e=>setDraft(e.target.value)} onBlur={()=>close(true)} onKeyDown={keys}/> :
-  <button type="button" disabled={readOnly} aria-label={label} title={label}
+  <button data-grid-cell-editor type="button" disabled={readOnly} aria-label={label} title={label}
     className={gridViewClass} onClick={()=>{setDraft(value);setEditing(true);}}
     onKeyDown={e=>{if(e.key==="F2"){e.preventDefault();setDraft(value);setEditing(true);}}}>
     <span className="min-w-0 truncate">{view||<span className="text-[var(--planner-secondary)]"> </span>}</span>
