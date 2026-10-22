@@ -80,7 +80,7 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     });
   }, [rows]);
   const treeIndex=useMemo(()=>buildTaskTree(data.records),[data.records]);
-  const projected=useMemo(()=>visibleTaskTree(data,rows,collapsed),[data,rows,collapsed]);
+  const projected=useMemo(()=>visibleTaskTree(data,rows,collapsed,Number.MAX_SAFE_INTEGER),[data,rows,collapsed]);
   const page = useMemo(() => collectionTablePage(projected.rows, requestedPage, pageSize),
     [projected, requestedPage, pageSize]);
   // Stable controlled state: one sorting array per saved View configuration.
@@ -180,7 +180,6 @@ export function CollectionTableView({ data, sources, view, rows, readOnly, onCha
     <CollectionGridMobileCards data={data} rows={page.rows} selected={selectedIds} readOnly={readOnly}
       onSelect={(id,checked)=>setSelected(current=>checked?[...new Set([...current,id])]:current.filter(value=>value!==id))}
       onOpen={setOpenRecordId} onChange={onChange} onDeleteRequest={setPendingDeleteTaskId}/>
-    {projected.truncated&&<p role="status" className="text-xs text-[var(--planner-secondary)]">Showing a limited tree view. Narrow the search or expand fewer branches (max 500 rows).</p>}
     {!page.rows.length && <p role="status" className="rounded-lg border border-dashed p-4 text-center text-sm text-[var(--planner-secondary)]">
       No matching tasks. Change filters or add a task.</p>}
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={finishDrag}>
