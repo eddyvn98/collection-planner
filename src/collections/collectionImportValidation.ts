@@ -1,4 +1,5 @@
 import { FIELD_TYPES, VIEW_KINDS, type CollectionBlockPayload } from "./model";
+import { MAX_TASK_DEPTH } from "./collectionTaskTree";
 
 const MAX_FIELDS = 100;
 const MAX_RECORDS = 5000;
@@ -94,19 +95,27 @@ function validateDependencies(records: Array<Record<string, unknown>>, ids: Set<
   }
 }
 
-function validateParents(records: Array<Record<string, unknown>>): void {
-  const parent = new Map(records.map(row => [row.id as string, row.parentId]));
-  const checked = new Set<string>();
-  for (const row of records) {
-    const path = new Set<string>();
-    let current: unknown = row.id;
-    while (typeof current === "string" && parent.has(current) && !checked.has(current)) {
-      if (path.has(current)) throw new Error("Collection parent cycle detected");
-      path.add(current);
-      current = parent.get(current);
-    }
-    for (const key of path) checked.add(key);
+function validateParents(records:Array<Record<string,unknown>>):void {
+ const parent=new Map(records.map(row=>[row.id as string,row.parentId]));
+ const depth=new Map<string,number>();
+ for(const row of records){
+  const ids:string[]=[],seen=new Set<string>();
+  let node:string|null=row.id as string;
+  while(node && !depth.has(node)){
+   if(!parent.has(node))throw new Error("Invalid Collection parent reference");
+   if(seen.has(node))throw new Error("Collection parent cycle detected");
+   seen.add(node);ids.push(node);
+   const next=parent.get(node);
+   if(next!==undefined && next!==null && typeof next!=="string")throw new Error("Invalid Collection parent");
+   node=next as string|null|undefined ?? null;
   }
+  let base=node?(depth.get(node)??0):0;
+  for(let i=ids.length-1;i>=0;i--){
+   base++;
+   if(base>MAX_TASK_DEPTH)throw new Error("Collection hierarchy exceeds "+MAX_TASK_DEPTH+" levels");
+   depth.set(ids[i],base);
+  }
+ }
 }
 
 /** Validate JSON at the import boundary before it can replace an open board. */
@@ -149,6 +158,16 @@ export function validateCollectionImport(value: unknown): CollectionBlockPayload
     }
   }
   validateParents(rows);
+  const parents=new Map(rows.map(row=>[row.id as string,row.parentId as string|null|undefined]));
+  for(const row of rows)for(const other of row.dependsOn as string[] ?? []){
+   const ancestor=(a:string,b:string)=>{
+    let cursor=parents.get(b);
+    while(cursor){if(cursor===a)return true;cursor=parents.get(cursor);}
+    return false;
+   };
+   if(ancestor(other,row.id as string)||ancestor(row.id as string,other))
+    throw new Error("Collection dependency cannot connect ancestor and descendant");
+  }
   validateDependencies(rows, records);
   validateViews(value.views, fields);
   return value as unknown as CollectionBlockPayload;
