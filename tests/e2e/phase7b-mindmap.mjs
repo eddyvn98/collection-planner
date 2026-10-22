@@ -133,6 +133,9 @@ try {
   await node(page,"sibling").click();
   await page.getByRole("button",{name:"Delete selected node"}).click();
   await page.getByRole("alertdialog",{name:"Delete Mind Map branch?"}).getByRole("button",{name:"Delete branch"}).click();
+  await page.waitForFunction(()=>
+   !JSON.parse(localStorage.getItem("collection-planner:v1")).records.some(r=>r.id==="sibling"),
+   null,{timeout:5000});
   assert(!(await records(page)).some(r=>r.id==="sibling"));
   console.log("PASS Mind Map delete confirmation");
   await page.getByRole("button",{name:"Timeline",exact:true}).click();
