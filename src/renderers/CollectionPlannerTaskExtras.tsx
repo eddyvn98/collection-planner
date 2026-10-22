@@ -3,7 +3,7 @@ import { ChevronDown, FileText, Paperclip, MessageCircle, ListChecks, Link2, His
 import { newId, updateRecordBody, type CollectionBlockPayload, type CollectionRecord } from "../collections/model";
 import { updateTask, addTaskComment } from "../collections/collectionTasks";
 import { CollectionChecklist } from "./CollectionChecklist";
-import { setCollectionDependencies } from "../collections/collectionDependencies";
+import { CollectionDependencyPicker } from "./CollectionDependencyPicker";
 interface Props{data:CollectionBlockPayload;record:CollectionRecord;readOnly:boolean;
  onChange:(data:CollectionBlockPayload)=>void;}
 const section="border-b border-[var(--planner-border)] py-3";
@@ -48,14 +48,11 @@ export function CollectionPlannerTaskExtras({data,record,readOnly,onChange}:Prop
       <button type="submit" className="rounded px-2 text-[var(--planner-accent)] hover:bg-[var(--planner-hover)]"
         aria-label="Attach link"><Plus size={16}/></button></form>}</div>
   </details>
-  <details className={section}><summary className={summary}>
-    <Link2 size={16}/>Dependencies<ChevronDown size={14} className="ml-auto"/></summary>
-    <div className="mt-2 flex flex-wrap gap-2">{data.records.filter(r=>r.id!==record.id).map(r=>
-      <label key={r.id} className="inline-flex min-h-8 items-center gap-2 text-xs">
-        <input type="checkbox" disabled={readOnly} checked={!!record.dependsOn?.includes(r.id)}
-          onChange={e=>onChange(setCollectionDependencies(data,record.id,e.target.checked?
-            [...(record.dependsOn??[]),r.id]:(record.dependsOn??[]).filter(id=>id!==r.id)))}/>
-        {r.values[data.fields[0]?.id]??r.id}</label>)}</div>
+  <details className={section} id="task-dependencies"><summary className={summary}>
+    <Link2 size={16}/>Dependencies
+    <span className="ml-auto text-xs font-normal text-[var(--planner-secondary)]">{record.dependsOn?.length??0}</span>
+    <ChevronDown size={14}/></summary>
+    <CollectionDependencyPicker data={data} record={record} readOnly={readOnly} onChange={onChange}/>
   </details>
   <details open className={section} id="task-comments"><summary className={summary}>
     <MessageCircle size={16} strokeWidth={1.75}/>Comments
