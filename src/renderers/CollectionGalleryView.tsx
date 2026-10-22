@@ -10,6 +10,7 @@ import { collectionTablePage } from "./collectionTablePaging";
 import { CollectionWrappedTextCell } from "./CollectionWrappedTextCell";
 import { CollectionReorderHandle } from "./CollectionReorderHandle";
 import { orderedGalleryRows,reorderGallery } from "../collections/collectionViewReorder";
+import {groupViewRows,viewGroupName} from "../collections/collectionToolbarGrouping";
 interface Props { data: CollectionBlockPayload; sources?: CollectionSources;
   view: CollectionView; rows: CollectionRecord[];
   titleField?: CollectionField; readOnly: boolean;
@@ -18,7 +19,8 @@ interface Props { data: CollectionBlockPayload; sources?: CollectionSources;
 const PAGE = 25;
 export function CollectionGalleryView({ data, sources, view, rows, titleField, readOnly, patch, onChange }: Props) {
   const [requestedPage, setRequestedPage] = useState(0);
-  const page = collectionTablePage(orderedGalleryRows(rows,view), requestedPage, PAGE);
+  const groupField=data.fields.find(f=>f.id===view.groupFieldId&&f.type==="select");
+  const page = collectionTablePage(groupViewRows(orderedGalleryRows(rows,view),groupField), requestedPage, PAGE);
   const order=page.rows.map(item=>item.id);
   const move=(source:string,target:string)=>{
    const next=reorderGallery(data,view.id,source,target);
@@ -31,9 +33,13 @@ export function CollectionGalleryView({ data, sources, view, rows, titleField, r
   const image = data.fields.find(field => field.type === "image");
   return <div className="space-y-3" data-testid="collection-gallery">
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {page.rows.map(record => {
+      {page.rows.map((record,index) => {
         const url = image ? record.values[image.id] : undefined;
-        return <article key={record.id} data-reorder-kind="gallery" data-reorder-id={record.id} className="group min-w-0 overflow-hidden rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] shadow-sm transition-shadow hover:shadow-md dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]"
+        return <React.Fragment key={record.id}>
+         {groupField&&(index===0||page.rows[index-1]?.values[groupField.id]!==record.values[groupField.id])&&
+          <h3 data-testid="planner-gallery-group" className="col-span-full min-h-11 border-b border-[var(--planner-border)] py-2 text-sm font-semibold">
+           {groupField.name}: {viewGroupName(record,groupField)}</h3>}
+        <article data-reorder-kind="gallery" data-reorder-id={record.id} className="group min-w-0 overflow-hidden rounded-xl border border-[var(--planner-border)] bg-[var(--planner-surface)] shadow-sm transition-shadow hover:shadow-md dark:border-[var(--planner-border)] dark:bg-[var(--planner-surface)]"
           data-testid="collection-gallery-card" data-record-id={record.id}>
           {url && /^https?:\/\//i.test(url)
             && <img src={url} alt={`${recordTitle(data, record)} cover`} loading="lazy" className="h-36 w-full bg-[var(--planner-hover)] object-cover dark:bg-[var(--planner-surface)]" />}
@@ -59,7 +65,7 @@ export function CollectionGalleryView({ data, sources, view, rows, titleField, r
                     onSet={value => patch(record, field, value)} /> </span>}
             </label>)}
           </div>
-        </article>;
+        </article></React.Fragment>;
       })}
     </div>
     {openRecordId && <CollectionRecordDetails data={data} sources={sources} recordId={openRecordId}
