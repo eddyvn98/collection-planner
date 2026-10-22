@@ -72,7 +72,9 @@ try {
   await title.fill("Renamed Root");await title.press("Enter");
   assert.equal((await records(page)).find(r=>r.id==="root").values.name,"Renamed Root");
   console.log("PASS direct F2 rename persists");
-  await node(page,"root").getByRole("button",{name:"Add child to Renamed Root"}).click();
+  const addChild=node(page,"root").getByRole("button",{name:"Add child to Renamed Root"});
+  const touch=await addChild.boundingBox();assert(touch?.height>=44&&touch.width>=44,"Mind Map + touch target must be at least 44px");
+  await addChild.click();
   const after=await records(page),created=after.find(r=>!data.records.some(orig=>orig.id===r.id));
   assert(created&&created.parentId==="root","Node + adds direct child");
   await node(page,created.id).waitFor();
