@@ -47,7 +47,7 @@ function MindMapTaskNodeComponent({data,selected}:NodeProps<MindCardNode>){
      className="nodrag nopan min-w-0 flex-1 rounded border-2 border-[var(--planner-accent)] bg-transparent px-1 text-xs"/>:
     <strong className="min-w-0 flex-1 break-words text-left text-xs" title={data.label}>{data.label}</strong>}
    {!data.readOnly&&<button type="button" className="nodrag nopan grid h-11 w-11 shrink-0 place-items-center rounded hover:bg-[var(--planner-hover)] focus-visible:ring-2"
-     aria-label={"Add child to "+data.label} onClick={event=>{event.stopPropagation();data.onAdd(data.id);}}>
+     aria-label={"Add child to "+data.label} onPointerDown={event=>{if(event.pointerType==="mouse")event.preventDefault();}} onClick={event=>{event.stopPropagation();data.onAdd(data.id);}}>
      <Plus size={15}/></button>}
   </div>
   <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-[var(--planner-secondary)]">
