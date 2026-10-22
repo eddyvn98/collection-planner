@@ -101,6 +101,18 @@ try {
   await page.mouse.up();
   assert.equal((await records(page)).find(r=>r.id==="sibling").parentId,"root");
   console.log("PASS Mind Map pointer drag reparent persists ID");
+  const existing=await records(page);
+  const sourceHandle=node(page,"root").locator(".react-flow__handle.source");
+  const hb=await sourceHandle.boundingBox(),frame=await graph.boundingBox();
+  assert(hb&&frame,"Handle and canvas must be visible");
+  await page.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);
+  await page.mouse.down();
+  await page.mouse.move(frame.x+frame.width-28,frame.y+35,{steps:22});
+  await page.mouse.up();
+  const afterHandle=await records(page);
+  assert(afterHandle.length===existing.length+1,"Handle to empty canvas creates a child");
+  assert(afterHandle.find(row=>!existing.some(old=>old.id===row.id))?.parentId==="root");
+  console.log("PASS drag from handle onto canvas creates sub-task");
   await node(page,"sibling").click();
   await page.getByRole("button",{name:"Delete selected node"}).click();
   await page.getByRole("alertdialog",{name:"Delete Mind Map branch?"}).getByRole("button",{name:"Delete branch"}).click();
