@@ -22,7 +22,10 @@ const fixture={version:1,title:"Collection Planner long title",fields:[
 async function open(width,view="board"){
  const page=await browser.newPage({viewport:{width,height:840}});
  await page.addInitScript(({fixture,view})=>{
-  localStorage.setItem("collection-planner:v1",JSON.stringify({...fixture,activeViewId:view}));
+  // Only seed once. A reload must exercise persisted view/card order,
+  // not silently reset localStorage back to the test fixture.
+  if(!localStorage.getItem("collection-planner:v1"))
+   localStorage.setItem("collection-planner:v1",JSON.stringify({...fixture,activeViewId:view}));
   localStorage.setItem("planner:dark","0");
  },{fixture,view});
  await page.goto(url,{waitUntil:"networkidle"});
