@@ -61,13 +61,6 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
     (drop.isOver?"ring-2 ring-[var(--planner-accent)]":"")}
    style={{transform:CSS.Translate.toString(drag.transform),opacity:drag.isDragging?.55:1}}>
   {img&&<img src={img.url} alt={img.name} loading="lazy" className="mb-2 h-24 w-full rounded object-cover"/>}
-  {!!labels.length&&<div data-testid="card-labels" className="mb-1 flex flex-wrap gap-1">
-    <CollectionBoardQuickEdit kind="labels" data={data} record={record} title={title}
-     readOnly={readOnly} onChange={onChange}>
-     {labels.map(label=><span key={label.id} className="rounded-[3px] px-2 py-0.5 text-[11px] text-white"
-      style={{backgroundColor:/^#[0-9a-f]{6}$/i.test(label.color)?label.color:"#5B5FC7"}}>{label.name}</span>)}
-    </CollectionBoardQuickEdit>
-   </div>}
   <div className="flex items-start gap-1.5">
    <button type="button" title={complete?"Mark not started":"Mark complete"} aria-label={(complete?"Reopen ":"Complete ")+title}
     disabled={readOnly} onClick={()=>onChange(setTaskProgress(data,record.id,complete?"not_started":"completed"))}
@@ -148,8 +141,15 @@ export function CollectionTaskCard({data,record,groupKey,readOnly,descendants,on
         :<UserRound size={14}/>}
       </CollectionBoardQuickEdit>
     </div>}
-    {!labels.length&&!readOnly&&<CollectionBoardQuickEdit kind="labels" data={data} record={record}
-      title={title} readOnly={readOnly} onChange={onChange}><Tag size={14}/></CollectionBoardQuickEdit>}
+    {(labels.length>0||!readOnly)&&<div data-testid={labels.length?"card-labels":undefined} className="min-w-0">
+      <CollectionBoardQuickEdit kind="labels" data={data} record={record}
+       title={title} readOnly={readOnly} onChange={onChange}>
+       {labels.length?<>
+        <Tag size={14}/><span className="max-w-20 truncate">{labels[0].name}</span>
+        {labels.length>1&&<span>+{labels.length-1}</span>}
+       </>:<Tag size={14}/>}
+      </CollectionBoardQuickEdit>
+    </div>}
    </div>}
   <CollectionBoardSubtaskDrop data={data} record={record}/>
   {confirmDelete&&<CollectionModalDialog label={"Delete "+title+" task?"} onClose={()=>setConfirmDelete(false)} trigger={titleRef.current}>
