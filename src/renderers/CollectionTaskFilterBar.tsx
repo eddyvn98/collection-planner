@@ -29,7 +29,7 @@ export function CollectionTaskFilterBar({data,value,readOnly,onChange,onDataChan
     setPresetName("");
   };
   return <div className="relative">
-    <button ref={trigger} type="button" aria-label="Filters" aria-haspopup="dialog" aria-expanded={expanded}
+    <button ref={trigger} type="button" style={{minWidth:44,minHeight:44}} aria-label="Filters" aria-haspopup="dialog" aria-expanded={expanded}
       onClick={()=>setExpanded(!expanded)}
       className="inline-flex h-11 min-h-11 w-11 min-w-11 items-center justify-center gap-1 rounded-md px-1 sm:w-auto sm:px-2 text-sm text-[var(--planner-secondary)] hover:bg-[var(--planner-hover)] focus-visible:ring-2 focus-visible:ring-[var(--planner-accent)]">
       <Filter size={16} strokeWidth={1.75}/> <span className="hidden sm:inline">Filter</span>
