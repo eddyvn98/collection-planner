@@ -30,6 +30,7 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
  const [warning,setWarning]=useState(""),[layoutEpoch,setLayoutEpoch]=useState(0);
  const [flow,setFlow]=useState<ReactFlowInstance|null>(null);
  const root=useRef<HTMLDivElement>(null),connectionStart=useRef<string|null>(null);
+ const latestData=useRef(data);latestData.current=data;
  const pointerDrag=useRef<{id:string;x:number;y:number}|null>(null);
  const pointerHandled=useRef(false);
  const visible=useMemo(()=>visibleMindMapRecords(data,rows,collapsed),[data,rows,collapsed]);
@@ -56,8 +57,10 @@ export function MindMapView({rows,data,readOnly,onChange,history}:Props){
   change(next);
  };
  const save=(id:string,value:string)=>{
-  setEditingId(null);const next=renameMindMapTask(data,id,value);
-  if(next!==data)onChange(next);
+  setEditingId(null);
+  const current=latestData.current;
+  const next=renameMindMapTask(current,id,value);
+  if(next!==current)onChange(next);
  };
  const toggle=(id:string)=>{
   // Commit the focused editor before hiding its branch. React Flow can
